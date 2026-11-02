@@ -280,6 +280,31 @@ void main() {
       expect(d2.logLimitExceeded, isFalse);
     });
 
+    test('a new limit starts the levels again (the phone case)', () {
+      // Limit 4.000: 50% then 100% were alerted earlier in the day.
+      const small = GuardrailSettings(dailyLimitFils: 4000);
+      final d1 = const AlertPlanner(small).decide(
+          const Guardrail(small).summarize([spend(4000, bh(2, 1))], today),
+          null,
+          now: now);
+      expect(d1.alert!.level, AlertLevel.level3);
+
+      // The user raises the limit to 10.000; 5.000 spent is 50% of the new one.
+      const big = GuardrailSettings(dailyLimitFils: 10000);
+      final d2 = const AlertPlanner(big).decide(
+          const Guardrail(big).summarize([spend(5000, bh(2, 1))], today),
+          d1.log,
+          now: now);
+      expect(d2.alert?.level, AlertLevel.level1);
+      expect(d2.log.sent, 2); // the daily cap still counts both
+    });
+
+    test('the same limit keeps the levels already sent', () {
+      final d1 = run([spend(5000, bh(2, 9))], null);
+      expect(d1.log.limitFils, 10000);
+      expect(run([spend(5500, bh(2, 9))], d1.log).alert, isNull);
+    });
+
     test('a log from another day is ignored', () {
       const old = AlertLog(
           day: Day(2026, 11, 1), sent: 4, highestLevel: AlertLevel.level3);
