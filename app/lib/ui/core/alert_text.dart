@@ -11,9 +11,12 @@ import 'package:beaza_extraction/beaza_extraction.dart';
   final s = alert.summary;
   String bhd(int fils) => l10n.bhd(formatFils(fils));
   final micro = l10n.microToday(s.micro.count, bhd(s.micro.totalFils));
-  final status = s.remainingFils < 0
-      ? l10n.alertSpentOver(bhd(s.spentFils), bhd(-s.remainingFils))
-      : l10n.alertSpentLeft(bhd(s.spentFils), bhd(s.remainingFils));
+  // With no limit set there is nothing to be over: just say what was spent.
+  final status = s.limitFils <= 0
+      ? l10n.spentToday(bhd(s.spentFils))
+      : s.remainingFils < 0
+          ? l10n.alertSpentOver(bhd(s.spentFils), bhd(-s.remainingFils))
+          : l10n.alertSpentLeft(bhd(s.spentFils), bhd(s.remainingFils));
 
   if (alert.level == AlertLevel.normal) {
     return (title: micro, body: status);

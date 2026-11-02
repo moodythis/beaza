@@ -133,6 +133,34 @@ void main() {
       expect(t.body.split('\n').last, '2 small expenses today · BHD 3.300');
     });
 
+    test('no limit set: the micro total does not claim an overrun', () {
+      const noLimit = Guardrail(GuardrailSettings(dailyLimitFils: 0));
+      final entries = [
+        for (var i = 0; i < 4; i++)
+          LedgerEntry(
+            index: i,
+            role: EntryRole.spending,
+            result: ExtractionResult(
+              status: ExtractionStatus.transaction,
+              amountFils: 1000,
+              currency: 'BHD',
+              direction: TxDirection.outgoing,
+              timestamp: bh(3, 9 + i),
+            ),
+          ),
+      ];
+      final t = alertText(
+        en,
+        GuardrailAlert(
+          summary: noLimit.summarize(entries, const Day(2026, 11, 3)),
+          level: AlertLevel.normal,
+          includesMicroTotal: true,
+        ),
+      );
+      expect(t.title, '4 small expenses today · BHD 4.000');
+      expect(t.body, 'Spent today: BHD 4.000');
+    });
+
     test('each level gets its own notification', () {
       const d = Day(2026, 11, 3);
       expect(alertId(d, AlertLevel.level1), 202611031);
