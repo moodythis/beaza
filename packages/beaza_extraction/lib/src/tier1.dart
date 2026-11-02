@@ -64,7 +64,6 @@ class _Template {
     this.direction,
     this.pattern, {
     this.hasMerchant = false,
-    this.specificity = 1.0,
   });
 
   final String id;
@@ -74,8 +73,9 @@ class _Template {
   final RegExp pattern;
   final bool hasMerchant;
 
-  /// 1.0 for templates verified on real messages, lower for guesses.
-  final double specificity;
+  /// 1.0 for templates verified on real messages. Give unverified templates
+  /// a lower value (and a constructor parameter) when they are added.
+  final double specificity = 1.0;
 }
 
 String? _g(RegExpMatch m, String name) =>

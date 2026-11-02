@@ -14,11 +14,11 @@ class Normalizer {
   // Bidi marks and embeddings that mixed Arabic/English messages carry,
   // including the Arabic Letter Mark (U+061C) that Android adds.
   static final RegExp _bidiMarks =
-      RegExp('[‎‏‪-‮⁦-⁩؜]');
+      RegExp('[\u200E\u200F\u202A-\u202E\u2066-\u2069\u061C]');
 
   // Arabic diacritics (tashkeel), dagger alef and tatweel.
   static final RegExp _diacriticsAndTatweel =
-      RegExp('[ً-ٰٟـ]');
+      RegExp('[\u064B-\u065F\u0670\u0640]');
 
   // BD or BHD as a standalone Latin word.
   static final RegExp _bhdLatin = RegExp(
