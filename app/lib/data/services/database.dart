@@ -15,6 +15,7 @@ class LedgerRows extends Table {
   String get tableName => 'transactions';
 
   TextColumn get id => text()();
+  // ignore: recursive_getters
   IntColumn get amountFils => integer().check(amountFils.isBiggerThanValue(0))();
   TextColumn get currency => text()();
   TextColumn get type => text().nullable()();
@@ -55,9 +56,12 @@ class SettingsRows extends Table {
   @override
   String get tableName => 'settings';
 
+  // ignore: recursive_getters
   IntColumn get id => integer().check(id.equals(1))();
+  // ignore: recursive_getters
   IntColumn get dailyLimitFils =>
       integer().check(dailyLimitFils.isBiggerOrEqualValue(0))();
+  // ignore: recursive_getters
   IntColumn get microThresholdFils =>
       integer().check(microThresholdFils.isBiggerThanValue(0))();
   IntColumn get alertCap => integer()();
