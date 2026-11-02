@@ -50,6 +50,8 @@ class ExtractionResult {
     this.category,
     this.channel,
     this.last4,
+    this.counterpartyLast4,
+    this.reference,
     this.timestamp,
     this.confidence = 0.0,
     this.templateVersion = '',
@@ -72,6 +74,13 @@ class ExtractionResult {
   final String? category;
   final Channel? channel;
   final String? last4;
+
+  /// Last digits of the other party's account. Never a name.
+  final String? counterpartyLast4;
+
+  /// Canonical reference, shared by duplicates and by both legs of a
+  /// transfer between the user's own accounts.
+  final String? reference;
 
   /// UTC instant.
   final DateTime? timestamp;
@@ -184,6 +193,8 @@ class Validator {
       merchantRaw: tier1.merchant,
       channel: _channelOf(tier1.channel),
       last4: tier1.accountLast4,
+      counterpartyLast4: tier1.counterpartyLast4,
+      reference: tier1.reference,
       timestamp: timestamp,
       confidence: tier1.confidence,
       templateVersion: '${tier1.templateId}@$kTemplateSetVersion',

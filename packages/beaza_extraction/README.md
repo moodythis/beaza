@@ -21,5 +21,7 @@ dart test
 | Tier 1 templates (BisB, ila, Al Salam, BenefitPay) | Done, tests included. ATM and deposit templates need real samples |
 | Validator and public ExtractionResult | Done, tests included |
 | BeazaExtractor facade (sender filter, whole pipeline) | Written, tests run in CI |
-| Deduplicator, own-account registry, merchant normalizer | Next |
+| Reconciler: duplicates, own accounts, spending total | Done, tests included |
+| Daily guardrail (limit, 50/80/100% alerts) | Next |
+| Merchant normalizer and categorizer | Needs more merchant data |
 | Tier 2 model | Later |
