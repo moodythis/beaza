@@ -220,6 +220,7 @@ void main() {
     test('a lost key does not create a fresh database over old data', () async {
       final s1 = await openStorage(
           directory: dir, keys: MemoryKeyStore(), background: false);
+      await s1.ledger.addManual(amountFils: 1500, at: bh(2, 9)); // creates the file
       await s1.database.close();
 
       await expectLater(
