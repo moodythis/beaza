@@ -20,6 +20,9 @@ class IntakeReport {
   /// Bank messages that look like transactions but could not be read
   /// safely. Kept unread until the review screen exists.
   final int notUnderstood;
+
+  /// Bank messages handled in this scan, of any kind.
+  int get found => added + notTransactions + notUnderstood;
 }
 
 /// Reads new bank SMS from the inbox and stores the transactions found.
@@ -66,6 +69,22 @@ class MessageIntake {
   /// Safe to call often: overlapping calls share one scan.
   Future<IntakeReport> scan() =>
       _running ??= _scan().whenComplete(() => _running = null);
+
+  /// For a run started by a new SMS: the SMS app saves the message to the
+  /// inbox a moment after Android announces it, so scan again a few times
+  /// until a bank message shows up (or give up; a non-bank SMS never will).
+  Future<IntakeReport> scanUntilFound({
+    int attempts = 4,
+    Duration pause = const Duration(milliseconds: 1500),
+  }) async {
+    var report = const IntakeReport();
+    for (var i = 0; i < attempts; i++) {
+      report = await scan();
+      if (report.found > 0) return report;
+      if (i < attempts - 1) await Future<void>.delayed(pause);
+    }
+    return report;
+  }
 
   Future<IntakeReport> _scan() async {
     final now = _clock();

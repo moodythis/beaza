@@ -9,6 +9,7 @@ import 'package:beaza/l10n/app_localizations.dart';
 import 'package:beaza/ui/core/alert_text.dart';
 import 'package:beaza/ui/features/home/view_models/home_view_model.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:path_provider/path_provider.dart';
 
 /// Kept for the life of the app so new bank messages are read on resume.
@@ -20,15 +21,13 @@ AppLocalizations phoneLocalizations() {
   return lookupAppLocalizations(Locale(code == 'en' ? 'en' : 'ar'));
 }
 
-Future<void> main() async {
-  WidgetsFlutterBinding.ensureInitialized();
-  try {
-    final storage = await openStorage(
+Future<Storage> openAppStorage() async => openStorage(
       directory: await getApplicationSupportDirectory(),
       keys: SecureKeyStore(),
     );
-    final notifier = PlatformAlertNotifier();
-    final alerts = GuardrailAlerts(
+
+GuardrailAlerts buildAlerts(Storage storage, AlertNotifier notifier) =>
+    GuardrailAlerts(
       ledger: storage.ledger,
       settings: storage.settings,
       logs: storage.alertLogs,
@@ -41,6 +40,19 @@ Future<void> main() async {
         );
       },
     );
+
+MessageIntake buildIntake(Storage storage) => MessageIntake(
+      sms: PlatformSmsSource(),
+      ledger: storage.ledger,
+      seen: storage.seenMessages,
+    );
+
+Future<void> main() async {
+  WidgetsFlutterBinding.ensureInitialized();
+  try {
+    final storage = await openAppStorage();
+    final notifier = PlatformAlertNotifier();
+    final alerts = buildAlerts(storage, notifier);
     // Every change to the ledger or the limit re-checks the thresholds.
     storage.ledger.addListener(alerts.evaluate);
     storage.settings.addListener(alerts.evaluate);
@@ -49,11 +61,7 @@ Future<void> main() async {
     final homeViewModel = HomeViewModel(
       ledger: storage.ledger,
       settings: storage.settings,
-      intake: MessageIntake(
-        sms: PlatformSmsSource(),
-        ledger: storage.ledger,
-        seen: storage.seenMessages,
-      ),
+      intake: buildIntake(storage),
     )..load();
     appLifecycle = AppLifecycleListener(onResume: () {
       homeViewModel.checkMessages();
@@ -67,5 +75,28 @@ Future<void> main() async {
   } on Object {
     // Never replace unreadable data with an empty database.
     runApp(const StartupErrorApp());
+  }
+}
+
+/// Started by Android (SmsReceiver.kt) when an SMS arrives while the app is
+/// closed. Reads new bank messages, stores the transactions, alerts if a
+/// threshold was crossed, and tells Android it is done. No screen.
+@pragma('vm:entry-point')
+Future<void> backgroundMain() async {
+  WidgetsFlutterBinding.ensureInitialized();
+  const done = MethodChannel('beaza/background');
+  Storage? storage;
+  try {
+    storage = await openAppStorage();
+    final intake = buildIntake(storage);
+    if (await intake.hasPermission()) {
+      await intake.scanUntilFound();
+    }
+    await buildAlerts(storage, PlatformAlertNotifier()).evaluate();
+  } on Object {
+    // Nothing to show without a screen; the app rescans when opened.
+  } finally {
+    await storage?.database.close();
+    await done.invokeMethod<void>('done').catchError((Object _) {});
   }
 }

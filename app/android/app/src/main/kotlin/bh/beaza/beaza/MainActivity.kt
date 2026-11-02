@@ -7,61 +7,22 @@ import android.content.Intent
 import android.content.IntentFilter
 import android.content.pm.PackageManager
 import android.os.Build
-import android.os.Handler
-import android.os.Looper
 import io.flutter.embedding.android.FlutterActivity
 import io.flutter.embedding.engine.FlutterEngine
 import io.flutter.plugin.common.EventChannel
 import io.flutter.plugin.common.MethodChannel
 
-/**
- * Bridge between Android's SMS inbox and Dart.
- *
- * Privacy: listing returns only id, sender and date. Dart decides which
- * senders are banks, and only then asks for those message bodies. Nothing is
- * stored on the Android side, and the new-SMS event carries no content.
- */
-class MainActivity : FlutterActivity() {
-    private val mainHandler = Handler(Looper.getMainLooper())
-    private var pendingPermission: MethodChannel.Result? = null
-    private var pendingNotifyPermission: MethodChannel.Result? = null
+/** The app screen: channels, permission dialogs, and new-SMS pings. */
+class MainActivity : FlutterActivity(), PermissionRequester {
+    private var pendingSms: MethodChannel.Result? = null
+    private var pendingNotify: MethodChannel.Result? = null
     private var smsReceiver: BroadcastReceiver? = null
 
     override fun configureFlutterEngine(flutterEngine: FlutterEngine) {
         super.configureFlutterEngine(flutterEngine)
         val messenger = flutterEngine.dartExecutor.binaryMessenger
-
-        MethodChannel(messenger, "beaza/sms").setMethodCallHandler { call, result ->
-            when (call.method) {
-                "hasPermission" -> result.success(hasSmsPermission())
-                "requestPermission" -> requestSmsPermission(result)
-                "listInbox" -> {
-                    val since = call.argument<Number>("sinceMs")?.toLong() ?: 0L
-                    inBackground(result) { SmsInbox.list(contentResolver, since) }
-                }
-                "readBodies" -> {
-                    val ids = call.argument<List<String>>("ids") ?: emptyList()
-                    inBackground(result) { SmsInbox.bodies(contentResolver, ids) }
-                }
-                else -> result.notImplemented()
-            }
-        }
-
-        MethodChannel(messenger, "beaza/notify").setMethodCallHandler { call, result ->
-            when (call.method) {
-                "requestPermission" -> requestNotifyPermission(result)
-                "show" -> {
-                    Alerts.show(
-                        this,
-                        call.argument<Number>("id")?.toInt() ?: 1,
-                        call.argument<String>("title") ?: "",
-                        call.argument<String>("body") ?: "",
-                    )
-                    result.success(null)
-                }
-                else -> result.notImplemented()
-            }
-        }
+        Channels.attach(this, messenger, this)
+        uiAlive = true
 
         EventChannel(messenger, "beaza/sms_events").setStreamHandler(
             object : EventChannel.StreamHandler {
@@ -76,27 +37,23 @@ class MainActivity : FlutterActivity() {
         )
     }
 
-    private fun hasSmsPermission(): Boolean =
-        checkSelfPermission(Manifest.permission.READ_SMS) == PackageManager.PERMISSION_GRANTED &&
-            checkSelfPermission(Manifest.permission.RECEIVE_SMS) == PackageManager.PERMISSION_GRANTED
-
-    private fun requestSmsPermission(result: MethodChannel.Result) {
-        if (hasSmsPermission()) {
+    override fun requestSms(result: MethodChannel.Result) {
+        if (Channels.hasSms(this)) {
             result.success(true)
             return
         }
-        if (pendingPermission != null) {
+        if (pendingSms != null) {
             result.error("busy", "A permission request is already open", null)
             return
         }
-        pendingPermission = result
+        pendingSms = result
         requestPermissions(
             arrayOf(Manifest.permission.READ_SMS, Manifest.permission.RECEIVE_SMS),
             SMS_PERMISSION_REQUEST,
         )
     }
 
-    private fun requestNotifyPermission(result: MethodChannel.Result) {
+    override fun requestNotifications(result: MethodChannel.Result) {
         if (Build.VERSION.SDK_INT < Build.VERSION_CODES.TIRAMISU ||
             checkSelfPermission(Manifest.permission.POST_NOTIFICATIONS) ==
             PackageManager.PERMISSION_GRANTED
@@ -104,11 +61,11 @@ class MainActivity : FlutterActivity() {
             result.success(true)
             return
         }
-        if (pendingNotifyPermission != null) {
+        if (pendingNotify != null) {
             result.error("busy", "A permission request is already open", null)
             return
         }
-        pendingNotifyPermission = result
+        pendingNotify = result
         requestPermissions(
             arrayOf(Manifest.permission.POST_NOTIFICATIONS),
             NOTIFY_PERMISSION_REQUEST,
@@ -121,19 +78,22 @@ class MainActivity : FlutterActivity() {
         grantResults: IntArray,
     ) {
         super.onRequestPermissionsResult(requestCode, permissions, grantResults)
-        if (requestCode == SMS_PERMISSION_REQUEST) {
-            pendingPermission?.success(hasSmsPermission())
-            pendingPermission = null
-        }
-        if (requestCode == NOTIFY_PERMISSION_REQUEST) {
-            pendingNotifyPermission?.success(
-                grantResults.isNotEmpty() && grantResults[0] == PackageManager.PERMISSION_GRANTED,
-            )
-            pendingNotifyPermission = null
+        when (requestCode) {
+            SMS_PERMISSION_REQUEST -> {
+                pendingSms?.success(Channels.hasSms(this))
+                pendingSms = null
+            }
+            NOTIFY_PERMISSION_REQUEST -> {
+                pendingNotify?.success(
+                    grantResults.isNotEmpty() &&
+                        grantResults[0] == PackageManager.PERMISSION_GRANTED,
+                )
+                pendingNotify = null
+            }
         }
     }
 
-    /** Only tells Dart that something arrived; Dart then scans the inbox. */
+    /** While the screen exists it handles new SMS itself (no background run). */
     private fun startListening(events: EventChannel.EventSink) {
         stopListening()
         val receiver = object : BroadcastReceiver() {
@@ -141,7 +101,7 @@ class MainActivity : FlutterActivity() {
                 events.success(System.currentTimeMillis())
             }
         }
-        val filter = IntentFilter(SMS_RECEIVED)
+        val filter = IntentFilter(SmsReceiver.SMS_RECEIVED)
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
             registerReceiver(receiver, filter, Context.RECEIVER_EXPORTED)
         } else {
@@ -157,23 +117,16 @@ class MainActivity : FlutterActivity() {
 
     override fun onDestroy() {
         stopListening()
+        uiAlive = false
         super.onDestroy()
-    }
-
-    private fun inBackground(result: MethodChannel.Result, work: () -> Any) {
-        Thread {
-            try {
-                val value = work()
-                mainHandler.post { result.success(value) }
-            } catch (e: Exception) {
-                mainHandler.post { result.error("sms", e.message, null) }
-            }
-        }.start()
     }
 
     companion object {
         private const val SMS_PERMISSION_REQUEST = 4101
         private const val NOTIFY_PERMISSION_REQUEST = 4102
-        private const val SMS_RECEIVED = "android.provider.Telephony.SMS_RECEIVED"
+
+        /** True while the app screen's engine is running. */
+        @Volatile
+        var uiAlive = false
     }
 }

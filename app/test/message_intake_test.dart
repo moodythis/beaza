@@ -121,4 +121,36 @@ void main() {
       expect(e.result.toString(), isNot(contains('9.999')));
     }
   });
+
+  group('run started by a new SMS', () {
+    test('waits for the message to reach the inbox', () async {
+      final late = FakeSms([]);
+      final lateIntake = MessageIntake(
+        sms: late,
+        ledger: ledger,
+        seen: seen,
+        clock: () => bh(2, 20),
+      );
+      // The SMS app saves the message only after the first scan.
+      Future<void>.delayed(const Duration(milliseconds: 5),
+          () => late.inbox.add(('9', 'BisB', bh(2, 16, 32), bisbCard)));
+
+      final r = await lateIntake.scanUntilFound(
+          pause: const Duration(milliseconds: 20));
+      expect(r.added, 1);
+      expect(await ledger.entries(), hasLength(1));
+    });
+
+    test('a personal SMS gives up after the last attempt', () async {
+      final only = FakeSms([('4', '+97333000000', bh(2, 18), personal)]);
+      final r = await MessageIntake(
+        sms: only,
+        ledger: ledger,
+        seen: seen,
+        clock: () => bh(2, 20),
+      ).scanUntilFound(attempts: 3, pause: Duration.zero);
+      expect(r.found, 0);
+      expect(only.bodiesRead, isEmpty);
+    });
+  });
 }
