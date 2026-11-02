@@ -68,6 +68,14 @@ void main() {
           0);
     });
 
+    test('copyWith changes one field and keeps the rest', () {
+      final s = const GuardrailSettings(dailyLimitFils: 1, alertCap: 2)
+          .copyWith(dailyLimitFils: 9000);
+      expect(s.dailyLimitFils, 9000);
+      expect(s.alertCap, 2);
+      expect(s.microThresholdFils, 5000);
+    });
+
     test('zero days is rejected', () {
       expect(
           () => GuardrailSettings.suggestedDailyLimitFils(

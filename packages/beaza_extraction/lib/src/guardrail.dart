@@ -104,6 +104,23 @@ class GuardrailSettings {
   /// Rollover is capped at this percentage of the daily limit (at most 50).
   final int rolloverCapPercent;
 
+  GuardrailSettings copyWith({
+    int? dailyLimitFils,
+    int? microThresholdFils,
+    int? alertCap,
+    int? microCountForTotal,
+    bool? rollover,
+    int? rolloverCapPercent,
+  }) =>
+      GuardrailSettings(
+        dailyLimitFils: dailyLimitFils ?? this.dailyLimitFils,
+        microThresholdFils: microThresholdFils ?? this.microThresholdFils,
+        alertCap: alertCap ?? this.alertCap,
+        microCountForTotal: microCountForTotal ?? this.microCountForTotal,
+        rollover: rollover ?? this.rollover,
+        rolloverCapPercent: rolloverCapPercent ?? this.rolloverCapPercent,
+      );
+
   /// (income - commitments - savings) / days, rounded down to the fil, never
   /// below zero (SRS 1.4). The app shows this calculation to the user.
   static int suggestedDailyLimitFils({
