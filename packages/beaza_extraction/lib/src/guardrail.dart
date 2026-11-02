@@ -292,6 +292,7 @@ class AlertLog {
     this.highestLevel = AlertLevel.normal,
     this.microTotalShown = false,
     this.limitExceededLogged = false,
+    this.limitFils,
   });
 
   final Day day;
@@ -300,11 +301,16 @@ class AlertLog {
   final bool microTotalShown;
   final bool limitExceededLogged;
 
+  /// The limit [highestLevel] was measured against. When the user changes
+  /// the limit, 50% means a different amount, so the levels start again.
+  final int? limitFils;
+
   AlertLog copyWith({
     int? sent,
     AlertLevel? highestLevel,
     bool? microTotalShown,
     bool? limitExceededLogged,
+    int? limitFils,
   }) =>
       AlertLog(
         day: day,
@@ -312,6 +318,7 @@ class AlertLog {
         highestLevel: highestLevel ?? this.highestLevel,
         microTotalShown: microTotalShown ?? this.microTotalShown,
         limitExceededLogged: limitExceededLogged ?? this.limitExceededLogged,
+        limitFils: limitFils ?? this.limitFils,
       );
 }
 
@@ -356,8 +363,9 @@ class AlertDecision {
 /// Decides whether a recompute should notify.
 ///
 /// Rules: a level alerts only when it is higher than any level already
-/// alerted that day, so an edit that drops the day to a lower state and
-/// back does not repeat the alert. Several levels crossed by one
+/// alerted that day for the same limit, so an edit that drops the day to a
+/// lower state and back does not repeat the alert, but a new limit does
+/// start the levels again (the cap keeps counting). Several levels crossed by one
 /// transaction give one alert at the highest. The micro-expense total is
 /// shown once per day and rides along with a level alert when both are due.
 /// While snoozed, or once the cap is reached, nothing is recorded as sent,
@@ -376,6 +384,16 @@ class AlertPlanner {
     var log = previous != null && previous.day == summary.day
         ? previous
         : AlertLog(day: summary.day);
+    if (log.limitFils != null && log.limitFils != summary.limitFils) {
+      // New limit: earlier levels no longer apply. The cap still counts.
+      log = AlertLog(
+        day: log.day,
+        sent: log.sent,
+        microTotalShown: log.microTotalShown,
+        limitExceededLogged: log.limitExceededLogged,
+      );
+    }
+    log = log.copyWith(limitFils: summary.limitFils);
 
     final logExceeded =
         summary.level == AlertLevel.level3 && !log.limitExceededLogged;

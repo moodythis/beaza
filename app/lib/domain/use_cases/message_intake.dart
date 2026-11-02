@@ -25,6 +25,24 @@ class IntakeReport {
   int get found => added + notTransactions + notUnderstood;
 }
 
+/// A bank message the pipeline could not read safely, shown to the user on
+/// the review screen. Held in memory only; never stored.
+class UnreadMessage {
+  const UnreadMessage({
+    required this.sender,
+    required this.receivedAt,
+    required this.text,
+    required this.reasons,
+  });
+
+  final String sender;
+  final DateTime receivedAt;
+  final String text;
+
+  /// ValidationIssue names, for example "noTemplate".
+  final List<String> reasons;
+}
+
 /// Reads new bank SMS from the inbox and stores the transactions found.
 ///
 /// Privacy order: list (id, sender, date only) -> drop every sender that is
@@ -69,6 +87,38 @@ class MessageIntake {
   /// Safe to call often: overlapping calls share one scan.
   Future<IntakeReport> scan() =>
       _running ??= _scan().whenComplete(() => _running = null);
+
+  /// The bank messages still not understood, newest first, read live from
+  /// the inbox for the review screen. Nothing is stored.
+  Future<List<UnreadMessage>> unreadable() async {
+    final now = _clock();
+    final listed = await _sms.listInbox(since: now.subtract(window));
+    final wanted = <InboxMessage>[];
+    for (final m in listed) {
+      if (_senders.detect(m.sender) == SenderFamily.unknown) continue;
+      if (await _seen.contains(keyFor(m))) continue;
+      wanted.add(m);
+    }
+    if (wanted.isEmpty) return const [];
+    final bodies = await _sms.readBodies([for (final m in wanted) m.id]);
+    final out = <UnreadMessage>[];
+    for (final m in wanted) {
+      final text = bodies[m.id];
+      if (text == null) continue;
+      final r = _extractor.process(
+        RawMessage(text: text, sender: m.sender, receivedAt: m.receivedAt),
+      );
+      if (r.status != ExtractionStatus.unparsed) continue;
+      out.add(UnreadMessage(
+        sender: m.sender,
+        receivedAt: m.receivedAt,
+        text: text,
+        reasons: [for (final i in r.issues) i.name],
+      ));
+    }
+    out.sort((a, b) => b.receivedAt.compareTo(a.receivedAt));
+    return out;
+  }
 
   /// For a run started by a new SMS: the SMS app saves the message to the
   /// inbox a moment after Android announces it, so scan again a few times

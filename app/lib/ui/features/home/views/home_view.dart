@@ -2,6 +2,8 @@ import 'package:beaza/l10n/app_localizations.dart';
 import 'package:beaza/ui/core/amount_dialog.dart';
 import 'package:beaza/ui/core/formatting.dart';
 import 'package:beaza/ui/features/home/view_models/home_view_model.dart';
+import 'package:beaza/ui/features/review/view_models/review_view_model.dart';
+import 'package:beaza/ui/features/review/views/review_view.dart';
 import 'package:beaza_extraction/beaza_extraction.dart';
 import 'package:flutter/material.dart';
 
@@ -49,13 +51,20 @@ class HomeView extends StatelessWidget {
               ],
               const SizedBox(height: 12),
               MicroCard(today: state.summary.micro, week: state.weekMicro),
-              if (viewModel.notUnderstood > 0)
-                Padding(
-                  padding: const EdgeInsets.only(top: 8),
-                  child: Text(
-                    l10n.notUnderstood(viewModel.notUnderstood),
-                    key: const Key('notUnderstood'),
-                    style: Theme.of(context).textTheme.bodySmall,
+              if (viewModel.notUnderstood > 0 && viewModel.intake != null)
+                ListTile(
+                  key: const Key('notUnderstood'),
+                  contentPadding: EdgeInsets.zero,
+                  dense: true,
+                  leading: const Icon(Icons.help_outline),
+                  title: Text(l10n.notUnderstood(viewModel.notUnderstood)),
+                  trailing: const Icon(Icons.chevron_right),
+                  onTap: () => Navigator.of(context).push(
+                    MaterialPageRoute<void>(
+                      builder: (_) => ReviewView(
+                        viewModel: ReviewViewModel(viewModel.intake!)..load(),
+                      ),
+                    ),
                   ),
                 ),
               const SizedBox(height: 20),

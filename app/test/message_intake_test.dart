@@ -12,6 +12,9 @@ const bisbCard =
     'Dear CLIENT, thank you for using your Debit card 7744 for BHD 0.300 at SAMPLE BAKERY - MAL BAH BH-000001 on 02/11 @16:31. Avail Bal BHD 9.999. Tel 17515151';
 const ilaCard =
     'Success! Purchase at SAMPLE TRADING CO W using card ****8855 for BHD 1.500 on 02/11/2026 15:42 debited from BHD Ac Balance BHD 9.999 Enquiry 17123456';
+/// A bank format with no template yet (invented values).
+const unknownFormat =
+    'Dear Client, your account was debited with BHD 3.000 for service charges on 02/11/2026.';
 const otp = 'Your OTP is 123456. Do not share it with anyone.';
 const personal = 'Hi, are we still meeting at 5? I owe you BHD 3.000';
 
@@ -151,6 +154,27 @@ void main() {
       ).scanUntilFound(attempts: 3, pause: Duration.zero);
       expect(r.found, 0);
       expect(only.bodiesRead, isEmpty);
+    });
+  });
+
+  group('review screen source', () {
+    test('lists only bank messages that were not understood, with reasons',
+        () async {
+      sms.inbox.add(('7', 'BisB', bh(2, 19), unknownFormat));
+      final report = await intake.scan();
+      expect(report.notUnderstood, 1);
+
+      final unread = await intake.unreadable();
+      expect(unread, hasLength(1));
+      expect(unread.single.sender, 'BisB');
+      expect(unread.single.text, unknownFormat);
+      expect(unread.single.reasons, isNotEmpty);
+    });
+
+    test('never includes personal messages', () async {
+      await intake.scan();
+      final unread = await intake.unreadable();
+      expect(unread.where((m) => m.text == personal), isEmpty);
     });
   });
 }

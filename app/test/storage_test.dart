@@ -243,6 +243,28 @@ void main() {
       expect(await store.contains('sms:2'), isTrue);
     });
 
+    test('a version 3 database gains the limit column and keeps its rows',
+        () async {
+      final dir = Directory.systemTemp.createTempSync('beaza_mig3_');
+      addTearDown(() => dir.deleteSync(recursive: true));
+      final file = File('${dir.path}/m.db');
+
+      final v4 = openEncryptedDatabase(file, goodKey, background: false);
+      await DriftAlertLogStore(v4)
+          .save(const AlertLog(day: Day(2026, 11, 3), sent: 2));
+      // Back to the version 3 shape the phone has now.
+      await v4.customStatement('ALTER TABLE alert_days DROP COLUMN limit_fils');
+      await v4.customStatement('PRAGMA user_version = 3');
+      await v4.close();
+
+      final upgraded = openEncryptedDatabase(file, goodKey, background: false);
+      final store = DriftAlertLogStore(upgraded);
+      final log = (await store.load(const Day(2026, 11, 3)))!;
+      expect(log.sent, 2);
+      expect(log.limitFils, isNull);
+      await upgraded.close();
+    });
+
     test('a version 1 database gains the new tables and keeps its data',
         () async {
       final dir = Directory.systemTemp.createTempSync('beaza_mig_');
@@ -280,6 +302,9 @@ void main() {
       expect(log.sent, 2);
       expect(log.highestLevel, AlertLevel.level2);
       expect(log.microTotalShown, isTrue);
+      expect(log.limitFils, isNull);
+      await store.save(const AlertLog(day: day, limitFils: 4000));
+      expect((await store.load(day))!.limitFils, 4000);
       expect(await store.load(const Day(2026, 11, 4)), isNull);
     });
   });

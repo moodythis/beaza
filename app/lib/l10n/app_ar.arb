@@ -31,5 +31,9 @@
   "smsDenied": "لم يُمنح الإذن. يمكنك إضافة المصروفات يدويًا.",
   "notUnderstood": "{count, plural, =1{رسالة بنكية واحدة لم تُفهم} =2{رسالتان بنكيتان لم تُفهما} few{{count} رسائل بنكية لم تُفهم} many{{count} رسالة بنكية لم تُفهم} other{{count} رسالة بنكية لم تُفهم}}",
   "alertSpentLeft": "صرفت {spent} · باقي لك {left} اليوم",
-  "alertSpentOver": "صرفت {spent} · تجاوزت حد اليوم بـ {over}"
+  "alertSpentOver": "صرفت {spent} · تجاوزت حد اليوم بـ {over}",
+  "reviewTitle": "رسائل لم تُفهم",
+  "reviewNote": "تظهر على هذا الهاتف فقط ولا تُحفظ. أخفِ الأسماء وأرقام الحسابات قبل مشاركة لقطة الشاشة.",
+  "reviewEmpty": "فُهمت كل رسائل البنك.",
+  "reviewReasons": "السبب: {reasons}"
 }

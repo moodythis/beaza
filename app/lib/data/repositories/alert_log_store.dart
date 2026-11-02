@@ -1,5 +1,6 @@
 import 'package:beaza/data/services/database.dart';
 import 'package:beaza_extraction/beaza_extraction.dart';
+import 'package:drift/drift.dart' show Value;
 
 /// What was already sent each day, so closing the app does not reset the
 /// alert cap or repeat an alert.
@@ -29,6 +30,7 @@ class DriftAlertLogStore implements AlertLogStore {
       highestLevel: levels[row.highestLevel.clamp(0, levels.length - 1)],
       microTotalShown: row.microTotalShown,
       limitExceededLogged: row.limitExceededLogged,
+      limitFils: row.limitFils,
     );
   }
 
@@ -41,6 +43,7 @@ class DriftAlertLogStore implements AlertLogStore {
               highestLevel: log.highestLevel.index,
               microTotalShown: log.microTotalShown,
               limitExceededLogged: log.limitExceededLogged,
+              limitFils: Value(log.limitFils),
               updatedAtMs: _clock().toUtc().millisecondsSinceEpoch,
             ),
           );

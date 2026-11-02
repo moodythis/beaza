@@ -98,6 +98,9 @@ class AlertDayRows extends Table {
   IntColumn get highestLevel => integer()();
   BoolColumn get microTotalShown => boolean()();
   BoolColumn get limitExceededLogged => boolean()();
+
+  /// The limit the levels were measured against. Added in version 4.
+  IntColumn get limitFils => integer().nullable()();
   IntColumn get updatedAtMs => integer()();
 
   @override
@@ -110,7 +113,7 @@ class AppDatabase extends _$AppDatabase {
   AppDatabase(super.e);
 
   @override
-  int get schemaVersion => 3;
+  int get schemaVersion => 4;
 
   @override
   MigrationStrategy get migration => MigrationStrategy(
@@ -118,6 +121,9 @@ class AppDatabase extends _$AppDatabase {
         onUpgrade: (m, from, to) async {
           if (from < 2) await m.createTable(seenMessageRows);
           if (from < 3) await m.createTable(alertDayRows);
+          if (from == 3) {
+            await m.addColumn(alertDayRows, alertDayRows.limitFils);
+          }
         },
         beforeOpen: (details) async {
           await customStatement('PRAGMA foreign_keys = ON');

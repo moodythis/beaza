@@ -121,5 +121,17 @@
         "type": "String"
       }
     }
+  },
+  "reviewTitle": "Messages not understood",
+  "reviewNote": "Shown only on this phone and never saved. Hide names and account numbers before sharing a screenshot.",
+  "reviewEmpty": "Every bank message was understood.",
+  "reviewReasons": "Reason: {reasons}",
+  "@reviewReasons": {
+    "placeholders": {
+      "reasons": {
+        "type": "String",
+        "example": "noTemplate"
+      }
+    }
   }
 }

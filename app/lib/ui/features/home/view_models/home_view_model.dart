@@ -57,6 +57,9 @@ class HomeViewModel extends ChangeNotifier {
   bool _smsDenied = false;
   bool get smsDenied => _smsDenied;
 
+  /// For the review screen; null when SMS reading is not available.
+  MessageIntake? get intake => _intake;
+
   int _notUnderstood = 0;
   int get notUnderstood => _notUnderstood;
 

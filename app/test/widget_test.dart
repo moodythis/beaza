@@ -169,4 +169,34 @@ void main() {
     await pumpHome(tester);
     expect(find.byKey(const Key('smsCard')), findsNothing);
   });
+
+  testWidgets('the not-understood line opens the review screen',
+      (tester) async {
+    final sms = fixtures.FakeSms(
+        [('7', 'BisB', bh(10), fixtures.unknownFormat)]);
+    final ledger = InMemoryLedgerRepository();
+    final vm = HomeViewModel(
+      ledger: ledger,
+      settings: InMemorySettingsRepository(
+          const GuardrailSettings(dailyLimitFils: 10000)),
+      intake: MessageIntake(
+        sms: sms,
+        ledger: ledger,
+        seen: MemorySeenMessageStore(),
+        clock: () => bh(20),
+      ),
+      clock: () => bh(20),
+    );
+    await vm.load();
+    await vm.checkMessages();
+    await tester.pumpWidget(BeazaApp(homeViewModel: vm, locale: const Locale('en')));
+    await tester.pumpAndSettle();
+
+    expect(find.text('1 bank message could not be read'), findsOneWidget);
+    await tester.tap(find.byKey(const Key('notUnderstood')));
+    await tester.pumpAndSettle();
+
+    expect(find.text('Messages not understood'), findsOneWidget);
+    expect(find.text(fixtures.unknownFormat), findsOneWidget);
+  });
 }
