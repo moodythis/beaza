@@ -1,0 +1,34 @@
+name: Bootstrap Android folder
+
+# One-off: generates app/android from the official Flutter template and
+# commits it, so the manifest and Kotlin code can be changed and reviewed.
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  bootstrap:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: app
+    steps:
+      - uses: actions/checkout@v5
+      - uses: subosito/flutter-action@v2
+        with:
+          channel: stable
+      - name: Generate Android files
+        run: |
+          test ! -d android || { echo "android/ already exists"; exit 1; }
+          flutter create --platforms=android --org bh.beaza --project-name beaza --no-pub .
+          rm -f .metadata README.md
+          git status --short
+      - name: Commit
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add android
+          git commit -m "Add Android platform files from the Flutter template"
+          git push
