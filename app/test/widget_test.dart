@@ -154,7 +154,7 @@ void main() {
     await tester.pumpWidget(BeazaApp(homeViewModel: vm, locale: const Locale('en')));
     await tester.pumpAndSettle();
     expect(find.byKey(const Key('smsCard')), findsOneWidget);
-    expect(find.text('Nothing spent today'), findsOneWidget);
+    expect(find.text('BHD 10.000'), findsOneWidget);
 
     sms.granted = true;
     await tester.tap(find.byKey(const Key('smsAllow')));
