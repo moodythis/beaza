@@ -133,8 +133,10 @@ void main() {
       expect(t.body.split('\n').last, '2 small expenses today · BHD 3.300');
     });
 
-    test('one id per day', () {
-      expect(alertId(const Day(2026, 11, 3)), 20261103);
+    test('each level gets its own notification', () {
+      const d = Day(2026, 11, 3);
+      expect(alertId(d, AlertLevel.level1), 202611031);
+      expect(alertId(d, AlertLevel.level3), 202611033);
     });
   });
 }

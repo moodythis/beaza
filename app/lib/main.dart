@@ -35,7 +35,7 @@ Future<void> main() async {
       present: (alert) {
         final text = alertText(phoneLocalizations(), alert);
         return notifier.show(
-          id: alertId(alert.summary.day),
+          id: alertId(alert.summary.day, alert.level),
           title: text.title,
           body: text.body,
         );

@@ -26,5 +26,8 @@ import 'package:beaza_extraction/beaza_extraction.dart';
   );
 }
 
-/// One notification per day: a later alert replaces the earlier one.
-int alertId(Day day) => day.year * 10000 + day.month * 100 + day.day;
+/// A separate notification for each level of each day. Reusing one id made
+/// Android update the old notification in place, so the 100% alert could
+/// look like the earlier 50% one was still showing.
+int alertId(Day day, AlertLevel level) =>
+    (day.year * 10000 + day.month * 100 + day.day) * 10 + level.index;
