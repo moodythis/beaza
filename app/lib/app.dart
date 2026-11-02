@@ -25,3 +25,24 @@ class BeazaApp extends StatelessWidget {
     );
   }
 }
+
+/// Shown when the database cannot be opened. Nothing is deleted or reset.
+class StartupErrorApp extends StatelessWidget {
+  const StartupErrorApp({super.key});
+
+  @override
+  Widget build(BuildContext context) {
+    return MaterialApp(
+      localizationsDelegates: AppLocalizations.localizationsDelegates,
+      supportedLocales: AppLocalizations.supportedLocales,
+      theme: buildTheme(Brightness.light),
+      home: Scaffold(
+        body: Center(
+          child: Builder(
+            builder: (context) => Text(AppLocalizations.of(context).loadError),
+          ),
+        ),
+      ),
+    );
+  }
+}

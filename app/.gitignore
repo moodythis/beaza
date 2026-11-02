@@ -3,3 +3,4 @@ lib/l10n/app_localizations*.dart
 .flutter-plugins
 .flutter-plugins-dependencies
 .metadata
+*.g.dart

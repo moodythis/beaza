@@ -46,6 +46,8 @@ jobs:
         run: flutter pub get
       - name: Generate localizations
         run: flutter gen-l10n
+      - name: Generate database code
+        run: dart run build_runner build --delete-conflicting-outputs
       - name: Analyze
         run: flutter analyze
       - name: Test
@@ -57,6 +59,15 @@ jobs:
           if [ ! -d android ]; then
             flutter create --platforms=android --org bh.beaza --project-name beaza .
           fi
+      # Keep the encrypted database out of Android's cloud backup: the key
+      # lives in the Keystore and does not travel with a restore.
+      - name: Disable Android backup
+        run: |
+          M=android/app/src/main/AndroidManifest.xml
+          grep -q 'android:allowBackup' "$M" || sed -i 's#<application#<application android:allowBackup="false" android:fullBackupContent="false" android:dataExtractionRules="@xml/data_extraction_rules_none"#' "$M"
+          mkdir -p android/app/src/main/res/xml
+          printf '<?xml version="1.0" encoding="utf-8"?>\n<data-extraction-rules>\n  <cloud-backup disableIfNoEncryptionCapabilities="false"><exclude domain="root"/></cloud-backup>\n  <device-transfer><exclude domain="root"/></device-transfer>\n</data-extraction-rules>\n' > android/app/src/main/res/xml/data_extraction_rules_none.xml
+          grep -n 'allowBackup' "$M"
       # Release build signed with the debug key: installable for testing, no
       # INTERNET permission (the template adds it only to debug builds).
       - name: Build APK (arm64)
