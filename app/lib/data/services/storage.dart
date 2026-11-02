@@ -3,6 +3,7 @@ import 'dart:io';
 import 'package:beaza/data/repositories/drift_ledger_repository.dart';
 import 'package:beaza/data/repositories/drift_settings_repository.dart';
 import 'package:beaza/data/repositories/ledger_repository.dart';
+import 'package:beaza/data/repositories/seen_message_store.dart';
 import 'package:beaza/data/repositories/settings_repository.dart';
 import 'package:beaza/data/services/database.dart';
 import 'package:beaza/data/services/database_opener.dart';
@@ -15,11 +16,13 @@ class Storage {
     required this.database,
     required this.ledger,
     required this.settings,
+    required this.seenMessages,
   });
 
   final AppDatabase database;
   final LedgerRepository ledger;
   final SettingsRepository settings;
+  final SeenMessageStore seenMessages;
 }
 
 /// Opens the encrypted database in [directory], creating the key on first
@@ -48,5 +51,6 @@ Future<Storage> openStorage({
     database: db,
     ledger: DriftLedgerRepository(db, deviceId: deviceId),
     settings: DriftSettingsRepository(db),
+    seenMessages: DriftSeenMessageStore(db),
   );
 }

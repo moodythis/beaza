@@ -64,15 +64,9 @@ class DriftLedgerRepository extends LedgerRepository {
     );
   }
 
-  /// Stores a transaction found in a bank message. Only the extracted
-  /// fields are kept, never the message text.
+  @override
   Future<void> addExtracted(ExtractionResult result) {
-    if (result.status != ExtractionStatus.transaction ||
-        (result.amountFils ?? 0) <= 0 ||
-        result.currency == null ||
-        result.timestamp == null) {
-      throw ArgumentError('not a complete transaction');
-    }
+    checkCompleteTransaction(result);
     return _insert(result, source: sourceMessage);
   }
 

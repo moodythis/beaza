@@ -1,5 +1,8 @@
+import 'dart:async';
+
 import 'package:beaza/data/repositories/ledger_repository.dart';
 import 'package:beaza/data/repositories/settings_repository.dart';
+import 'package:beaza/domain/use_cases/message_intake.dart';
 import 'package:beaza_extraction/beaza_extraction.dart';
 import 'package:flutter/foundation.dart';
 
@@ -23,17 +26,39 @@ class HomeViewModel extends ChangeNotifier {
   HomeViewModel({
     required LedgerRepository ledger,
     required SettingsRepository settings,
+    MessageIntake? intake,
     DateTime Function()? clock,
+    this.arrivalDelay = const Duration(seconds: 3),
   })  : _ledger = ledger,
         _settings = settings,
+        _intake = intake,
         _clock = clock ?? DateTime.now {
     _ledger.addListener(load);
     _settings.addListener(load);
+    // The SMS app writes the inbox a moment after the broadcast.
+    _arrivals = _intake?.arrivals.listen(
+      (_) => Future<void>.delayed(arrivalDelay, checkMessages),
+      onError: (Object _) {},
+    );
   }
 
   final LedgerRepository _ledger;
   final SettingsRepository _settings;
+  final MessageIntake? _intake;
   final DateTime Function() _clock;
+  final Duration arrivalDelay;
+  StreamSubscription<void>? _arrivals;
+
+  /// Null until checked, or when there is no SMS support (tests, other OS).
+  bool? _smsAllowed;
+  bool? get smsAllowed => _smsAllowed;
+
+  /// True after the user refused the permission dialog in this session.
+  bool _smsDenied = false;
+  bool get smsDenied => _smsDenied;
+
+  int _notUnderstood = 0;
+  int get notUnderstood => _notUnderstood;
 
   HomeState? _state;
   HomeState? get state => _state;
@@ -70,6 +95,35 @@ class HomeViewModel extends ChangeNotifier {
     }
   }
 
+  /// Reads new bank messages if allowed. Called at start, on resume and
+  /// when an SMS arrives.
+  Future<void> checkMessages() async {
+    final intake = _intake;
+    if (intake == null || _disposed) return;
+    try {
+      _smsAllowed = await intake.hasPermission();
+      if (_smsAllowed == true) {
+        _notUnderstood = (await intake.scan()).notUnderstood;
+      }
+    } on Exception {
+      // Reading SMS is a convenience: a failure must not break the screen.
+    }
+    _notify();
+  }
+
+  Future<void> enableMessages() async {
+    final intake = _intake;
+    if (intake == null) return;
+    try {
+      _smsAllowed = await intake.requestPermission();
+    } on Exception {
+      _smsAllowed = false;
+    }
+    _smsDenied = _smsAllowed != true;
+    _notify();
+    if (_smsAllowed == true) await checkMessages();
+  }
+
   Future<void> addExpense({required int amountFils, String? merchant}) =>
       _ledger.addManual(amountFils: amountFils, merchant: merchant, at: _clock());
 
@@ -85,6 +139,7 @@ class HomeViewModel extends ChangeNotifier {
   @override
   void dispose() {
     _disposed = true;
+    _arrivals?.cancel();
     _ledger.removeListener(load);
     _settings.removeListener(load);
     super.dispose();

@@ -1,10 +1,14 @@
 import 'package:beaza/app.dart';
 import 'package:beaza/data/repositories/ledger_repository.dart';
+import 'package:beaza/data/repositories/seen_message_store.dart';
 import 'package:beaza/data/repositories/settings_repository.dart';
+import 'package:beaza/domain/use_cases/message_intake.dart';
 import 'package:beaza/ui/features/home/view_models/home_view_model.dart';
 import 'package:beaza_extraction/beaza_extraction.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
+
+import 'message_intake_test.dart' as fixtures;
 
 /// A Bahrain local time on 2 Nov 2026, as the stored UTC instant.
 DateTime bh(int hour, [int minute = 0]) =>
@@ -126,5 +130,43 @@ void main() {
 
     expect(find.text('BHD 14.000'), findsOneWidget);
     expect(find.text('On track'), findsOneWidget);
+  });
+
+  testWidgets('SMS card asks for permission, then bank messages appear',
+      (tester) async {
+    final sms = fixtures.FakeSms([('1', 'BisB', bh(16, 32), fixtures.bisbCard)])
+      ..granted = false;
+    final ledger = InMemoryLedgerRepository();
+    final vm = HomeViewModel(
+      ledger: ledger,
+      settings: InMemorySettingsRepository(
+          const GuardrailSettings(dailyLimitFils: 10000)),
+      intake: MessageIntake(
+        sms: sms,
+        ledger: ledger,
+        seen: MemorySeenMessageStore(),
+        clock: () => bh(20),
+      ),
+      clock: () => bh(20),
+    );
+    await vm.load();
+    await vm.checkMessages();
+    await tester.pumpWidget(BeazaApp(homeViewModel: vm, locale: const Locale('en')));
+    await tester.pumpAndSettle();
+    expect(find.byKey(const Key('smsCard')), findsOneWidget);
+    expect(find.text('Nothing spent today'), findsOneWidget);
+
+    sms.granted = true;
+    await tester.tap(find.byKey(const Key('smsAllow')));
+    await tester.pumpAndSettle();
+
+    expect(find.byKey(const Key('smsCard')), findsNothing);
+    expect(find.text('SAMPLE BAKERY - MAL BAH BH-000001'), findsOneWidget);
+    expect(find.text('BHD 9.700'), findsOneWidget);
+  });
+
+  testWidgets('no SMS card when there is no SMS support', (tester) async {
+    await pumpHome(tester);
+    expect(find.byKey(const Key('smsCard')), findsNothing);
   });
 }

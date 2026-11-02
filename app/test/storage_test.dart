@@ -2,6 +2,7 @@ import 'dart:io';
 
 import 'package:beaza/data/repositories/drift_ledger_repository.dart';
 import 'package:beaza/data/repositories/drift_settings_repository.dart';
+import 'package:beaza/data/repositories/seen_message_store.dart';
 import 'package:beaza/data/services/database.dart';
 import 'package:beaza/data/services/database_opener.dart';
 import 'package:beaza/data/services/key_store.dart';
@@ -227,6 +228,40 @@ void main() {
         openStorage(directory: dir, keys: MemoryKeyStore(), background: false),
         throwsStateError,
       );
+    });
+  });
+
+  group('seen messages and migration', () {
+    test('seen ids are remembered and pruned', () async {
+      final store = DriftSeenMessageStore(db);
+      await store.add('sms:1', bh(1, 9));
+      await store.add('sms:2', bh(2, 9));
+      expect(await store.contains('sms:1'), isTrue);
+      await store.pruneBefore(bh(2, 0));
+      expect(await store.contains('sms:1'), isFalse);
+      expect(await store.contains('sms:2'), isTrue);
+    });
+
+    test('a version 1 database gains the seen table and keeps its data',
+        () async {
+      final dir = Directory.systemTemp.createTempSync('beaza_mig_');
+      addTearDown(() => dir.deleteSync(recursive: true));
+      final file = File('${dir.path}/m.db');
+
+      final v2 = openEncryptedDatabase(file, goodKey, background: false);
+      await DriftLedgerRepository(v2, deviceId: 'd')
+          .addManual(amountFils: 700, at: bh(2, 9));
+      // Turn it back into what version 1 looked like on the phone.
+      await v2.customStatement('DROP TABLE seen_messages');
+      await v2.customStatement('PRAGMA user_version = 1');
+      await v2.close();
+
+      final upgraded = openEncryptedDatabase(file, goodKey, background: false);
+      final store = DriftSeenMessageStore(upgraded);
+      await store.add('sms:9', bh(2, 9));
+      expect(await store.contains('sms:9'), isTrue);
+      expect(await upgraded.select(upgraded.ledgerRows).get(), hasLength(1));
+      await upgraded.close();
     });
   });
 

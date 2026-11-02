@@ -1,6 +1,15 @@
 <manifest xmlns:android="http://schemas.android.com/apk/res/android">
+    <!-- Bank SMS. Only senders on Beaza's allow-list are ever read. -->
+    <uses-permission android:name="android.permission.READ_SMS" />
+    <uses-permission android:name="android.permission.RECEIVE_SMS" />
+
+    <!-- The database key lives in the Keystore, so a cloud backup of the
+         encrypted file could never be opened: keep the app out of backups. -->
     <application
-        android:label="beaza"
+        android:allowBackup="false"
+        android:fullBackupContent="false"
+        android:dataExtractionRules="@xml/data_extraction_rules"
+        android:label="بيزة"
         android:name="${applicationName}"
         android:icon="@mipmap/ic_launcher">
         <activity

@@ -16,10 +16,24 @@ abstract class LedgerRepository extends ChangeNotifier {
     String? merchant,
     required DateTime at,
   });
+
+  /// A transaction found in a bank message. Only extracted fields are kept,
+  /// never the message text. Throws for anything not a complete transaction.
+  Future<void> addExtracted(ExtractionResult result);
 }
 
-/// Keeps everything in memory. Used until the encrypted database
-/// (drift + SQLCipher) is added; data is lost when the app closes.
+/// Shared check for [LedgerRepository.addExtracted].
+void checkCompleteTransaction(ExtractionResult r) {
+  if (r.status != ExtractionStatus.transaction ||
+      (r.amountFils ?? 0) <= 0 ||
+      r.currency == null ||
+      r.timestamp == null) {
+    throw ArgumentError('not a complete transaction');
+  }
+}
+
+/// Keeps everything in memory, for tests. The app uses the encrypted
+/// database (DriftLedgerRepository).
 class InMemoryLedgerRepository extends LedgerRepository {
   InMemoryLedgerRepository({
     List<ExtractionResult> initial = const [],
@@ -60,6 +74,13 @@ class InMemoryLedgerRepository extends LedgerRepository {
       confidence: 1.0,
       templateVersion: manualTemplate,
     ));
+    notifyListeners();
+  }
+
+  @override
+  Future<void> addExtracted(ExtractionResult result) async {
+    checkCompleteTransaction(result);
+    _results.add(result);
     notifyListeners();
   }
 }

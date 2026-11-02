@@ -1,24 +1,41 @@
 {
   "@@locale": "en",
   "appTitle": "Beaza",
-  "@appTitle": { "description": "App name" },
+  "@appTitle": {
+    "description": "App name"
+  },
   "remainingLabel": "Left to spend today",
-  "@remainingLabel": { "description": "Label above the remaining amount" },
+  "@remainingLabel": {
+    "description": "Label above the remaining amount"
+  },
   "overLimitLabel": "Over today's limit by",
-  "@overLimitLabel": { "description": "Label above the overrun amount when the limit is exceeded" },
+  "@overLimitLabel": {
+    "description": "Label above the overrun amount when the limit is exceeded"
+  },
   "editLimit": "Edit daily limit",
   "spentOfLimit": "{spent} spent of {limit}",
   "@spentOfLimit": {
     "description": "Under the progress bar",
     "placeholders": {
-      "spent": { "type": "String", "example": "BHD 6.000" },
-      "limit": { "type": "String", "example": "BHD 10.000" }
+      "spent": {
+        "type": "String",
+        "example": "BHD 6.000"
+      },
+      "limit": {
+        "type": "String",
+        "example": "BHD 10.000"
+      }
     }
   },
   "setLimitTitle": "Set a daily spending limit",
   "spentToday": "Spent today: {amount}",
   "@spentToday": {
-    "placeholders": { "amount": { "type": "String", "example": "BHD 3.500" } }
+    "placeholders": {
+      "amount": {
+        "type": "String",
+        "example": "BHD 3.500"
+      }
+    }
   },
   "levelNormal": "On track",
   "level1": "Half of today's limit used",
@@ -28,13 +45,23 @@
   "@microToday": {
     "description": "Micro-expenses are debits of 5.000 BHD or less",
     "placeholders": {
-      "count": { "type": "int" },
-      "total": { "type": "String", "example": "BHD 2.500" }
+      "count": {
+        "type": "int"
+      },
+      "total": {
+        "type": "String",
+        "example": "BHD 2.500"
+      }
     }
   },
   "microWeek": "Last 7 days: {total}",
   "@microWeek": {
-    "placeholders": { "total": { "type": "String", "example": "BHD 12.750" } }
+    "placeholders": {
+      "total": {
+        "type": "String",
+        "example": "BHD 12.750"
+      }
+    }
   },
   "todaySpendingTitle": "Today's spending",
   "emptyToday": "Nothing spent today",
@@ -49,7 +76,27 @@
   "bhd": "BHD {amount}",
   "@bhd": {
     "description": "An amount in Bahraini dinars, three decimals",
-    "placeholders": { "amount": { "type": "String", "example": "3.500" } }
+    "placeholders": {
+      "amount": {
+        "type": "String",
+        "example": "3.500"
+      }
+    }
   },
-  "loadError": "Could not load your data"
+  "loadError": "Could not load your data",
+  "smsTitle": "Read bank messages automatically",
+  "@smsTitle": {
+    "description": "Card that asks for SMS permission"
+  },
+  "smsBody": "Only messages from known Bahraini banks are read. The text is never stored or sent anywhere.",
+  "smsAllow": "Allow",
+  "smsDenied": "Permission not given. You can still add expenses by hand.",
+  "notUnderstood": "{count, plural, =1{1 bank message could not be read} other{{count} bank messages could not be read}}",
+  "@notUnderstood": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  }
 }

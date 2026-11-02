@@ -70,15 +70,33 @@ class SettingsRows extends Table {
   Set<Column> get primaryKey => {id};
 }
 
-@DriftDatabase(tables: [LedgerRows, SettingsRows])
+/// Messages already handled (ids only, never text). Added in version 2.
+@DataClassName('SeenMessageRow')
+class SeenMessageRows extends Table {
+  @override
+  String get tableName => 'seen_messages';
+
+  /// For example "sms:123" (the inbox id).
+  TextColumn get messageKey => text()();
+  IntColumn get seenAtMs => integer()();
+
+  @override
+  Set<Column> get primaryKey => {messageKey};
+}
+
+@DriftDatabase(tables: [LedgerRows, SettingsRows, SeenMessageRows])
 class AppDatabase extends _$AppDatabase {
   AppDatabase(super.e);
 
   @override
-  int get schemaVersion => 1;
+  int get schemaVersion => 2;
 
   @override
   MigrationStrategy get migration => MigrationStrategy(
+        onCreate: (m) => m.createAll(),
+        onUpgrade: (m, from, to) async {
+          if (from < 2) await m.createTable(seenMessageRows);
+        },
         beforeOpen: (details) async {
           await customStatement('PRAGMA foreign_keys = ON');
         },

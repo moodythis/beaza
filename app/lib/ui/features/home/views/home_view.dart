@@ -40,8 +40,24 @@ class HomeView extends StatelessWidget {
                 summary: state.summary,
                 onEditLimit: () => _editLimit(context),
               ),
+              if (viewModel.smsAllowed == false) ...[
+                const SizedBox(height: 12),
+                SmsCard(
+                  denied: viewModel.smsDenied,
+                  onAllow: viewModel.enableMessages,
+                ),
+              ],
               const SizedBox(height: 12),
               MicroCard(today: state.summary.micro, week: state.weekMicro),
+              if (viewModel.notUnderstood > 0)
+                Padding(
+                  padding: const EdgeInsets.only(top: 8),
+                  child: Text(
+                    l10n.notUnderstood(viewModel.notUnderstood),
+                    key: const Key('notUnderstood'),
+                    style: Theme.of(context).textTheme.bodySmall,
+                  ),
+                ),
               const SizedBox(height: 20),
               Text(
                 l10n.todaySpendingTitle,
@@ -189,6 +205,51 @@ String levelText(AppLocalizations l10n, AlertLevel level) => switch (level) {
       AlertLevel.level2 => l10n.level2,
       AlertLevel.level3 => l10n.level3,
     };
+
+/// Asks for the SMS permission and says what is read.
+class SmsCard extends StatelessWidget {
+  const SmsCard({super.key, required this.denied, required this.onAllow});
+
+  final bool denied;
+  final VoidCallback onAllow;
+
+  @override
+  Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context);
+    final theme = Theme.of(context);
+    return Card(
+      key: const Key('smsCard'),
+      child: Padding(
+        padding: const EdgeInsets.all(16),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Row(
+              children: [
+                const Icon(Icons.sms_outlined),
+                const SizedBox(width: 12),
+                Expanded(
+                  child: Text(l10n.smsTitle, style: theme.textTheme.titleSmall),
+                ),
+              ],
+            ),
+            const SizedBox(height: 8),
+            Text(denied ? l10n.smsDenied : l10n.smsBody),
+            const SizedBox(height: 8),
+            Align(
+              alignment: AlignmentDirectional.centerEnd,
+              child: FilledButton.tonal(
+                key: const Key('smsAllow'),
+                onPressed: onAllow,
+                child: Text(l10n.smsAllow),
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
 
 class MicroCard extends StatelessWidget {
   const MicroCard({super.key, required this.today, required this.week});
