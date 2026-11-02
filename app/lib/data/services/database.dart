@@ -58,12 +58,8 @@ class SettingsRows extends Table {
 
   // ignore: recursive_getters
   IntColumn get id => integer().check(id.equals(1))();
-  // ignore: recursive_getters
-  IntColumn get dailyLimitFils =>
-      integer().check(dailyLimitFils.isBiggerOrEqualValue(0))();
-  // ignore: recursive_getters
-  IntColumn get microThresholdFils =>
-      integer().check(microThresholdFils.isBiggerThanValue(0))();
+  IntColumn get dailyLimitFils => integer().check(dailyLimitFils.isBiggerOrEqualValue(0))(); // ignore: recursive_getters
+  IntColumn get microThresholdFils => integer().check(microThresholdFils.isBiggerThanValue(0))(); // ignore: recursive_getters
   IntColumn get alertCap => integer()();
   IntColumn get microCountForTotal => integer()();
   BoolColumn get rollover => boolean()();
