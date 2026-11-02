@@ -98,5 +98,28 @@
         "type": "int"
       }
     }
+  },
+  "alertSpentLeft": "Spent {spent} · {left} left today",
+  "@alertSpentLeft": {
+    "description": "Notification body",
+    "placeholders": {
+      "spent": {
+        "type": "String"
+      },
+      "left": {
+        "type": "String"
+      }
+    }
+  },
+  "alertSpentOver": "Spent {spent} · {over} over today's limit",
+  "@alertSpentOver": {
+    "placeholders": {
+      "spent": {
+        "type": "String"
+      },
+      "over": {
+        "type": "String"
+      }
+    }
   }
 }

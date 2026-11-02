@@ -24,6 +24,7 @@ import io.flutter.plugin.common.MethodChannel
 class MainActivity : FlutterActivity() {
     private val mainHandler = Handler(Looper.getMainLooper())
     private var pendingPermission: MethodChannel.Result? = null
+    private var pendingNotifyPermission: MethodChannel.Result? = null
     private var smsReceiver: BroadcastReceiver? = null
 
     override fun configureFlutterEngine(flutterEngine: FlutterEngine) {
@@ -41,6 +42,22 @@ class MainActivity : FlutterActivity() {
                 "readBodies" -> {
                     val ids = call.argument<List<String>>("ids") ?: emptyList()
                     inBackground(result) { SmsInbox.bodies(contentResolver, ids) }
+                }
+                else -> result.notImplemented()
+            }
+        }
+
+        MethodChannel(messenger, "beaza/notify").setMethodCallHandler { call, result ->
+            when (call.method) {
+                "requestPermission" -> requestNotifyPermission(result)
+                "show" -> {
+                    Alerts.show(
+                        this,
+                        call.argument<Number>("id")?.toInt() ?: 1,
+                        call.argument<String>("title") ?: "",
+                        call.argument<String>("body") ?: "",
+                    )
+                    result.success(null)
                 }
                 else -> result.notImplemented()
             }
@@ -79,6 +96,25 @@ class MainActivity : FlutterActivity() {
         )
     }
 
+    private fun requestNotifyPermission(result: MethodChannel.Result) {
+        if (Build.VERSION.SDK_INT < Build.VERSION_CODES.TIRAMISU ||
+            checkSelfPermission(Manifest.permission.POST_NOTIFICATIONS) ==
+            PackageManager.PERMISSION_GRANTED
+        ) {
+            result.success(true)
+            return
+        }
+        if (pendingNotifyPermission != null) {
+            result.error("busy", "A permission request is already open", null)
+            return
+        }
+        pendingNotifyPermission = result
+        requestPermissions(
+            arrayOf(Manifest.permission.POST_NOTIFICATIONS),
+            NOTIFY_PERMISSION_REQUEST,
+        )
+    }
+
     override fun onRequestPermissionsResult(
         requestCode: Int,
         permissions: Array<out String>,
@@ -88,6 +124,12 @@ class MainActivity : FlutterActivity() {
         if (requestCode == SMS_PERMISSION_REQUEST) {
             pendingPermission?.success(hasSmsPermission())
             pendingPermission = null
+        }
+        if (requestCode == NOTIFY_PERMISSION_REQUEST) {
+            pendingNotifyPermission?.success(
+                grantResults.isNotEmpty() && grantResults[0] == PackageManager.PERMISSION_GRANTED,
+            )
+            pendingNotifyPermission = null
         }
     }
 
@@ -131,6 +173,7 @@ class MainActivity : FlutterActivity() {
 
     companion object {
         private const val SMS_PERMISSION_REQUEST = 4101
+        private const val NOTIFY_PERMISSION_REQUEST = 4102
         private const val SMS_RECEIVED = "android.provider.Telephony.SMS_RECEIVED"
     }
 }

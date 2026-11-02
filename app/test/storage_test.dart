@@ -1,5 +1,6 @@
 import 'dart:io';
 
+import 'package:beaza/data/repositories/alert_log_store.dart';
 import 'package:beaza/data/repositories/drift_ledger_repository.dart';
 import 'package:beaza/data/repositories/drift_settings_repository.dart';
 import 'package:beaza/data/repositories/seen_message_store.dart';
@@ -242,7 +243,7 @@ void main() {
       expect(await store.contains('sms:2'), isTrue);
     });
 
-    test('a version 1 database gains the seen table and keeps its data',
+    test('a version 1 database gains the new tables and keeps its data',
         () async {
       final dir = Directory.systemTemp.createTempSync('beaza_mig_');
       addTearDown(() => dir.deleteSync(recursive: true));
@@ -253,6 +254,7 @@ void main() {
           .addManual(amountFils: 700, at: bh(2, 9));
       // Turn it back into what version 1 looked like on the phone.
       await v2.customStatement('DROP TABLE seen_messages');
+      await v2.customStatement('DROP TABLE alert_days');
       await v2.customStatement('PRAGMA user_version = 1');
       await v2.close();
 
@@ -260,8 +262,25 @@ void main() {
       final store = DriftSeenMessageStore(upgraded);
       await store.add('sms:9', bh(2, 9));
       expect(await store.contains('sms:9'), isTrue);
+      expect(await upgraded.select(upgraded.alertDayRows).get(), isEmpty);
       expect(await upgraded.select(upgraded.ledgerRows).get(), hasLength(1));
       await upgraded.close();
+    });
+  });
+
+  group('alert log', () {
+    test('saved per day and read back', () async {
+      final store = DriftAlertLogStore(db);
+      const day = Day(2026, 11, 3);
+      expect(await store.load(day), isNull);
+      await store.save(const AlertLog(
+          day: day, sent: 2, highestLevel: AlertLevel.level2,
+          microTotalShown: true));
+      final log = (await store.load(day))!;
+      expect(log.sent, 2);
+      expect(log.highestLevel, AlertLevel.level2);
+      expect(log.microTotalShown, isTrue);
+      expect(await store.load(const Day(2026, 11, 4)), isNull);
     });
   });
 

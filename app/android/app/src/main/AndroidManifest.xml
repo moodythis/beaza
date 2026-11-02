@@ -2,6 +2,8 @@
     <!-- Bank SMS. Only senders on Beaza's allow-list are ever read. -->
     <uses-permission android:name="android.permission.READ_SMS" />
     <uses-permission android:name="android.permission.RECEIVE_SMS" />
+    <!-- Daily limit alerts (Android 13+ asks the user). -->
+    <uses-permission android:name="android.permission.POST_NOTIFICATIONS" />
 
     <!-- The database key lives in the Keystore, so a cloud backup of the
          encrypted file could never be opened: keep the app out of backups. -->

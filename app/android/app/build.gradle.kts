@@ -15,7 +15,6 @@ android {
     }
 
     defaultConfig {
-        // TODO: Specify your own unique Application ID (https://developer.android.com/studio/build/application-id.html).
         applicationId = "bh.beaza.beaza"
         // You can update the following values to match your application needs.
         // For more information, see: https://flutter.dev/to/review-gradle-config.
@@ -29,11 +28,20 @@ android {
         versionName = flutter.versionName
     }
 
+    // TEST ONLY key, committed so every CI build installs over the last one.
+    // See ../keystore/README.md. Never use it for a store release.
+    signingConfigs {
+        create("beazaTest") {
+            storeFile = file("../keystore/beaza-test.jks")
+            storePassword = "removed-from-repo"
+            keyAlias = "beaza"
+            keyPassword = "removed-from-repo"
+        }
+    }
+
     buildTypes {
         release {
-            // TODO: Add your own signing config for the release build.
-            // Signing with the debug keys for now, so `flutter run --release` works.
-            signingConfig = signingConfigs.getByName("debug")
+            signingConfig = signingConfigs.getByName("beazaTest")
         }
     }
 }

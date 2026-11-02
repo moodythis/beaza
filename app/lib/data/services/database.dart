@@ -84,18 +84,40 @@ class SeenMessageRows extends Table {
   Set<Column> get primaryKey => {messageKey};
 }
 
-@DriftDatabase(tables: [LedgerRows, SettingsRows, SeenMessageRows])
+/// Alerts already sent on a Bahrain day (FR-5.6 cap). Added in version 3.
+@DataClassName('AlertDayRow')
+class AlertDayRows extends Table {
+  @override
+  String get tableName => 'alert_days';
+
+  /// "2026-11-03" in Bahrain time.
+  TextColumn get dayKey => text()();
+  IntColumn get sent => integer()();
+
+  /// AlertLevel index: 0 normal ... 3 limit reached.
+  IntColumn get highestLevel => integer()();
+  BoolColumn get microTotalShown => boolean()();
+  BoolColumn get limitExceededLogged => boolean()();
+  IntColumn get updatedAtMs => integer()();
+
+  @override
+  Set<Column> get primaryKey => {dayKey};
+}
+
+@DriftDatabase(
+    tables: [LedgerRows, SettingsRows, SeenMessageRows, AlertDayRows])
 class AppDatabase extends _$AppDatabase {
   AppDatabase(super.e);
 
   @override
-  int get schemaVersion => 2;
+  int get schemaVersion => 3;
 
   @override
   MigrationStrategy get migration => MigrationStrategy(
         onCreate: (m) => m.createAll(),
         onUpgrade: (m, from, to) async {
           if (from < 2) await m.createTable(seenMessageRows);
+          if (from < 3) await m.createTable(alertDayRows);
         },
         beforeOpen: (details) async {
           await customStatement('PRAGMA foreign_keys = ON');

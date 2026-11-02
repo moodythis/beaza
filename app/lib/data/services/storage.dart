@@ -1,5 +1,6 @@
 import 'dart:io';
 
+import 'package:beaza/data/repositories/alert_log_store.dart';
 import 'package:beaza/data/repositories/drift_ledger_repository.dart';
 import 'package:beaza/data/repositories/drift_settings_repository.dart';
 import 'package:beaza/data/repositories/ledger_repository.dart';
@@ -17,12 +18,14 @@ class Storage {
     required this.ledger,
     required this.settings,
     required this.seenMessages,
+    required this.alertLogs,
   });
 
   final AppDatabase database;
   final LedgerRepository ledger;
   final SettingsRepository settings;
   final SeenMessageStore seenMessages;
+  final AlertLogStore alertLogs;
 }
 
 /// Opens the encrypted database in [directory], creating the key on first
@@ -52,5 +55,6 @@ Future<Storage> openStorage({
     ledger: DriftLedgerRepository(db, deviceId: deviceId),
     settings: DriftSettingsRepository(db),
     seenMessages: DriftSeenMessageStore(db),
+    alertLogs: DriftAlertLogStore(db),
   );
 }
