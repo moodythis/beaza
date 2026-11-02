@@ -1,0 +1,11 @@
+name: beaza_extraction
+description: Pure Dart extraction core for Beaza (normalizer, classifier, rules). No Flutter dependency, so the app and the evaluation tool share the same code.
+version: 0.1.0
+publish_to: none
+
+environment:
+  sdk: ">=3.3.0 <4.0.0"
+
+dev_dependencies:
+  lints: ^4.0.0
+  test: ^1.25.0

@@ -1,0 +1,28 @@
+name: CI
+
+on:
+  push:
+  pull_request:
+  workflow_dispatch:
+
+jobs:
+  extraction:
+    name: beaza_extraction (analyze and test)
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: packages/beaza_extraction
+    steps:
+      - uses: actions/checkout@v4
+      - uses: dart-lang/setup-dart@v1
+        with:
+          sdk: stable
+      - name: Install dependencies
+        run: dart pub get
+      - name: Analyze
+        run: dart analyze
+      - name: Test
+        run: dart test --reporter expanded
+
+# Later: add a job that builds the Flutter app (flutter build apk) and uploads
+# the APK as an artifact, so it can be downloaded to a phone without a laptop.
