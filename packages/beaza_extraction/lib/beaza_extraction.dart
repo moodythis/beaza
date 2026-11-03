@@ -4,6 +4,7 @@ export 'src/classifier.dart';
 export 'src/detector.dart';
 export 'src/extractor.dart';
 export 'src/guardrail.dart';
+export 'src/merchant.dart';
 export 'src/normalizer.dart';
 export 'src/reconciler.dart';
 export 'src/tier1.dart';

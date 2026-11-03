@@ -19,6 +19,8 @@ class Prediction {
     this.direction,
     this.type,
     this.merchant,
+    this.merchantNorm,
+    this.category,
     this.last4,
     this.time,
   });
@@ -33,6 +35,8 @@ class Prediction {
   final String? direction;
   final String? type;
   final String? merchant;
+  final String? merchantNorm;
+  final String? category;
   final String? last4;
   final DateTime? time;
 
@@ -49,6 +53,8 @@ class Prediction {
           r.direction == TxDirection.unknown ? null : r.direction.name,
       type: r.type?.name,
       merchant: r.merchantRaw,
+      merchantNorm: r.merchantNorm,
+      category: r.category,
       last4: r.last4,
       time: fromReceipt ? null : r.timestamp,
     );

@@ -3,6 +3,7 @@ library;
 
 import 'classifier.dart';
 import 'detector.dart';
+import 'merchant.dart';
 import 'normalizer.dart';
 import 'tier1.dart';
 import 'validator.dart';
@@ -39,11 +40,13 @@ class BeazaExtractor {
     MessageClassifier? classifier,
     Tier1Extractor? tier1,
     Validator? validator,
+    MerchantNormalizer? merchants,
   })  : _senders = senders ?? SenderFamilyDetector(),
         _normalizer = normalizer ?? const Normalizer(),
         _classifier = classifier ?? const MessageClassifier(),
         _tier1 = tier1 ?? const Tier1Extractor(),
-        _validator = validator ?? const Validator();
+        _validator = validator ?? const Validator(),
+        _merchants = merchants ?? const MerchantNormalizer();
 
   /// Turn off only for evaluation runs on labelled data.
   final bool requireKnownSender;
@@ -53,6 +56,7 @@ class BeazaExtractor {
   final MessageClassifier _classifier;
   final Tier1Extractor _tier1;
   final Validator _validator;
+  final MerchantNormalizer _merchants;
 
   ExtractionResult process(RawMessage message) {
     final family = _senders.detect(message.sender);
@@ -71,10 +75,14 @@ class BeazaExtractor {
           )
         : null;
 
-    return _validator.assemble(
+    final result = _validator.assemble(
       classification: classification,
       tier1: tier1,
       receivedAt: message.receivedAt,
     );
+    final shop = _merchants.normalize(result.merchantRaw);
+    if (shop == null) return result;
+    return result.withMerchant(
+        merchantNorm: shop.name, category: shop.category);
   }
 }

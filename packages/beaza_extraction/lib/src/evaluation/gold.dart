@@ -6,6 +6,8 @@ library;
 
 import 'dart:convert';
 
+import '../merchant.dart' show kCategories;
+
 /// What a human annotator says is true about one message.
 class GoldLabel {
   const GoldLabel({
@@ -15,6 +17,8 @@ class GoldLabel {
     this.direction,
     this.type,
     this.merchant,
+    this.merchantNorm,
+    this.category,
     this.last4,
     this.time,
   });
@@ -29,6 +33,12 @@ class GoldLabel {
   /// A TxnType name, or null when the message does not say.
   final String? type;
   final String? merchant;
+
+  /// Short display name of the shop, as a person would write it.
+  final String? merchantNorm;
+
+  /// One of kCategories.
+  final String? category;
   final String? last4;
 
   /// UTC time written in the message, or null when it has none.
@@ -73,9 +83,15 @@ class GoldLabel {
       direction: direction,
       type: type,
       merchant: j['merchant'] as String?,
+      merchantNorm: j['merchant_norm'] as String?,
+      category: j['category'] as String?,
       last4: j['last4'] as String?,
       time: time,
     );
+    if (label.category != null && !kCategories.contains(label.category)) {
+      throw FormatException(
+          '$where: label.category "${label.category}" is not one of $kCategories');
+    }
     if (!isTx && label.hasAnyField) {
       throw FormatException('$where: a non-transaction must not have transaction fields');
     }
@@ -88,6 +104,8 @@ class GoldLabel {
       direction != null ||
       type != null ||
       merchant != null ||
+      merchantNorm != null ||
+      category != null ||
       last4 != null ||
       time != null;
 
@@ -98,6 +116,8 @@ class GoldLabel {
         if (direction != null) 'direction': direction,
         if (type != null) 'type': type,
         if (merchant != null) 'merchant': merchant,
+        if (merchantNorm != null) 'merchant_norm': merchantNorm,
+        if (category != null) 'category': category,
         if (last4 != null) 'last4': last4,
         if (time != null) 'time': time!.toIso8601String(),
       };

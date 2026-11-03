@@ -38,6 +38,8 @@ from other messages, except `last4` and `direction` as explained below.
 | `direction` | `outgoing` / `incoming` | From the user's point of view. When the text is unclear, use the account numbers: money to one of the user's accounts is incoming. |
 | `type` | `purchase`, `transferOut`, `transferIn`, `atmWithdrawal`, `refund`, `bill` | Only when the message says what it was. A plain "account debited" has no type. |
 | `merchant` | text | Copied as written (not cleaned up). Only for card or wallet purchases. |
+| `merchant_norm` | text | The shop's short name. A chain gets its brand name ("Day To Day"). Any other shop gets the printed name without the city, store or branch codes and legal suffix (WLL, CO), in Title Case. Do not complete cut-off words. |
+| `category` | `food`, `groceries`, `shopping`, `transport`, `bills`, `health`, `entertainment`, `education`, `other` | The annotator's judgement. Leave out when the shop cannot be told from its name. |
 | `last4` | 4 digits | The user's own card or account. Not the other party's. |
 | `time` | ISO 8601 UTC | The time written in the message, converted from Bahrain time. Leave out when the message has no time (a date alone is not enough). If the printed date is provably wrong (for example the balances show the order), label the real time. |
 

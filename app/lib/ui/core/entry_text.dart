@@ -8,7 +8,7 @@ import 'package:beaza_extraction/beaza_extraction.dart';
 /// withdrawal and a typed-in expense can be told apart. (Bank messages for
 /// transfers carry no names on purpose: the extractor never keeps them.)
 String entryTitle(AppLocalizations l10n, ExtractionResult r) {
-  final merchant = r.merchantRaw?.trim();
+  final merchant = (r.merchantNorm ?? r.merchantRaw)?.trim();
   if (merchant != null && merchant.isNotEmpty) return merchant;
   if (r.templateVersion == InMemoryLedgerRepository.manualTemplate) {
     return l10n.entryManual;

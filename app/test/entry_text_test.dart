@@ -11,6 +11,7 @@ ExtractionResult msg({
   TxnType? type = TxnType.purchase,
   Channel? channel,
   String? merchant,
+  String? norm,
   String? last4,
   String? to,
   String template = '',
@@ -22,6 +23,7 @@ ExtractionResult msg({
       type: type,
       direction: TxDirection.outgoing,
       merchantRaw: merchant,
+      merchantNorm: norm,
       channel: channel,
       last4: last4,
       counterpartyLast4: to,
@@ -35,6 +37,12 @@ void main() {
 
   test('the shop name wins when the message has one', () {
     expect(entryTitle(en, msg(merchant: 'PETRO MART WLL')), 'PETRO MART WLL');
+  });
+
+  test('the clean shop name is shown when there is one', () {
+    expect(
+        entryTitle(en, msg(merchant: 'ABED BAKERY MANAMA', norm: 'Abed Bakery')),
+        'Abed Bakery');
   });
 
   test('without a shop, the kind of payment is named', () {

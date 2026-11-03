@@ -13,6 +13,8 @@ const evalFields = [
   'direction',
   'type',
   'merchant',
+  'merchant_norm',
+  'category',
   'last4',
   'time',
 ];
@@ -148,7 +150,9 @@ String? canonical(String field, Object? v) {
   }
   final s = v.toString().trim().replaceAll(RegExp(r'\s+'), ' ');
   if (s.isEmpty) return null;
-  return field == 'merchant' || field == 'currency' ? s.toUpperCase() : s;
+  return field == 'merchant' || field == 'merchant_norm' || field == 'currency'
+      ? s.toUpperCase()
+      : s;
 }
 
 Map<String, String?> _goldValues(GoldLabel g) => {
@@ -157,6 +161,8 @@ Map<String, String?> _goldValues(GoldLabel g) => {
       'direction': canonical('direction', g.direction),
       'type': canonical('type', g.type),
       'merchant': canonical('merchant', g.merchant),
+      'merchant_norm': canonical('merchant_norm', g.merchantNorm),
+      'category': canonical('category', g.category),
       'last4': canonical('last4', g.last4),
       'time': canonical('time', g.time),
     };
@@ -167,6 +173,8 @@ Map<String, String?> _predValues(Prediction p) => {
       'direction': canonical('direction', p.direction),
       'type': canonical('type', p.type),
       'merchant': canonical('merchant', p.merchant),
+      'merchant_norm': canonical('merchant_norm', p.merchantNorm),
+      'category': canonical('category', p.category),
       'last4': canonical('last4', p.last4),
       'time': canonical('time', p.time),
     };

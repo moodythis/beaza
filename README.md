@@ -27,7 +27,8 @@ for cashless micro-expenses in Bahrain. Flutter and Dart, Android first.
 | SMS intake (Kotlin receiver, background run) and local alerts | Done; battery saving can delay background alerts (the app shows a card) |
 | Optional account, end-to-end encrypted sync, merge protection | Done, tested (including a two-phone test against the real server code) |
 | Data export to a JSON file | Done, tested |
-| Notification intake (wallet apps), merchant normalizer and categorizer | Later |
+| Merchant normalizer and categorizer | First version built (names cleaned, nine categories) |
+| Notification intake (wallet apps) | Later |
 | Evaluation harness | B1 (rules) built: `packages/beaza_extraction/eval` |
 | Tier 2 model (B2, B3) | Later |
 | Changing the account email | Later |

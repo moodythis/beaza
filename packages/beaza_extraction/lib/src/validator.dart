@@ -89,6 +89,29 @@ class ExtractionResult {
   final List<ValidationIssue> issues;
   final List<ExtractionFlag> flags;
 
+  /// A copy with the display name and category filled in (FR-3.9).
+  ExtractionResult withMerchant({String? merchantNorm, String? category}) =>
+      ExtractionResult(
+        status: status,
+        kind: kind,
+        amountFils: amountFils,
+        currency: currency,
+        type: type,
+        direction: direction,
+        merchantRaw: merchantRaw,
+        merchantNorm: merchantNorm ?? this.merchantNorm,
+        category: category ?? this.category,
+        channel: channel,
+        last4: last4,
+        counterpartyLast4: counterpartyLast4,
+        reference: reference,
+        timestamp: timestamp,
+        confidence: confidence,
+        templateVersion: templateVersion,
+        issues: issues,
+        flags: flags,
+      );
+
   /// True when the user should check it: unusable, or usable with a warning.
   bool get needsReview =>
       status == ExtractionStatus.unparsed || flags.isNotEmpty;
