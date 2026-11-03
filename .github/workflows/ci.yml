@@ -24,6 +24,24 @@ jobs:
       - name: Test
         run: dart test --reporter expanded
 
+  crypto:
+    name: beaza_crypto (analyze and test)
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: packages/beaza_crypto
+    steps:
+      - uses: actions/checkout@v5
+      - uses: dart-lang/setup-dart@v1
+        with:
+          sdk: stable
+      - name: Install dependencies
+        run: dart pub get
+      - name: Analyze
+        run: dart analyze --fatal-infos
+      - name: Test
+        run: dart test --reporter expanded
+
   app:
     name: Flutter app (analyze, test, build APK)
     runs-on: ubuntu-latest
