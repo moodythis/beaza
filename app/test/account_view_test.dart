@@ -100,6 +100,13 @@ Future<FakeAccounts> pumpApp(WidgetTester tester,
   return account;
 }
 
+/// The AppBar back button. (tester.pageBack looks for the English tooltip
+/// "Back", so it cannot be used when the app is in Arabic.)
+Future<void> goBack(WidgetTester tester) async {
+  await tester.tap(find.byType(BackButton));
+  await tester.pumpAndSettle();
+}
+
 Finder checkbox(String key) => find.descendant(
     of: find.byKey(Key(key)), matching: find.byType(Checkbox));
 
@@ -220,8 +227,7 @@ void main() {
     await tester.pumpAndSettle();
     expect(find.text(privacyNotice.titleAr), findsOneWidget);
     expect(find.text(privacyNotice.ar.first.title), findsOneWidget);
-    await tester.pageBack();
-    await tester.pumpAndSettle();
+    await goBack(tester);
     await tester.tap(find.byKey(const Key('openTerms')));
     await tester.pumpAndSettle();
     expect(find.text(termsOfUse.titleAr), findsOneWidget);
@@ -245,8 +251,7 @@ void main() {
   testWidgets('the account icon shows when you are signed in', (tester) async {
     final accounts = FakeAccounts()..signIn('a@b.co');
     await pumpApp(tester, accounts: accounts);
-    await tester.pageBack();
-    await tester.pumpAndSettle();
+    await goBack(tester);
     expect(find.byIcon(Icons.cloud_done_outlined), findsOneWidget);
   });
 }

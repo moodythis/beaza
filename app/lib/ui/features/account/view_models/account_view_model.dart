@@ -59,10 +59,11 @@ class AccountViewModel extends ChangeNotifier {
     _notify();
   }
 
-  void clearFailure() {
-    _failure = null;
-    _notify();
-  }
+  /// Forgets the last failure when a form opens, so an old error from
+  /// another screen is not shown. Called from initState, while widgets are
+  /// being built, so it does not notify: the form reads the cleared state
+  /// when it builds, and the screens behind it do not show sign-in errors.
+  void forgetFailure() => _failure = null;
 
   Future<bool> _ok(Future<void> Function() action) async =>
       await _run(() async {

@@ -33,7 +33,7 @@ class _SignUpViewState extends State<SignUpView> {
   @override
   void initState() {
     super.initState();
-    vm.clearFailure();
+    vm.forgetFailure();
   }
 
   @override

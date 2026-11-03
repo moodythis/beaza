@@ -23,7 +23,7 @@ class _LogInViewState extends State<LogInView> {
   @override
   void initState() {
     super.initState();
-    vm.clearFailure();
+    vm.forgetFailure();
   }
 
   @override
@@ -115,7 +115,7 @@ class _RecoverViewState extends State<RecoverView> {
   @override
   void initState() {
     super.initState();
-    vm.clearFailure();
+    vm.forgetFailure();
   }
 
   @override
