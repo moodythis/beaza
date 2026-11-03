@@ -57,7 +57,7 @@ class MerchantNormalizer {
     r'\s+(?:[A-Z]{1,2}\s+)?#\S+|\s+[A-Z]{2}-\d{3,}\b|\s+#?\d{4,}\b',
   );
   static final RegExp _legal = RegExp(
-    r'\s+(?:W\.?\s?L\.?\s?L\.?|L\.?L\.?C\.?|B\.?S\.?C\.?|S\.?P\.?C\.?|CO\.?|COMPANY|EST\.?)$',
+    r'\s+(?:W\.?\s?L\.?\s?L\.?|L\.?L\.?C\.?|B\.?S\.?C\.?|S\.?P\.?C\.?|CO\.?(?:\s+W)?|COMPANY|EST\.?)$',
     caseSensitive: false,
   );
 

@@ -26,6 +26,10 @@ void main() {
       expect(show('ABED BAKERY MANAMA'), 'Abed Bakery|food|keyword');
     });
 
+    test('a legal suffix cut short by the bank (CO W for CO WLL) goes too', () {
+      expect(show('SAMPLE TRADING CO W'), 'Sample Trading|shopping|keyword');
+    });
+
     test('an unknown shop is cleaned but not categorised', () {
       expect(show('Waleed Al Kabah MANAMA'), 'Waleed Al Kabah|null|none');
     });
