@@ -26,7 +26,9 @@ String accountProblemText(AppLocalizations l10n, AccountFailure failure) =>
       AccountProblem.wrongRecoveryKey => l10n.errorWrongKey,
       AccountProblem.documentsOutdated => l10n.errorOutdated,
       AccountProblem.sessionExpired => l10n.errorSessionExpired,
-      AccountProblem.server => l10n.errorServer,
+      AccountProblem.server => failure.code == null
+          ? l10n.errorServer
+          : '${l10n.errorServer} (${failure.code})',
     };
 
 /// Progress line while busy, or the reason the last action failed.

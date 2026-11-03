@@ -26,6 +26,7 @@ class FakeServer {
   final calls = <String>[];
   final bodies = <String>[];
   Map<String, Object?>? kdfOverride;
+  String? failRegisterWith;
   bool offline = false;
   bool rateLimited = false;
   int _tokens = 0;
@@ -45,6 +46,7 @@ class FakeServer {
 
     switch ('${r.method} ${r.url.path}') {
       case 'POST /v1/register':
+        if (failRegisterWith != null) return _error(400, failRegisterWith!);
         final email = body['email'] as String;
         final c = body['consent'] as Map<String, Object?>?;
         if (c == null || c['adult'] != true || c['privacy'] == null || c['terms'] == null) {
@@ -284,6 +286,18 @@ void main() {
     } on AccountFailure catch (e) {
       expect(e.problem, AccountProblem.rateLimited);
       expect(e.retryAfterSeconds, 120);
+    }
+  });
+
+  test('an unexpected server error keeps its code for the screen', () async {
+    final server = FakeServer()..failRegisterWith = 'bad_bundle';
+    try {
+      await phone(server)
+          .signUp(email: 'a@b.co', password: 'a long password', consent: consent);
+      fail('should be refused');
+    } on AccountFailure catch (e) {
+      expect(e.problem, AccountProblem.server);
+      expect(e.code, 'bad_bundle');
     }
   });
 

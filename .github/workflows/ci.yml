@@ -58,6 +58,33 @@ jobs:
       - name: Test
         run: npm test
 
+  # The phone (Dart) and the server (TypeScript) are tested separately above,
+  # each with its own assumptions. This job makes a real account with the
+  # Dart code, sends it to the real server code, and opens the answers with
+  # Dart again, so a mismatch between the two sides fails here.
+  contract:
+    name: Phone and server agree (real keys)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+      - uses: dart-lang/setup-dart@v1
+        with:
+          sdk: stable
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+      - name: 1. Make a real account as the phone does (Dart)
+        working-directory: packages/beaza_crypto
+        run: |
+          dart pub get
+          dart run tool/sample_account.dart > "$RUNNER_TEMP/account.json"
+      - name: 2. Send it to the server code (Node, SQLite)
+        working-directory: server
+        run: node scripts/contract.ts "$RUNNER_TEMP/account.json" "$RUNNER_TEMP/responses.json"
+      - name: 3. Open the server's answers as a second phone (Dart)
+        working-directory: packages/beaza_crypto
+        run: dart run tool/check_responses.dart "$RUNNER_TEMP/account.json" "$RUNNER_TEMP/responses.json"
+
   app:
     name: Flutter app (analyze, test, build APK)
     runs-on: ubuntu-latest

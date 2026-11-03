@@ -103,11 +103,11 @@ export function newAccountFields(email = 'user@example.com') {
   const bundle = {
     v: 1,
     keyId,
-    recovery: toB64(randomBytes(105)),
+    recovery: toB64(randomBytes(73)),
     password: {
       salt: toB64(randomBytes(16)),
       kdf: { alg: 'argon2id', m: 19456, t: 2, p: 1 },
-      key: toB64(randomBytes(105)),
+      key: toB64(randomBytes(73)),
     },
   };
   const consent = { privacy: PRIVACY_VERSION, terms: TERMS_VERSION, adult: true };

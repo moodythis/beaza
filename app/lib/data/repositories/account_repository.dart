@@ -25,10 +25,14 @@ enum AccountProblem {
 }
 
 class AccountFailure implements Exception {
-  const AccountFailure(this.problem, {this.retryAfterSeconds});
+  const AccountFailure(this.problem, {this.retryAfterSeconds, this.code});
 
   final AccountProblem problem;
   final int? retryAfterSeconds;
+
+  /// The server's error code, shown with unexpected errors so they can be
+  /// reported from a screenshot (for example `bad_bundle`).
+  final String? code;
 
   @override
   String toString() => 'AccountFailure(${problem.name})';
@@ -234,7 +238,7 @@ class RemoteAccountRepository extends AccountRepository {
       return await call();
     } on ApiException catch (e) {
       throw AccountFailure(_problemFor(e.code),
-          retryAfterSeconds: e.retryAfterSeconds);
+          retryAfterSeconds: e.retryAfterSeconds, code: e.code);
     } on NetworkException {
       throw const AccountFailure(AccountProblem.network);
     }

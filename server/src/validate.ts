@@ -5,6 +5,9 @@ export const MAX_BATCH = 100;
 export const MAX_BLOB_CHARS = 16 * 1024;
 /** version + nonce + tag + one 64-byte padding block (see beaza_crypto). */
 export const MIN_BLOB_BYTES = 1 + 24 + 16 + 64;
+/** A locked 32-byte data key: version + nonce + key + tag. Records are
+ * padded, but locked keys are not, so they are smaller than any record. */
+export const SEALED_KEY_BYTES = 1 + 24 + 32 + 16;
 
 /** Thrown for any problem that should become a JSON error response. */
 export class HttpError extends Error {
@@ -77,7 +80,7 @@ export function checkBundle(value: unknown): Bundle {
   if (!isObject(value) || value.v !== 1) throw bad('bad_bundle');
   const keyId = value.keyId;
   if (typeof keyId !== 'string' || !/^[0-9a-f]{32}$/.test(keyId)) throw bad('bad_bundle');
-  const bundle: Bundle = { v: 1, keyId, recovery: checkB64(value.recovery, 105, 400) };
+  const bundle: Bundle = { v: 1, keyId, recovery: checkB64(value.recovery, SEALED_KEY_BYTES, 400) };
 
   const password = value.password;
   if (password !== undefined) {
@@ -92,7 +95,7 @@ export function checkBundle(value: unknown): Bundle {
         t: checkInt(kdf.t, 2, 10),
         p: checkInt(kdf.p, 1, 4),
       },
-      key: checkB64(password.key, 105, 400),
+      key: checkB64(password.key, SEALED_KEY_BYTES, 400),
     };
   }
   return bundle;

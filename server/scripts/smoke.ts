@@ -33,11 +33,11 @@ const recoveryAuthKey = toB64(randomBytes(32));
 const bundle = {
   v: 1,
   keyId: Array.from(randomBytes(16), (b) => b.toString(16).padStart(2, '0')).join(''),
-  recovery: toB64(randomBytes(105)),
+  recovery: toB64(randomBytes(73)),
   password: {
     salt: toB64(randomBytes(16)),
     kdf: { alg: 'argon2id', m: 19456, t: 2, p: 1 },
-    key: toB64(randomBytes(105)),
+    key: toB64(randomBytes(73)),
   },
 };
 const blob = toB64(randomBytes(200));

@@ -74,6 +74,14 @@ describe('register', () => {
     }
   });
 
+  it('a locked data key is 73 bytes; anything shorter is refused', async () => {
+    const s = new Server();
+    const ok = newAccountFields();
+    const short = { ...ok, bundle: { ...ok.bundle, recovery: toB64(randomBytes(72)) } };
+    assert.equal((await s.call('POST', '/v1/register', short)).body.error, 'bad_bundle');
+    assert.equal((await s.call('POST', '/v1/register', ok)).status, 200);
+  });
+
   it('a weak Argon2id setting in the bundle is refused', async () => {
     const s = new Server();
     const ok = newAccountFields();
@@ -239,7 +247,7 @@ describe('change password and recovery key', () => {
     const s = new Server();
     const { account, token } = await signUp(s);
     const fresh = toB64(randomBytes(32));
-    const bundle = { ...account.bundle, recovery: toB64(randomBytes(105)) };
+    const bundle = { ...account.bundle, recovery: toB64(randomBytes(73)) };
     const res = await s.call('POST', '/v1/recovery-key', { recoveryAuthKey: fresh, bundle }, token);
     assert.equal(res.status, 200);
     assert.equal((await s.call('POST', '/v1/recover', { email: account.email, recoveryAuthKey: account.recoveryAuthKey })).status, 401);
