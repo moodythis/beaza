@@ -2587,7 +2587,7 @@
     },
     {
       "type": "bridge_node",
-      "question": "Why does `Three separate, unticked consent boxes` connect `Community 53` to `Community 29`, `Community 62`?",
+      "question": "Why does `Three separate, unticked consent boxes` connect `Request validation and consent` to `Sign-up screen`, `Privacy law and legal sync`?",
       "why": "High betweenness centrality (0.071) - this node is a cross-community bridge."
     },
     {
@@ -2597,22 +2597,22 @@
     },
     {
       "type": "low_cohesion",
-      "question": "Should `Community 0` be split into smaller, more focused modules?",
+      "question": "Should `DartPad validator copy` be split into smaller, more focused modules?",
       "why": "Cohesion score 0.03076923076923077 - nodes in this community are weakly interconnected."
     },
     {
       "type": "bridge_node",
-      "question": "Why does `checkConsent()` connect `Community 53` to `Community 17`?",
+      "question": "Why does `checkConsent()` connect `Request validation and consent` to `Server HTTP routes`?",
       "why": "High betweenness centrality (0.060) - this node is a cross-community bridge."
     },
     {
       "type": "low_cohesion",
-      "question": "Should `Community 1` be split into smaller, more focused modules?",
+      "question": "Should `Daily guardrail engine` be split into smaller, more focused modules?",
       "why": "Cohesion score 0.03076923076923077 - nodes in this community are weakly interconnected."
     },
     {
       "type": "bridge_node",
-      "question": "Why does `AppDatabase` connect `Community 20` to `Community 4`, `Community 8`, `Community 12`, `Community 51`, `Community 23`, `Community 55`, `Community 25`?",
+      "question": "Why does `AppDatabase` connect `Local stores on AppDatabase` to `Encrypted database schema`, `Sync tests`, `Live two-phone and storage tests`, `Storage bootstrap`, `Package entry points and README`, `Drift settings repository`, `Drift ledger repository`?",
       "why": "High betweenness centrality (0.042) - this node is a cross-community bridge."
     }
   ]
