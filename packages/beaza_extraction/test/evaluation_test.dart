@@ -292,6 +292,15 @@ void main() {
       expect(ev.overall.messages, 30);
     });
 
+    test('B1 reads every real NBB message exactly', () {
+      final real = parseGold(File('eval/real_nbb.jsonl').readAsStringSync(),
+          name: 'real_nbb.jsonl');
+      expect(real, hasLength(33));
+      final ev = evaluate(RulesSystem(), real);
+      expect(ev.errors.map((e) => '${e.id} ${e.field}'), isEmpty);
+      expect(ev.overall.acceptedRate, 1.0);
+    });
+
     test('report has the summary and every section', () {
       final ev = evaluate(RulesSystem(), seed);
       final md = markdownReport(

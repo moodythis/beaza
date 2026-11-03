@@ -239,4 +239,71 @@ void main() {
       expect(r.status, ExtractionStatus.unparsed);
     });
   });
+
+  group('NBB (real formats, balances and names masked)', () {
+    test('card purchase: the account digits stand for the card', () {
+      final r = run(
+          'NBB',
+          'Thank you for using NBB Debit Card at REDTAG                MANAMA for BHD6.930 on 27/10/2026 20:37, A/C ending 4810 balance BHD99.999.',
+          DateTime.utc(2026, 10, 27, 17, 38));
+      expect(sum(r),
+          'transaction|purchase|card|6930|BHD|4810|REDTAG MANAMA|2026-10-27T17:37:00.000Z');
+    });
+
+    test('a promotion word inside the merchant name is still a purchase', () {
+      final r = run(
+          'NBB',
+          'Thank you for using NBB Debit Card at DAY TO DAY DISCOUNT CEMANAMA for BHD14.396 on 02/11/2026 23:13, A/C ending 4810 balance BHD99.999.',
+          DateTime.utc(2026, 11, 2, 20, 14));
+      expect(sum(r),
+          'transaction|purchase|card|14396|BHD|4810|DAY TO DAY DISCOUNT CEMANAMA|2026-11-02T20:13:00.000Z');
+    });
+
+    test('Fawri+ out', () {
+      final r = run(
+          'NBB',
+          'Successful Fawri+ transfer of BHD1.600 credited to BHXALSAXX9417 on 24/10/2026 11:55, Ref.NBB241026ONH8WCQ, A/C ending 4810 balance BHD99.999.',
+          DateTime.utc(2026, 10, 24, 8, 56));
+      expect(sum(r),
+          'transaction|transferOut|transfer|1600|BHD|4810|null|2026-10-24T08:55:00.000Z');
+      expect(r.counterpartyLast4, '0100');
+      expect(r.reference, 'NBB241026ONH8WCQ');
+    });
+
+    test('Fawri+ in', () {
+      final r = run(
+          'NBB',
+          'Fawri+ transfer of BHD5.000 from BHXBIBBX9307 credited to your account on 30/10/2026 07:14, Ref.NBB301026IN7J3XS, A/C ending 4810 balance BHD99.999.',
+          DateTime.utc(2026, 10, 30, 4, 15));
+      expect(sum(r),
+          'transaction|transferIn|transfer|5000|BHD|4810|null|2026-10-30T04:14:00.000Z');
+      expect(r.counterpartyLast4, '8097');
+    });
+
+    test('after midnight NBB prints the previous day: the date is moved on', () {
+      // Printed 02/11 00:41, received 03/11 00:42 Bahrain time.
+      final r = run(
+          'NBB',
+          'Fawri+ transfer of BHD0.500 from BHXBIBBX3208 credited to your account on 02/11/2026 00:41, Ref.NBB021126IN8PD5G, A/C ending 4810 balance BHD99.999.',
+          DateTime.utc(2026, 11, 2, 21, 42));
+      expect(r.timestamp, DateTime.utc(2026, 11, 2, 21, 41));
+      expect(r.status, ExtractionStatus.transaction);
+    });
+
+    test('a message just after midnight received at once keeps its date', () {
+      final r = run(
+          'NBB',
+          'Fawri+ transfer of BHD0.500 from BHXBIBBX3208 credited to your account on 03/11/2026 00:41, Ref.NBB031126INMU8ZJ, A/C ending 4810 balance BHD99.999.',
+          DateTime.utc(2026, 11, 2, 21, 42));
+      expect(r.timestamp, DateTime.utc(2026, 11, 2, 21, 41));
+    });
+
+    test('other banks are not moved', () {
+      final r = run(
+          'ilabank',
+          'Success! Purchase at SAMPLE SHOP using card ****8855 for BHD 1.500 on 02/11/2026 00:30 debited from BHD Ac Balance BHD 9.999 Enquiry 17123456',
+          DateTime.utc(2026, 11, 2, 21, 31));
+      expect(r.timestamp, DateTime.utc(2026, 11, 1, 21, 30));
+    });
+  });
 }

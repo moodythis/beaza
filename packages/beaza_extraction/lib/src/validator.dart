@@ -6,7 +6,7 @@ import 'tier1.dart';
 
 /// Version of the template set. Recorded in every result so that evaluation
 /// runs can be reproduced.
-const String kTemplateSetVersion = '2026-11-03';
+const String kTemplateSetVersion = '2026-11-04';
 
 enum ExtractionStatus { transaction, nonTransaction, unparsed }
 

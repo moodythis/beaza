@@ -22,6 +22,12 @@ for the report:
   real Arabic bank samples have been collected yet. They show what happens
   to Arabic messages today.
 
+`real_nbb.jsonl` (33 messages) holds real NBB SMS from the team, 24 October
+to 3 November 2026, with balances masked. They were used to write the NBB
+templates, so they are development data too. They showed that NBB prints the
+previous day's date between 00:00 and 00:59; the label carries the real time,
+found from the order of the balances.
+
 The held-out evaluation set will be real, consented, masked messages labelled
 by two annotators (SRS section 8). Label format: [SCHEMA.md](SCHEMA.md).
 

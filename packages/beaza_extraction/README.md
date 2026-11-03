@@ -18,7 +18,7 @@ dart test
 | Normalize | Done, tests included |
 | Detect language and sender family | Done, tests included |
 | Classify transaction or not | Done, tests included |
-| Tier 1 templates (BisB, ila, Al Salam, BenefitPay) | Done, tests included. ATM and deposit templates need real samples |
+| Tier 1 templates (BisB, ila, Al Salam, NBB, BenefitPay) | Done, tests included. ATM and deposit templates need real samples |
 | Validator and public ExtractionResult | Done, tests included |
 | BeazaExtractor facade (sender filter, whole pipeline) | Written, tests run in CI |
 | Reconciler: duplicates, own accounts, spending total | Done, tests included |

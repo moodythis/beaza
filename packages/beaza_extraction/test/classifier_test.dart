@@ -56,6 +56,8 @@ void main() {
   test('Empty is information', () => expect(kindOf(''), MessageKind.information));
   test('Maintenance notice is information', () => expect(kindOf('System maintenance on 16 October 2026 from 2:00 to 6:00 AM.'), MessageKind.information));
   test('Loan campaign is a promotion', () => expect(kindOf('Apply for a loan, up to BHD20,000. Campaign period ends soon.'), MessageKind.promotion));
+  test('NBB card use is a transaction', () => expect(kindOf('Thank you for using NBB Debit Card at REDTAG MANAMA for BHD6.930 on 27/10/2026 20:37, A/C ending 4810 balance BHD9.999.'), tx));
+  test('A promotion word inside a merchant name does not hide a purchase', () => expect(kindOf('Thank you for using NBB Debit Card at DAY TO DAY DISCOUNT CEMANAMA for BHD5.085 on 30/10/2026 21:55, A/C ending 4810 balance BHD9.999.'), tx));
   // ClassificationResult
   final fawri = c.classify('Fawri+ payment BHD2.900, ref: BIB103KAA000AAAA was credited to IBAN ending 4411 on 2026/10/30 00:59. Balance BHD9.999. Tel: 17515151');
   test('isTransaction true', () => expect(fawri.isTransaction, true));

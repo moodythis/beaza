@@ -39,7 +39,7 @@ from other messages, except `last4` and `direction` as explained below.
 | `type` | `purchase`, `transferOut`, `transferIn`, `atmWithdrawal`, `refund`, `bill` | Only when the message says what it was. A plain "account debited" has no type. |
 | `merchant` | text | Copied as written (not cleaned up). Only for card or wallet purchases. |
 | `last4` | 4 digits | The user's own card or account. Not the other party's. |
-| `time` | ISO 8601 UTC | The time written in the message, converted from Bahrain time. Leave out when the message has no time (a date alone is not enough). |
+| `time` | ISO 8601 UTC | The time written in the message, converted from Bahrain time. Leave out when the message has no time (a date alone is not enough). If the printed date is provably wrong (for example the balances show the order), label the real time. |
 
 ## Masking (FR-6.1)
 

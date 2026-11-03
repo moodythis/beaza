@@ -64,6 +64,7 @@ class _Template {
     this.direction,
     this.pattern, {
     this.hasMerchant = false,
+    this.dateLagsAfterMidnight = false,
   });
 
   final String id;
@@ -72,6 +73,11 @@ class _Template {
   final TxDirection direction;
   final RegExp pattern;
   final bool hasMerchant;
+
+  /// The bank prints the previous day's date between 00:00 and 00:59
+  /// (seen on NBB: the balances show the order). With a receive time the
+  /// date is moved forward one day.
+  final bool dateLagsAfterMidnight;
 
   /// 1.0 for templates verified on real messages. Give unverified templates
   /// a lower value (and a constructor parameter) when they are added.
@@ -233,6 +239,49 @@ class Tier1Extractor {
       ),
       hasMerchant: true,
     ),
+    // ---- NBB ----
+    // The card's own digits are not printed; "A/C ending" is the user's
+    // account. The merchant field is fixed width: name and city run together
+    // ("DAY TO DAY DISCOUNT CEMANAMA") and are kept as printed.
+    _Template(
+      'nbb.card',
+      {SenderFamily.nbb},
+      TxChannel.card,
+      TxDirection.outgoing,
+      RegExp(
+        r'Thank you for using NBB (?:Debit|Credit|Prepaid) Card at (?<m>.+?) for (?<cur>[A-Z]{3})\s?' +
+            _amt + r' on ' + _dmy4 + r', A/C ending (?<acct>\d{4})',
+        caseSensitive: false,
+      ),
+      hasMerchant: true,
+      dateLagsAfterMidnight: true,
+    ),
+    _Template(
+      'nbb.fawri.out',
+      {SenderFamily.nbb},
+      TxChannel.fawri,
+      TxDirection.outgoing,
+      RegExp(
+        r'Successful Fawri\+ transfer of BHD\s?' + _amt +
+            r' credited to (?<cp>\S+) on ' + _dmy4 +
+            r', Ref\.?\s?(?<ref>\w+), A/C ending (?<acct>\d{4})',
+        caseSensitive: false,
+      ),
+      dateLagsAfterMidnight: true,
+    ),
+    _Template(
+      'nbb.fawri.in',
+      {SenderFamily.nbb},
+      TxChannel.fawri,
+      TxDirection.incoming,
+      RegExp(
+        r'Fawri\+ transfer of BHD\s?' + _amt +
+            r' from (?<cp>\S+) credited to your account on ' + _dmy4 +
+            r', Ref\.?\s?(?<ref>\w+), A/C ending (?<acct>\d{4})',
+        caseSensitive: false,
+      ),
+      dateLagsAfterMidnight: true,
+    ),
     // ---- BenefitPay notifications ----
     _Template(
       'benefitpay.fawri.received',
@@ -290,7 +339,8 @@ class Tier1Extractor {
     DateTime? receivedAt,
   ) {
     final amount = _toFils(_g(m, 'amt'));
-    final date = _parseDate(m, receivedAt);
+    final date = _parseDate(m, receivedAt,
+        lagsAfterMidnight: t.dateLagsAfterMidnight);
     final merchant = t.hasMerchant ? _cleanMerchant(_g(m, 'm')) : null;
 
     var needed = 3;
@@ -365,7 +415,11 @@ class Tier1Extractor {
     return i < 0 ? null : i + 1;
   }
 
-  static DateTime? _parseDate(RegExpMatch m, DateTime? receivedAt) {
+  static DateTime? _parseDate(
+    RegExpMatch m,
+    DateTime? receivedAt, {
+    bool lagsAfterMidnight = false,
+  }) {
     final d = int.tryParse(_g(m, 'd') ?? '');
     final mo = int.tryParse(_g(m, 'mo') ?? '') ?? _monthNumber(_g(m, 'mon'));
     final h = int.tryParse(_g(m, 'h') ?? '');
@@ -389,6 +443,14 @@ class Tier1Extractor {
     }
     final local = DateTime.utc(year, mo, d, h, mi);
     if (local.month != mo || local.day != d) return null; // e.g. 31 Feb
-    return local.subtract(_bahrain);
+    var utc = local.subtract(_bahrain);
+    if (lagsAfterMidnight && h == 0 && receivedAt != null) {
+      // Received about a day after the printed time: the date lagged.
+      final gap = receivedAt.toUtc().difference(utc);
+      if (gap > const Duration(hours: 12) && gap < const Duration(hours: 36)) {
+        utc = utc.add(const Duration(days: 1));
+      }
+    }
+    return utc;
   }
 }
