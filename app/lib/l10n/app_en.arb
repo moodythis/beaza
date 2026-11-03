@@ -381,6 +381,37 @@
       }
     }
   },
+  "tipsTitle": "Saving tips",
+  "tipsSubtitle": "From your last 7 days · worked out on this phone only",
+  "tipSpike": "{category} is up: {now} this week, {before} the week before",
+  "@tipSpike": {
+    "placeholders": {
+      "category": { "type": "String" },
+      "now": { "type": "String" },
+      "before": { "type": "String" }
+    }
+  },
+  "tipOverLimit": "You went over your daily limit on {days} of the last 7 days",
+  "@tipOverLimit": {
+    "placeholders": {
+      "days": { "type": "int" }
+    }
+  },
+  "tipTop": "{category} is {percent}% of this week's spending ({amount})",
+  "@tipTop": {
+    "placeholders": {
+      "category": { "type": "String" },
+      "percent": { "type": "int" },
+      "amount": { "type": "String" }
+    }
+  },
+  "tipTrim": "Spending 20% less on {category} would keep about {amount} a week",
+  "@tipTrim": {
+    "placeholders": {
+      "category": { "type": "String" },
+      "amount": { "type": "String" }
+    }
+  },
   "historyTitle": "History",
   "historyEmpty": "No transactions yet",
   "historyDaySpent": "Spent {total}",

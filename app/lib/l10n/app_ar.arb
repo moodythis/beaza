@@ -168,6 +168,37 @@
       }
     }
   },
+  "tipsTitle": "نصائح للتوفير",
+  "tipsSubtitle": "من آخر 7 أيام · تُحسب على هذا الجوال فقط",
+  "tipSpike": "ارتفع صرفك على {category}: {now} هذا الأسبوع مقابل {before} في الأسبوع السابق",
+  "@tipSpike": {
+    "placeholders": {
+      "category": { "type": "String" },
+      "now": { "type": "String" },
+      "before": { "type": "String" }
+    }
+  },
+  "tipOverLimit": "تجاوزت حدك اليومي في {days} أيام من آخر 7 أيام",
+  "@tipOverLimit": {
+    "placeholders": {
+      "days": { "type": "int" }
+    }
+  },
+  "tipTop": "{category} تمثل {percent}٪ من صرف هذا الأسبوع ({amount})",
+  "@tipTop": {
+    "placeholders": {
+      "category": { "type": "String" },
+      "percent": { "type": "int" },
+      "amount": { "type": "String" }
+    }
+  },
+  "tipTrim": "لو صرفت 20٪ أقل على {category} توفّر نحو {amount} في الأسبوع",
+  "@tipTrim": {
+    "placeholders": {
+      "category": { "type": "String" },
+      "amount": { "type": "String" }
+    }
+  },
   "historyTitle": "السجل",
   "historyEmpty": "لا توجد معاملات بعد",
   "historyDaySpent": "المصروف {total}",

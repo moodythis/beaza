@@ -5,6 +5,7 @@ import 'package:beaza/data/repositories/settings_repository.dart';
 import 'package:beaza/data/services/device_service.dart';
 import 'package:beaza/domain/use_cases/data_export.dart';
 import 'package:beaza/domain/use_cases/message_intake.dart';
+import 'package:beaza/domain/use_cases/savings_tips.dart';
 import 'package:beaza/domain/use_cases/spending_by_category.dart';
 import 'package:beaza_extraction/beaza_extraction.dart';
 import 'package:flutter/foundation.dart';
@@ -17,6 +18,7 @@ class HomeState {
     required this.today,
     required this.weekMicro,
     this.weekByCategory = const [],
+    this.tips = const [],
   });
 
   final DaySummary summary;
@@ -27,6 +29,9 @@ class HomeState {
 
   /// Spending of the last 7 days per category, largest first.
   final List<CategoryTotal> weekByCategory;
+
+  /// Saving tips from rules on this phone (empty when there is too little).
+  final List<SavingsTip> tips;
 }
 
 class HomeViewModel extends ChangeNotifier {
@@ -118,6 +123,7 @@ class HomeViewModel extends ChangeNotifier {
         today: guardrail.spendingOn(entries, day).reversed.toList(),
         weekMicro: guardrail.weeklyMicro(entries, day),
         weekByCategory: spendingByCategory(entries, day.addDays(-6), day),
+        tips: savingsTips(entries, day, dailyLimitFils: settings.dailyLimitFils),
       );
       _error = null;
     } on Exception catch (e) {

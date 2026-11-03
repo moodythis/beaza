@@ -1,5 +1,6 @@
 import 'package:beaza/data/repositories/account_repository.dart';
 import 'package:beaza/data/repositories/sync_repository.dart';
+import 'package:beaza/domain/use_cases/savings_tips.dart';
 import 'package:beaza/domain/use_cases/spending_by_category.dart';
 import 'package:beaza/l10n/app_localizations.dart';
 import 'package:beaza/ui/core/amount_dialog.dart';
@@ -134,6 +135,10 @@ class HomeView extends StatelessWidget {
               MicroCard(today: state.summary.micro, week: state.weekMicro),
               const SizedBox(height: 12),
               CategoryCard(totals: state.weekByCategory),
+              if (state.tips.isNotEmpty) ...[
+                const SizedBox(height: 12),
+                TipsCard(tips: state.tips),
+              ],
               if (viewModel.duplicates > 0)
                 Card(
                   key: const Key('duplicatesCard'),
@@ -440,6 +445,68 @@ class MicroCard extends StatelessWidget {
           l10n.microToday(today.count, l10n.bhd(formatFils(today.totalFils))),
         ),
         subtitle: Text(l10n.microWeek(l10n.bhd(formatFils(week.totalFils)))),
+      ),
+    );
+  }
+}
+
+/// Saving tips worked out by rules on this phone.
+class TipsCard extends StatelessWidget {
+  const TipsCard({super.key, required this.tips});
+
+  final List<SavingsTip> tips;
+
+  static String text(AppLocalizations l10n, SavingsTip t) {
+    String money(int fils) => l10n.bhd(formatFils(fils));
+    final category = categoryName(l10n, t.bucket ?? 'other');
+    return switch (t.kind) {
+      TipKind.categorySpike =>
+        l10n.tipSpike(category, money(t.fils), money(t.otherFils)),
+      TipKind.overLimitDays => l10n.tipOverLimit(t.count),
+      TipKind.topCategory => l10n.tipTop(category, t.count, money(t.fils)),
+      TipKind.trimTarget => l10n.tipTrim(category, money(t.fils)),
+    };
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context);
+    final theme = Theme.of(context);
+    return Card(
+      key: const Key('tipsCard'),
+      child: Padding(
+        padding: const EdgeInsets.all(16),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Row(
+              children: [
+                const Icon(Icons.lightbulb_outline, size: 20),
+                const SizedBox(width: 8),
+                Text(l10n.tipsTitle, style: theme.textTheme.titleMedium),
+              ],
+            ),
+            const SizedBox(height: 2),
+            Text(l10n.tipsSubtitle, style: theme.textTheme.bodySmall),
+            for (var i = 0; i < tips.length; i++) ...[
+              const SizedBox(height: 12),
+              Row(
+                key: Key('tip_$i'),
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Icon(
+                    tips[i].bucket == null
+                        ? Icons.warning_amber_outlined
+                        : categoryIcon(tips[i].bucket!),
+                    size: 20,
+                  ),
+                  const SizedBox(width: 12),
+                  Expanded(child: Text(text(l10n, tips[i]))),
+                ],
+              ),
+            ],
+          ],
+        ),
       ),
     );
   }

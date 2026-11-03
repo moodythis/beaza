@@ -59,6 +59,42 @@ void main() {
     expect(find.text('23%'), findsOneWidget);
   });
 
+  testWidgets('saving tips appear from the last 7 days, in English', (tester) async {
+    await pumpHome(tester, results: [
+      purchase(3900, bh(9), merchant: 'BAKERY', category: 'food'),
+      purchase(13200, bh(10), merchant: 'SHOP', category: 'shopping'),
+    ]);
+    await tester.scrollUntilVisible(
+      find.byKey(const Key('tipsCard')),
+      300,
+      scrollable: find.byType(Scrollable).first,
+    );
+    expect(find.text('Saving tips'), findsOneWidget);
+    expect(find.text("Shopping is 77% of this week's spending (BHD 13.200)"),
+        findsOneWidget);
+    expect(find.byKey(const Key('tip_0')), findsOneWidget);
+  });
+
+  testWidgets('saving tips are in Arabic too, and absent with little spending',
+      (tester) async {
+    await pumpHome(tester, locale: const Locale('ar'), results: [
+      purchase(13200, bh(10), merchant: 'SHOP', category: 'shopping'),
+    ]);
+    await tester.scrollUntilVisible(
+      find.byKey(const Key('tipsCard')),
+      300,
+      scrollable: find.byType(Scrollable).first,
+    );
+    expect(find.text('نصائح للتوفير'), findsOneWidget);
+  });
+
+  testWidgets('no tips card when almost nothing was spent', (tester) async {
+    await pumpHome(tester, results: [
+      purchase(1500, bh(10), merchant: 'BAKERY', category: 'food'),
+    ]);
+    expect(find.byKey(const Key('tipsCard')), findsNothing);
+  });
+
   testWidgets('tapping a transaction changes its category', (tester) async {
     await pumpHome(tester, results: [
       purchase(3900, bh(9), merchant: 'MYSTERY SHOP'),
