@@ -152,11 +152,6 @@ class HomeView extends StatelessWidget {
               MicroCard(today: state.summary.micro, week: state.weekMicro),
               const SizedBox(height: 12),
               CategoryCard(totals: state.weekByCategory),
-              if (state.tips.isNotEmpty ||
-                  adviceText(l10n, state.summary.level) != null) ...[
-                const SizedBox(height: 12),
-                TipsCard(tips: state.tips, level: state.summary.level),
-              ],
               if (viewModel.duplicates > 0)
                 Card(
                   key: const Key('duplicatesCard'),
@@ -210,6 +205,12 @@ class HomeView extends StatelessWidget {
                     entry: entry,
                     onTap: () => _chooseCategory(context, entry),
                   ),
+              // Tips come after today's list, which matters most.
+              if (state.tips.isNotEmpty ||
+                  adviceText(l10n, state.summary.level) != null) ...[
+                const SizedBox(height: 12),
+                TipsCard(tips: state.tips, level: state.summary.level),
+              ],
             ],
           );
         },
