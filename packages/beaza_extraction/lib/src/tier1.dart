@@ -203,6 +203,19 @@ class Tier1Extractor {
         caseSensitive: false,
       ),
     ),
+    // Fawri credit as Al Salam also prints it: no "+", "Ref." with a dot,
+    // the sender's name (skipped, never kept) instead of an IBAN, and "Acc.".
+    _Template(
+      'alsalam.fawri.in.named',
+      {SenderFamily.alSalam},
+      TxChannel.fawri,
+      TxDirection.incoming,
+      RegExp(
+        r'Fawri\+? BHD\s?' + _amt +
+            r' Ref\.? (?<ref>\w+) from .+? credited to Acc\.? X+(?<acct>\d+)\. Bal: BHD [\d,.]+ on (?<d>\d{2})/(?<mo>\d{2})/(?<y>\d{2}) at (?<h>\d{2}):(?<mi>\d{2})',
+        caseSensitive: false,
+      ),
+    ),
     // ---- BenefitPay notifications ----
     _Template(
       'benefitpay.fawri.received',

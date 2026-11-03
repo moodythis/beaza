@@ -201,6 +201,17 @@ void main() {
       expect(r.status, ExtractionStatus.nonTransaction);
     });
 
+    test('Al Salam Fawri credit with the sender\'s name is read', () {
+      final r = run(
+          'AlSalamBank',
+          "Fawri BHD 12.500 Ref. NBB103KAE000EEEE from 'TEST PERSON ONE' credited to Acc. XXXX010100000. Bal: BHD 99.999 on 26/10/26 at 09:19. Tel 17005500",
+          DateTime.utc(2026, 10, 26, 6, 20));
+      expect(r.status, ExtractionStatus.transaction);
+      expect(r.type, TxnType.transferIn);
+      expect(r.amountFils, 12500);
+      expect(r.reference, 'NBB103KAE000EEEE');
+    });
+
     test('Al Salam maintenance notice is not a transaction', () {
       final r = run(
           'AlSalamBank',

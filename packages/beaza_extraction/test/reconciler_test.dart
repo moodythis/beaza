@@ -201,6 +201,23 @@ void main() {
       expect(Reconciler.spentFils(es), 0);
     });
 
+    test('a Fawri credit that prints the name still pairs with its debit',
+        () {
+      final out = x.process(RawMessage(
+          text:
+              'Fawri+ payment BHD12.500, ref: NBB103KAE000EEEE was credited to IBAN ending 0000 on 2026/10/26 09:19. Balance BHD9.999. Tel: 17515151',
+          sender: 'BisB',
+          receivedAt: DateTime.utc(2026, 10, 26, 6, 20)));
+      final inn = x.process(RawMessage(
+          text:
+              "Fawri BHD 12.500 Ref. NBB103KAE000EEEE from 'TEST PERSON ONE' credited to Acc. XXXX010100000. Bal: BHD 99.999 on 26/10/26 at 09:19. Tel 17005500",
+          sender: 'AlSalamBank',
+          receivedAt: DateTime.utc(2026, 10, 26, 6, 20)));
+      final es = rec.reconcile([out, inn], OwnAccounts());
+      expect(roles(es), 'internalTransfer,internalTransfer');
+      expect(Reconciler.spentFils(es), 0);
+    });
+
     test('BenefitPay received from a confirmed own account is internal', () {
       final r = x.process(RawMessage(
           text:

@@ -50,6 +50,12 @@ void main() {
   check('Al Salam Fawri+ in',
       sum(ex.extract('Fawri+ BHD 6.000 ref BIB103KAD000DDDD from IBAN BH35BIBBXXXXXXXXXXXX27 credited to acct XXX10100777. Bal: BHD 9.999 on 26/10/26 at 15:39. Tel 17005500', family: SenderFamily.alSalam)),
       '6000|incoming|fawri|0777|27|BIB103KAD000DDDD|null|2026-10-26T12:39:00.000Z');
+  check('Al Salam Fawri in with the sender\'s name',
+      sum(ex.extract("Fawri BHD 12.500 Ref. NBB103KAE000EEEE from 'TEST PERSON ONE' credited to Acc. XXXX010100000. Bal: BHD 99.999 on 26/10/26 at 09:19. Tel 17005500", family: SenderFamily.alSalam)),
+      '12500|incoming|fawri|0000|null|NBB103KAE000EEEE|null|2026-10-26T06:19:00.000Z');
+  check('Al Salam Fawri in with the name, the name is never kept',
+      ex.extract("Fawri BHD 12.500 Ref. NBB103KAE000EEEE from 'TEST PERSON ONE' credited to Acc. XXXX010100000. Bal: BHD 99.999 on 26/10/26 at 09:19. Tel 17005500", family: SenderFamily.alSalam).toString(),
+      isNot(contains('TEST PERSON')));
   check('BenefitPay received', sum(ex.extract(bpReceived, family: SenderFamily.benefitPay)),
       '100|incoming|fawri|6633|0777|BP1000000001TEST|null|2026-11-02T18:02:00.000Z');
   check('BenefitPay credited (direction unknown)', sum(ex.extract(bpCredited, family: SenderFamily.benefitPay)),
