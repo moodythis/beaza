@@ -5,8 +5,15 @@
 import { MIGRATE_PATH } from '../src/migrate.ts';
 
 const url = new URL(MIGRATE_PATH, process.argv[2]);
-for (let attempt = 1; attempt <= 40; attempt++) {
-  const response = await fetch(url, { method: 'POST' });
+for (let attempt = 1; attempt <= 80; attempt++) {
+  let response: Response;
+  try {
+    response = await fetch(url, { method: 'POST' });
+  } catch (error) {
+    console.log(`attempt ${attempt}: ${error instanceof Error ? error.message : 'no answer'}, waiting`);
+    await new Promise((resolve) => setTimeout(resolve, 15_000));
+    continue;
+  }
   if (response.ok) {
     const report = (await response.json()) as Record<string, { rows: number; copied: number; same: boolean }>;
     console.log(JSON.stringify(report, null, 2));
