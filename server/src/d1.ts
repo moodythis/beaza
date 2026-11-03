@@ -20,4 +20,7 @@ export type Env = {
   DB: D1Like;
   /** Optional contact shown on the privacy page (a Worker variable). */
   PRIVACY_CONTACT?: string;
+  /** The Web OAuth client id that Google ID tokens must be issued for.
+   * Unset turns Google sign-in off (503 google_disabled). */
+  GOOGLE_CLIENT_ID?: string;
 };

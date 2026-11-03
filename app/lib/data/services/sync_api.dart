@@ -190,6 +190,49 @@ class SyncApi {
 
   /// Deletes the account and every synced record. Needs the password key as
   /// well as the session, so a stolen session alone cannot delete it.
+  /// Whether this Google account already has a Beaza account; Google has
+  /// just confirmed the person owns it.
+  Future<({bool exists, String email})> googleCheck(String idToken) async {
+    final body = await _send('POST', '/v1/google/check', {'idToken': idToken});
+    return (exists: body['exists'] as bool, email: body['email'] as String);
+  }
+
+  /// A Google account: no password, the recovery key is the only lock.
+  Future<String> googleRegister({
+    required String idToken,
+    required List<int> recoveryAuthKey,
+    required KeyBundle bundle,
+    required Consent consent,
+  }) async {
+    final body = await _send('POST', '/v1/google/register', {
+      'idToken': idToken,
+      'recoveryAuthKey': toBase64(recoveryAuthKey),
+      'bundle': bundle.toJson(),
+      'consent': consent.toJson(),
+    });
+    return body['token'] as String;
+  }
+
+  /// Logging in on a phone with Google needs the recovery proof as well.
+  Future<({String token, KeyBundle bundle})> googleLogin(
+    String idToken,
+    List<int> recoveryAuthKey,
+  ) async {
+    final body = await _send('POST', '/v1/google/login', {
+      'idToken': idToken,
+      'recoveryAuthKey': toBase64(recoveryAuthKey),
+    });
+    return _session(body);
+  }
+
+  /// Deletes a Google account; [idToken] is a fresh one for the same account.
+  Future<void> deleteGoogleAccount(String token, String idToken) => _send(
+        'POST',
+        '/v1/account/delete',
+        {'idToken': idToken},
+        token: token,
+      );
+
   Future<void> deleteAccount(String token, List<int> authKey) => _send(
         'POST',
         '/v1/account/delete',

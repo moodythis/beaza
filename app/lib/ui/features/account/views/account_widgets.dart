@@ -26,6 +26,9 @@ String accountProblemText(AppLocalizations l10n, AccountFailure failure) =>
       AccountProblem.wrongRecoveryKey => l10n.errorWrongKey,
       AccountProblem.documentsOutdated => l10n.errorOutdated,
       AccountProblem.sessionExpired => l10n.errorSessionExpired,
+      AccountProblem.google => failure.code == null
+          ? l10n.errorGoogle
+          : '${l10n.errorGoogle} (${failure.code})',
       AccountProblem.server => failure.code == null
           ? l10n.errorServer
           : '${l10n.errorServer} (${failure.code})',

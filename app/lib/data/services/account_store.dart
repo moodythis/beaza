@@ -7,9 +7,13 @@ class SavedAccount {
     required this.email,
     required this.token,
     required this.dataKey,
+    this.google = false,
   });
 
   final String email;
+
+  /// Signed in with Google: no password; Google confirms deletion.
+  final bool google;
 
   /// Session token for the sync server.
   final String token;
@@ -35,6 +39,7 @@ class SecureAccountStore implements AccountStore {
   static const _email = 'beaza.account.email';
   static const _token = 'beaza.account.token';
   static const _dataKey = 'beaza.account.dataKey';
+  static const _google = 'beaza.account.google';
 
   @override
   Future<SavedAccount?> read() async {
@@ -46,6 +51,7 @@ class SecureAccountStore implements AccountStore {
       email: email,
       token: token,
       dataKey: DataKey.fromBytes(fromBase64(key)),
+      google: await _storage.read(key: _google) == '1',
     );
   }
 
@@ -56,6 +62,7 @@ class SecureAccountStore implements AccountStore {
         value: toBase64(account.dataKey.exportForSecureStorage()));
     await _storage.write(key: _token, value: account.token);
     await _storage.write(key: _email, value: account.email);
+    await _storage.write(key: _google, value: account.google ? '1' : '0');
   }
 
   @override
@@ -63,6 +70,7 @@ class SecureAccountStore implements AccountStore {
     await _storage.delete(key: _email);
     await _storage.delete(key: _token);
     await _storage.delete(key: _dataKey);
+    await _storage.delete(key: _google);
   }
 }
 

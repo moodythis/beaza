@@ -1,3 +1,4 @@
+import 'package:beaza/data/repositories/account_repository.dart';
 import 'package:beaza/data/services/sync_api.dart';
 import 'package:beaza/l10n/app_localizations.dart';
 import 'package:beaza/ui/features/account/legal_text.dart';
@@ -10,10 +11,13 @@ import 'package:flutter/services.dart';
 /// Email, password, and three separate, unticked agreements: the privacy
 /// notice (consent to processing), the terms of use, and the age statement.
 /// None of them is pre-ticked or bundled with another (GDPR Art. 7).
+/// With [google] the Google account replaces the email and password; the
+/// agreements are the same.
 class SignUpView extends StatefulWidget {
-  const SignUpView({super.key, required this.viewModel});
+  const SignUpView({super.key, required this.viewModel, this.google});
 
   final AccountViewModel viewModel;
+  final GoogleStart? google;
 
   @override
   State<SignUpView> createState() => _SignUpViewState();
@@ -46,15 +50,19 @@ class _SignUpViewState extends State<SignUpView> {
 
   Future<void> _submit() async {
     if (!_form.currentState!.validate()) return;
-    final key = await vm.signUp(
-      email: _email.text,
-      password: _password.text,
-      consent: Consent(
-        privacyVersion: privacyNotice.version,
-        termsVersion: termsOfUse.version,
-        adult: _adult,
-      ),
+    final consent = Consent(
+      privacyVersion: privacyNotice.version,
+      termsVersion: termsOfUse.version,
+      adult: _adult,
     );
+    final google = widget.google;
+    final key = google != null
+        ? await vm.signUpWithGoogle(google, consent)
+        : await vm.signUp(
+            email: _email.text,
+            password: _password.text,
+            consent: consent,
+          );
     if (key == null || !mounted) return;
     TextInput.finishAutofillContext();
     await Navigator.of(context).pushReplacement(MaterialPageRoute<void>(
@@ -75,25 +83,35 @@ class _SignUpViewState extends State<SignUpView> {
             child: ListView(
               padding: const EdgeInsets.all(16),
               children: [
-                EmailField(controller: _email),
-                const SizedBox(height: 12),
-                PasswordField(
-                  key: const Key('passwordField'),
-                  controller: _password,
-                  label: l10n.passwordLabel,
-                  helper: l10n.passwordHelp,
-                  autofillHint: AutofillHints.newPassword,
-                  validator: (v) => validatePassword(l10n, v),
-                ),
-                const SizedBox(height: 12),
-                PasswordField(
-                  key: const Key('repeatField'),
-                  controller: _repeat,
-                  label: l10n.repeatPasswordLabel,
-                  autofillHint: AutofillHints.newPassword,
-                  validator: (v) =>
-                      v == _password.text ? null : l10n.passwordsDiffer,
-                ),
+                if (widget.google case final google?) ...[
+                  ListTile(
+                    key: const Key('googleAccount'),
+                    contentPadding: EdgeInsets.zero,
+                    leading: const Icon(Icons.account_circle_outlined),
+                    title: Text(l10n.googleAccountAs(google.email)),
+                  ),
+                  Text(l10n.googleSignUpIntro),
+                ] else ...[
+                  EmailField(controller: _email),
+                  const SizedBox(height: 12),
+                  PasswordField(
+                    key: const Key('passwordField'),
+                    controller: _password,
+                    label: l10n.passwordLabel,
+                    helper: l10n.passwordHelp,
+                    autofillHint: AutofillHints.newPassword,
+                    validator: (v) => validatePassword(l10n, v),
+                  ),
+                  const SizedBox(height: 12),
+                  PasswordField(
+                    key: const Key('repeatField'),
+                    controller: _repeat,
+                    label: l10n.repeatPasswordLabel,
+                    autofillHint: AutofillHints.newPassword,
+                    validator: (v) =>
+                        v == _password.text ? null : l10n.passwordsDiffer,
+                  ),
+                ],
                 const SizedBox(height: 16),
                 _Agreement(
                   key: const Key('consentPrivacy'),

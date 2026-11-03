@@ -19,6 +19,8 @@ import {
 } from './validate.ts';
 import type { Bundle } from './validate.ts';
 import { legalPage, PRIVACY_VERSION, TERMS_VERSION } from './legal.ts';
+import { fetchGoogleKeys, verifyGoogleIdToken } from './google.ts';
+import type { GoogleIdentity, GoogleKeys } from './google.ts';
 
 const MINUTE = 60_000;
 const HOUR = 60 * MINUTE;
@@ -34,6 +36,8 @@ export type Options = {
   now?: () => number;
   /** One line per request: route and status only, never a body or query. */
   log?: (line: string) => void;
+  /** Google's public keys; tests pass their own. */
+  googleKeys?: GoogleKeys;
 };
 
 type Ctx = {
@@ -42,6 +46,8 @@ type Ctx = {
   now: number;
   ip: string;
   pepper: () => Promise<Uint8Array>;
+  /** Who a Google ID token belongs to (throws if it is not valid). */
+  google: (token: unknown) => Promise<GoogleIdentity>;
 };
 
 type UserRow = {
@@ -79,6 +85,13 @@ export async function handle(
       now: (options.now ?? Date.now)(),
       ip: request.headers.get('cf-connecting-ip') ?? 'unknown',
       pepper: async () => (cachedPepper ??= await loadPepper(env.DB)),
+      google: (token) =>
+        verifyGoogleIdToken(
+          token,
+          env.GOOGLE_CLIENT_ID,
+          (options.now ?? Date.now)(),
+          options.googleKeys ?? fetchGoogleKeys,
+        ),
     };
     response = json(200, await dispatch(route, url, ctx));
   } catch (error) {
@@ -107,6 +120,12 @@ async function dispatch(route: string, url: URL, ctx: Ctx): Promise<Record<strin
       return login(ctx, 'login');
     case 'POST /v1/recover':
       return login(ctx, 'recover');
+    case 'POST /v1/google/check':
+      return googleCheck(ctx);
+    case 'POST /v1/google/register':
+      return googleRegister(ctx);
+    case 'POST /v1/google/login':
+      return googleLogin(ctx);
     case 'POST /v1/password':
       return changePassword(ctx);
     case 'POST /v1/recovery-key':
@@ -284,6 +303,98 @@ async function register(ctx: Ctx) {
   return { token: await createSession(ctx, id) };
 }
 
+// ---- Google accounts ----
+// Google proves who the person is; the recovery key, which never leaves the
+// phone, is the only lock on the data key (packages/beaza_crypto/README.md).
+// Logging in on a phone needs both: a Google ID token and the recovery proof.
+
+/** Whether this Google account already has a Beaza account. Google has
+ * just proved the caller owns it, so the answer reveals nothing to others. */
+async function googleCheck(ctx: Ctx) {
+  const ipKey = `google:ip:${await keyedHash(ctx, ctx.ip)}`;
+  await assertNotLimited(ctx, ipKey, 40, 15 * MINUTE);
+  await recordAttempt(ctx, ipKey, 15 * MINUTE);
+  const who = await ctx.google((await readJson(ctx.request)).idToken);
+  const row = await ctx.db
+    .prepare('SELECT id FROM users WHERE google_sub = ?')
+    .bind(who.sub)
+    .first();
+  return { exists: row !== null, email: who.email };
+}
+
+async function googleRegister(ctx: Ctx) {
+  const ipKey = `register:${await keyedHash(ctx, ctx.ip)}`;
+  await assertNotLimited(ctx, ipKey, 20, HOUR);
+  await recordAttempt(ctx, ipKey, HOUR);
+
+  const body = await readJson(ctx.request);
+  const who = await ctx.google(body.idToken);
+  const email = checkEmail(who.email);
+  const recoveryAuthKey = checkKey(body.recoveryAuthKey, 'bad_recovery_auth_key');
+  const bundle = checkBundle(body.bundle);
+  if (bundle.password) throw new HttpError(400, 'bad_bundle');
+  const consent = checkConsent(body.consent);
+
+  const taken = await ctx.db
+    .prepare('SELECT id FROM users WHERE email = ? OR google_sub = ?')
+    .bind(email, who.sub)
+    .first();
+  if (taken) throw new HttpError(409, 'email_taken');
+
+  const id = toHex(randomBytes(16));
+  try {
+    await ctx.db
+      .prepare(
+        `INSERT INTO users (id, email, auth_hash, recovery_auth_hash, bundle, seq, created_at,
+                            privacy_version, terms_version, consent_at, google_sub)
+         VALUES (?, ?, ?, ?, ?, 0, ?, ?, ?, ?, ?)`,
+      )
+      .bind(
+        id,
+        email,
+        // No password: a hash of random bytes nobody has, so password log-in
+        // can never succeed for this account.
+        await storedHash('auth', id, randomBytes(32)),
+        await storedHash('recovery', id, recoveryAuthKey),
+        JSON.stringify(bundle),
+        ctx.now,
+        consent.privacy,
+        consent.terms,
+        ctx.now,
+        who.sub,
+      )
+      .run();
+  } catch (error) {
+    if (/UNIQUE constraint failed/i.test(String(error))) throw new HttpError(409, 'email_taken');
+    throw error;
+  }
+  return { token: await createSession(ctx, id) };
+}
+
+async function googleLogin(ctx: Ctx) {
+  const body = await readJson(ctx.request);
+  const who = await ctx.google(body.idToken);
+  const key = checkKey(body.recoveryAuthKey, 'bad_recovery_auth_key');
+
+  const accountKey = `google:sub:${await keyedHash(ctx, who.sub)}`;
+  const ipKey = `google:ip:${await keyedHash(ctx, ctx.ip)}`;
+  await assertNotLimited(ctx, accountKey, 5, HOUR);
+  await assertNotLimited(ctx, ipKey, 40, 15 * MINUTE);
+
+  const user = await ctx.db
+    .prepare('SELECT id, recovery_auth_hash, bundle FROM users WHERE google_sub = ?')
+    .bind(who.sub)
+    .first<{ id: string; recovery_auth_hash: string; bundle: string }>();
+  if (!user) throw new HttpError(404, 'no_account');
+  if (!safeEqual(await storedHash('recovery', user.id, key), user.recovery_auth_hash)) {
+    await recordAttempt(ctx, accountKey, HOUR);
+    await recordAttempt(ctx, ipKey, 15 * MINUTE);
+    throw new HttpError(401, 'invalid_credentials');
+  }
+  await ctx.db.prepare('DELETE FROM attempts WHERE key = ?').bind(accountKey).run();
+  return { token: await createSession(ctx, user.id), bundle: JSON.parse(user.bundle) };
+}
+
 /** Sign-up needs three separate, explicit statements: consent to the current
  * privacy notice, acceptance of the current terms, and being 18 or over.
  * Refusing anything else keeps the record meaningful (GDPR Art. 7(1)). */
@@ -440,15 +551,24 @@ async function logout(ctx: Ctx) {
   return { ok: true };
 }
 
+/** Needs the password key, or for a Google account a fresh Google ID token
+ * for that same Google account. */
 async function deleteAccount(ctx: Ctx) {
   const { userId } = await authenticate(ctx);
-  const authKey = checkKey((await readJson(ctx.request)).authKey, 'bad_auth_key');
+  const body = await readJson(ctx.request);
   const user = await ctx.db
-    .prepare('SELECT auth_hash FROM users WHERE id = ?')
+    .prepare('SELECT auth_hash, google_sub FROM users WHERE id = ?')
     .bind(userId)
-    .first<{ auth_hash: string }>();
-  if (!user || !safeEqual(await storedHash('auth', userId, authKey), user.auth_hash)) {
-    throw new HttpError(401, 'invalid_credentials');
+    .first<{ auth_hash: string; google_sub: string | null }>();
+  if (!user) throw new HttpError(401, 'invalid_credentials');
+  if (user.google_sub !== null && body.idToken !== undefined) {
+    const who = await ctx.google(body.idToken);
+    if (who.sub !== user.google_sub) throw new HttpError(401, 'invalid_credentials');
+  } else {
+    const authKey = checkKey(body.authKey, 'bad_auth_key');
+    if (!safeEqual(await storedHash('auth', userId, authKey), user.auth_hash)) {
+      throw new HttpError(401, 'invalid_credentials');
+    }
   }
   await ctx.db.batch([
     ctx.db.prepare('DELETE FROM records WHERE user_id = ?').bind(userId),

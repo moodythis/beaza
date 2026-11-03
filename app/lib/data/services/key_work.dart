@@ -31,6 +31,11 @@ class KeyWork {
         () => AccountKeys.create(password: password, params: p, minimum: m));
   }
 
+  /// A Google account: no password, so only the recovery key locks the data
+  /// key (no Argon2id work at all).
+  Future<NewAccount> createGoogleAccount() =>
+      _run(() => AccountKeys.create());
+
   /// Keys for logging in, with the salt and setting the server returned.
   /// Throws [WeakKdfParams] when the server asks for a weak setting.
   Future<PasswordKeys> derive(

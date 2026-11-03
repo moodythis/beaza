@@ -4,6 +4,7 @@ import 'package:beaza/domain/use_cases/data_export.dart';
 import 'package:beaza/l10n/app_localizations.dart';
 import 'package:beaza/ui/features/account/view_models/account_view_model.dart';
 import 'package:beaza/ui/features/account/views/account_widgets.dart';
+import 'package:beaza/ui/features/account/views/google_log_in_view.dart';
 import 'package:beaza/ui/features/account/views/log_in_view.dart';
 import 'package:beaza/ui/features/account/views/sign_up_view.dart';
 import 'package:flutter/material.dart';
@@ -108,6 +109,17 @@ class _AccountViewState extends State<AccountView> {
             )),
             child: Text(l10n.logIn),
           ),
+          if (widget.repository.googleAvailable) ...[
+            const SizedBox(height: 8),
+            OutlinedButton.icon(
+              key: const Key('googleButton'),
+              onPressed: vm.busy ? null : () => _google(context),
+              icon: const Icon(Icons.g_mobiledata, size: 28),
+              label: Text(l10n.continueWithGoogle),
+            ),
+            const SizedBox(height: 8),
+            AccountStatus(viewModel: vm),
+          ],
           const SizedBox(height: 16),
           const LegalLinks(),
           if (widget.sync case final sync?) OtherPhonesCard(sync: sync),
@@ -186,7 +198,45 @@ class _AccountViewState extends State<AccountView> {
     );
   }
 
+  /// Google's picker, then log in (account exists) or sign up.
+  Future<void> _google(BuildContext context) async {
+    final start = await vm.startGoogle();
+    if (start == null || !context.mounted) return;
+    await Navigator.of(context).push(MaterialPageRoute<void>(
+      builder: (_) => start.exists
+          ? GoogleLogInView(viewModel: vm, start: start)
+          : SignUpView(viewModel: vm, google: start),
+    ));
+  }
+
   Future<void> _delete(BuildContext context, AppLocalizations l10n) async {
+    if (widget.repository.current?.google ?? false) {
+      final sure = await showDialog<bool>(
+        context: context,
+        builder: (context) => AlertDialog(
+          title: Text(l10n.deleteAccount),
+          content: Text(l10n.deleteGoogleConfirm),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.of(context).pop(false),
+              child: Text(MaterialLocalizations.of(context).cancelButtonLabel),
+            ),
+            TextButton(
+              key: const Key('deleteGoogleConfirm'),
+              onPressed: () => Navigator.of(context).pop(true),
+              child: Text(l10n.deleteAccount),
+            ),
+          ],
+        ),
+      );
+      if (sure != true) return;
+      final ok = await vm.deleteGoogleAccount();
+      if (ok && context.mounted) {
+        ScaffoldMessenger.of(context)
+            .showSnackBar(SnackBar(content: Text(l10n.accountDeleted)));
+      }
+      return;
+    }
     final password = await showDialog<String>(
       context: context,
       builder: (_) => const _DeleteDialog(),

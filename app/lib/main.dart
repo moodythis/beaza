@@ -6,6 +6,7 @@ import 'package:beaza/data/repositories/sync_repository.dart';
 import 'package:beaza/data/services/account_store.dart';
 import 'package:beaza/data/services/alert_notifier.dart';
 import 'package:beaza/data/services/device_service.dart';
+import 'package:beaza/data/services/google_auth.dart';
 import 'package:beaza/data/services/key_store.dart';
 import 'package:beaza/data/services/sms_source.dart';
 import 'package:beaza/data/services/storage.dart';
@@ -90,8 +91,11 @@ Future<void> main() async {
     // The sync account. Nothing is sent anywhere until the user creates an
     // account or logs in.
     final api = SyncApi();
-    final account =
-        RemoteAccountRepository(api: api, store: SecureAccountStore());
+    final account = RemoteAccountRepository(
+      api: api,
+      store: SecureAccountStore(),
+      google: PluginGoogleAuth(),
+    );
     await account.load().catchError((Object _) {});
     final sync = SyncRepository(
       api: api,

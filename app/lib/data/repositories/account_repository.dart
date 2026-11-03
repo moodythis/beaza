@@ -1,4 +1,5 @@
 import 'package:beaza/data/services/account_store.dart';
+import 'package:beaza/data/services/google_auth.dart';
 import 'package:beaza/data/services/key_work.dart';
 import 'package:beaza/data/services/sync_api.dart';
 import 'package:beaza_crypto/beaza_crypto.dart';
@@ -21,6 +22,10 @@ enum AccountProblem {
   /// The privacy notice or terms changed; this app is out of date.
   documentsOutdated,
   sessionExpired,
+
+  /// Google's sign-in did not work (not set up for this app, or no Google
+  /// account on the phone).
+  google,
   server,
 }
 
@@ -36,6 +41,20 @@ class AccountFailure implements Exception {
 
   @override
   String toString() => 'AccountFailure(${problem.name})';
+}
+
+/// A Google account picked on this phone, and whether it already has a
+/// Beaza account (then log in with the recovery key; otherwise sign up).
+class GoogleStart {
+  const GoogleStart({
+    required this.idToken,
+    required this.email,
+    required this.exists,
+  });
+
+  final String idToken;
+  final String email;
+  final bool exists;
 }
 
 /// The sync account on this phone. Without an account nothing leaves the
@@ -73,6 +92,31 @@ abstract class AccountRepository extends ChangeNotifier {
   /// Ends the session. Works offline: the phone forgets the account even if
   /// the server cannot be told.
   Future<void> logOut();
+
+  // ---- Sign in with Google ----
+  // Google proves who the person is; the recovery key is the only lock on
+  // the data, so logging in on a phone needs it too.
+
+  /// True when this phone can show Google's account picker.
+  bool get googleAvailable => false;
+
+  /// Shows Google's account picker and asks the server whether that Google
+  /// account has a Beaza account. Null when the person closed the picker.
+  Future<GoogleStart?> startGoogle() =>
+      throw UnsupportedError('Google sign-in');
+
+  /// Creates a Google account and returns the recovery key, to be shown once.
+  Future<RecoveryKey> signUpWithGoogle(GoogleStart start, Consent consent) =>
+      throw UnsupportedError('Google sign-in');
+
+  /// Logs in to a Google account with its recovery key.
+  Future<void> logInWithGoogle(GoogleStart start, String recoveryKey) =>
+      throw UnsupportedError('Google sign-in');
+
+  /// Deletes a Google account after Google confirms it is the same
+  /// account. False when the person closed Google's picker.
+  Future<bool> deleteGoogleAccount() =>
+      throw UnsupportedError('Google sign-in');
 }
 
 String normalizeEmail(String email) => email.trim().toLowerCase();
@@ -95,6 +139,10 @@ AccountProblem problemForCode(String code) => switch (code) {
       'rate_limited' => AccountProblem.rateLimited,
       'documents_outdated' => AccountProblem.documentsOutdated,
       'unauthorized' => AccountProblem.sessionExpired,
+      'google_disabled' ||
+      'invalid_id_token' ||
+      'google_unavailable' =>
+        AccountProblem.google,
       _ => AccountProblem.server,
     };
 
@@ -103,13 +151,16 @@ class RemoteAccountRepository extends AccountRepository {
     required SyncApi api,
     required AccountStore store,
     KeyWork work = const KeyWork(),
+    GoogleAuth? google,
   })  : _api = api,
         _store = store,
-        _work = work;
+        _work = work,
+        _google = google;
 
   final SyncApi _api;
   final AccountStore _store;
   final KeyWork _work;
+  final GoogleAuth? _google;
 
   SavedAccount? _current;
 
@@ -141,6 +192,96 @@ class RemoteAccountRepository extends AccountRepository {
     await _save(SavedAccount(
         email: email, token: token, dataKey: created.dataKey));
     return created.recoveryKey;
+  }
+
+  @override
+  bool get googleAvailable => _google?.available ?? false;
+
+  @override
+  Future<GoogleStart?> startGoogle() async {
+    final idToken = await _googleToken();
+    if (idToken == null) return null;
+    final found = await _guard(() => _api.googleCheck(idToken));
+    return GoogleStart(
+        idToken: idToken, email: found.email, exists: found.exists);
+  }
+
+  @override
+  Future<RecoveryKey> signUpWithGoogle(
+      GoogleStart start, Consent consent) async {
+    if (!consent.adult) throw ArgumentError('consent must include age');
+    final created = await _work.createGoogleAccount();
+    final token = await _guard(() => _api.googleRegister(
+          idToken: start.idToken,
+          recoveryAuthKey: created.recoveryAuthKey,
+          bundle: created.bundle,
+          consent: consent,
+        ));
+    await _save(SavedAccount(
+        email: start.email,
+        token: token,
+        dataKey: created.dataKey,
+        google: true));
+    return created.recoveryKey;
+  }
+
+  @override
+  Future<void> logInWithGoogle(GoogleStart start, String recoveryKey) async {
+    final key = _parseRecoveryKey(recoveryKey);
+    final ({String token, KeyBundle bundle}) session;
+    try {
+      session = await _guard(
+          () async => _api.googleLogin(start.idToken, await key.authKey()));
+    } on AccountFailure catch (e) {
+      if (e.problem == AccountProblem.wrongCredentials) {
+        throw const AccountFailure(AccountProblem.wrongRecoveryKey);
+      }
+      rethrow;
+    }
+    final DataKey dataKey;
+    try {
+      dataKey = await session.bundle.openWithRecoveryKey(key);
+    } on DecryptionFailed {
+      throw const AccountFailure(AccountProblem.wrongRecoveryKey);
+    }
+    await _save(SavedAccount(
+        email: start.email,
+        token: session.token,
+        dataKey: dataKey,
+        google: true));
+  }
+
+  @override
+  Future<bool> deleteGoogleAccount() async {
+    final account = _requireAccount();
+    final idToken = await _googleToken();
+    if (idToken == null) return false;
+    await _guard(() => _api.deleteGoogleAccount(account.token, idToken));
+    await _forget();
+    return true;
+  }
+
+  Future<String?> _googleToken() async {
+    final google = _google;
+    if (google == null || !google.available) {
+      throw const AccountFailure(AccountProblem.google);
+    }
+    try {
+      return await google.idToken();
+    } on Exception catch (e) {
+      throw AccountFailure(AccountProblem.google,
+          code: e is GoogleAuthException ? e.message : null);
+    }
+  }
+
+  static RecoveryKey _parseRecoveryKey(String text) {
+    try {
+      return RecoveryKey.parse(text);
+    } on RecoveryKeyException catch (e) {
+      throw AccountFailure(e.problem == RecoveryKeyProblem.typo
+          ? AccountProblem.recoveryKeyTypo
+          : AccountProblem.recoveryKeyFormat);
+    }
   }
 
   @override

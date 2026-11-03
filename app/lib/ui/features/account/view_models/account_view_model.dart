@@ -42,6 +42,22 @@ class AccountViewModel extends ChangeNotifier {
       _ok(() => repository.recover(
           email: email, recoveryKey: recoveryKey, newPassword: newPassword));
 
+  /// Google's account picker, then whether that account exists. Null when
+  /// cancelled or failed ([failure] says why).
+  Future<GoogleStart?> startGoogle() => _run(repository.startGoogle);
+
+  Future<RecoveryKey?> signUpWithGoogle(GoogleStart start, Consent consent) =>
+      _run(() => repository.signUpWithGoogle(start, consent));
+
+  Future<bool> logInWithGoogle(GoogleStart start, String recoveryKey) =>
+      _ok(() => repository.logInWithGoogle(start, recoveryKey));
+
+  Future<bool> deleteGoogleAccount() async {
+    final done = await _run(repository.deleteGoogleAccount) ?? false;
+    if (done) _info = null;
+    return done;
+  }
+
   Future<void> loadInfo() async {
     _info = await _run(repository.info);
     _notify();
