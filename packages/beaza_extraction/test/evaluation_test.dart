@@ -162,6 +162,14 @@ void main() {
       expect(ev.overall.exactMatch, 1);
     });
 
+    test('nothing predicted for an expected field gives F1 0, not undefined',
+        () {
+      final c = Counts()..fn = 3;
+      expect(c.precision.isNaN, isTrue);
+      expect(c.f1, 0.0);
+      expect(Counts().f1.isNaN, isTrue);
+    });
+
     test('groups by sender family and language', () {
       final ev = evaluate(FakeSystem({'1': right(), '2': right()}), [
         msg('1', buy, sender: 'ilabank', text: 'Purchase BHD 1.500'),

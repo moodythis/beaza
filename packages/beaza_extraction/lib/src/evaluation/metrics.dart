@@ -30,10 +30,11 @@ class Counts {
   double get precision => tp + fp == 0 ? double.nan : tp / (tp + fp);
   double get recall => tp + fn == 0 ? double.nan : tp / (tp + fn);
   double get f1 {
+    // Nothing right but something expected or predicted: F1 is 0, even when
+    // precision is undefined because nothing was predicted.
+    if (tp == 0) return fp + fn == 0 ? double.nan : 0.0;
     final p = precision;
     final r = recall;
-    if (p.isNaN || r.isNaN) return double.nan;
-    if (p + r == 0) return 0.0;
     return 2 * p * r / (p + r);
   }
 
