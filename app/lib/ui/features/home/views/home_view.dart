@@ -53,13 +53,15 @@ class HomeView extends StatelessWidget {
             ),
           if (account != null)
             ListenableBuilder(
-              listenable: account!,
+              listenable: Listenable.merge([account!, if (sync != null) sync!]),
               builder: (context, _) => IconButton(
                 key: const Key('accountButton'),
                 tooltip: l10n.accountTitle,
-                icon: Icon(account!.signedIn
-                    ? Icons.cloud_done_outlined
-                    : Icons.account_circle_outlined),
+                icon: Icon(!account!.signedIn
+                    ? Icons.account_circle_outlined
+                    : sync?.mergeCount != null || sync?.failure != null
+                        ? Icons.sync_problem_outlined
+                        : Icons.cloud_done_outlined),
                 onPressed: () => Navigator.of(context).push(
                   MaterialPageRoute<void>(
                     builder: (_) =>

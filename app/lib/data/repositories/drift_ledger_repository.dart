@@ -147,6 +147,33 @@ class DriftLedgerRepository extends LedgerRepository implements Syncable {
       .write(const LedgerRowsCompanion(pendingSync: Value(true)));
 
   @override
+  Future<int> localCount() async {
+    final count = _db.ledgerRows.id.count();
+    final query = _db.selectOnly(_db.ledgerRows)
+      ..addColumns([count])
+      ..where(_db.ledgerRows.deletedAtMs.isNull());
+    return (await query.getSingle()).read(count) ?? 0;
+  }
+
+  @override
+  Future<int> countFromOtherPhones() async {
+    final count = _db.ledgerRows.id.count();
+    final query = _db.selectOnly(_db.ledgerRows)
+      ..addColumns([count])
+      ..where(_db.ledgerRows.deviceId.equals(_deviceId).not());
+    return (await query.getSingle()).read(count) ?? 0;
+  }
+
+  @override
+  Future<int> removeFromOtherPhones() async {
+    final n = await (_db.delete(_db.ledgerRows)
+          ..where((r) => r.deviceId.equals(_deviceId).not()))
+        .go();
+    if (n > 0) notifyListeners();
+    return n;
+  }
+
+  @override
   Future<int> applyRemote(List<RemoteItem> items) async {
     var changed = 0;
     await _db.transaction(() async {

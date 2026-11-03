@@ -101,6 +101,7 @@ class _AccountViewState extends State<AccountView> {
           ),
           const SizedBox(height: 16),
           const LegalLinks(),
+          if (widget.sync case final sync?) OtherPhonesCard(sync: sync),
         ],
       );
 
@@ -142,7 +143,11 @@ class _AccountViewState extends State<AccountView> {
         ),
         if (widget.sync case final sync?) ...[
           const SizedBox(height: 8),
-          SyncSection(sync: sync, onSynced: vm.loadInfo),
+          SyncSection(
+            sync: sync,
+            onSynced: vm.loadInfo,
+            onLogOut: vm.busy ? null : vm.logOut,
+          ),
         ],
         const SizedBox(height: 8),
         const LegalLinks(),
@@ -232,12 +237,20 @@ class _DeleteDialogState extends State<_DeleteDialog> {
 /// When this phone last synced, why the last sync failed, and a button to
 /// sync now.
 class SyncSection extends StatelessWidget {
-  const SyncSection({super.key, required this.sync, this.onSynced});
+  const SyncSection({
+    super.key,
+    required this.sync,
+    this.onSynced,
+    this.onLogOut,
+  });
 
   final SyncRepository sync;
 
   /// Called after a sync started with the button succeeds.
   final VoidCallback? onSynced;
+
+  /// "Log out instead" when asked whether to add this phone's data.
+  final VoidCallback? onLogOut;
 
   @override
   Widget build(BuildContext context) {
@@ -247,6 +260,8 @@ class SyncSection extends StatelessWidget {
     return ListenableBuilder(
       listenable: sync,
       builder: (context, _) {
+        final merge = sync.mergeCount;
+        if (merge != null) return _askMerge(context, l10n, merge);
         final failure = sync.failure;
         final last = sync.lastSynced;
         final Widget status;
@@ -291,5 +306,124 @@ class SyncSection extends StatelessWidget {
         );
       },
     );
+  }
+
+  /// Asked once when this phone holds data and was signed in to an account
+  /// it never synced with. Nothing is sent or fetched until the answer.
+  Widget _askMerge(BuildContext context, AppLocalizations l10n, int count) {
+    final theme = Theme.of(context);
+    return Card(
+      key: const Key('mergeCard'),
+      color: theme.colorScheme.secondaryContainer,
+      child: Padding(
+        padding: const EdgeInsets.all(16),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            Text(l10n.mergeTitle, style: theme.textTheme.titleMedium),
+            const SizedBox(height: 8),
+            Text(l10n.mergeBody(count)),
+            const SizedBox(height: 4),
+            Text(l10n.mergeWarning, style: theme.textTheme.bodySmall),
+            const SizedBox(height: 12),
+            FilledButton(
+              key: const Key('mergeConfirm'),
+              onPressed: () async {
+                if (await sync.approveMerge()) onSynced?.call();
+              },
+              child: Text(l10n.mergeConfirm),
+            ),
+            const SizedBox(height: 4),
+            OutlinedButton(
+              key: const Key('mergeLogOut'),
+              onPressed: onLogOut,
+              child: Text(l10n.mergeLogOut),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+/// Signed out: offers to remove, from this phone only, transactions that
+/// came from other phones (the undo for signing in to the wrong account).
+/// Hidden when there are none.
+class OtherPhonesCard extends StatefulWidget {
+  const OtherPhonesCard({super.key, required this.sync});
+
+  final SyncRepository sync;
+
+  @override
+  State<OtherPhonesCard> createState() => _OtherPhonesCardState();
+}
+
+class _OtherPhonesCardState extends State<OtherPhonesCard> {
+  int _count = 0;
+
+  @override
+  void initState() {
+    super.initState();
+    widget.sync.countFromOtherPhones().then((n) {
+      if (mounted) setState(() => _count = n);
+    }, onError: (Object _) {});
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    if (_count == 0) return const SizedBox.shrink();
+    final l10n = AppLocalizations.of(context);
+    final theme = Theme.of(context);
+    return Padding(
+      padding: const EdgeInsets.only(top: 16),
+      child: Card(
+        key: const Key('otherPhonesCard'),
+        child: Padding(
+          padding: const EdgeInsets.all(16),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              Text(l10n.otherPhonesBody(_count)),
+              const SizedBox(height: 8),
+              TextButton(
+                key: const Key('removeOtherPhones'),
+                style: TextButton.styleFrom(
+                    foregroundColor: theme.colorScheme.error),
+                onPressed: () => _remove(context, l10n),
+                child: Text(l10n.removeOtherPhones),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  Future<void> _remove(BuildContext context, AppLocalizations l10n) async {
+    final sure = await showDialog<bool>(
+      context: context,
+      builder: (context) => AlertDialog(
+        content: Text(l10n.removeOtherPhonesConfirm(_count)),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(context).pop(false),
+            child: Text(l10n.cancel),
+          ),
+          TextButton(
+            key: const Key('confirmRemoveOtherPhones'),
+            onPressed: () => Navigator.of(context).pop(true),
+            child: Text(l10n.removeOtherPhones),
+          ),
+        ],
+      ),
+    );
+    if (sure != true) return;
+    final removed = await widget.sync.removeFromOtherPhones();
+    if (!mounted) return;
+    setState(() => _count = 0);
+    if (context.mounted) {
+      ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text(l10n.removedOtherPhones(removed))));
+    }
   }
 }

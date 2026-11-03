@@ -130,8 +130,15 @@ SavedAccount account(String token, [DataKey? key]) =>
 
 /// One phone: its own database, the shared fake server, one account.
 class Phone {
-  Phone(String deviceId, FakeRecordServer server, SavedAccount saved)
+  /// [owner]: this phone's data already belongs to the account (the
+  /// question about adding it was answered before).
+  Phone(String deviceId, FakeRecordServer server, SavedAccount saved,
+      {bool owner = true})
       : db = openMemoryDatabase() {
+    if (owner) {
+      prefs.values[SyncRepository.ownerPref] =
+          SyncRepository.ownerMarker(saved.dataKey);
+    }
     ledger = DriftLedgerRepository(db, deviceId: deviceId, clock: () => now);
     settings = DriftSettingsRepository(db, clock: () => now);
     account = FixedAccount(saved);
@@ -313,15 +320,109 @@ void main() {
     expect(a.sync.failure!.problem, AccountProblem.sessionExpired);
   });
 
-  test('logging in to another account sends everything to it', () async {
-    await a.ledger.addManual(amountFils: 400, at: now);
-    await a.sync.syncNow();
-    expect(await a.pending(), 0);
+  group('signing in to an account this phone never synced with', () {
+    test('asks first, and sends or fetches nothing until the answer',
+        () async {
+      await a.ledger.addManual(amountFils: 400, at: now);
+      await a.sync.syncNow();
 
-    server.addAccount('user2', 'tokenC');
-    a.account.current = account('tokenC', key2);
+      server.addAccount('user2', 'tokenC');
+      server.addAccount('user2', 'tokenD');
+      final other = Phone('deviceO', server, account('tokenD', key2));
+      await other.ledger.addManual(amountFils: 999, at: now);
+      await other.sync.syncNow();
+      server.pulled.clear();
+
+      a.account.current = account('tokenC', key2);
+      expect(await a.sync.syncNow(), isFalse);
+      expect(a.sync.mergeCount, 1);
+      expect(server.stored('user2'), hasLength(1), reason: 'only theirs');
+      expect(server.pulled, isEmpty, reason: 'nothing fetched either');
+      expect(await a.amounts(), [400]);
+
+      // Later triggers (a local change, the background run) wait as well.
+      expect(await a.sync.syncNow(pushOnly: true), isFalse);
+      expect(server.stored('user2'), hasLength(1));
+
+      expect(await a.sync.approveMerge(), isTrue);
+      expect(a.sync.mergeCount, isNull);
+      expect(server.stored('user2'), hasLength(2));
+      expect((await a.amounts())..sort(), [400, 999]);
+      await other.close();
+    });
+
+    test('logging out instead leaves the account untouched', () async {
+      await a.ledger.addManual(amountFils: 400, at: now);
+      server.addAccount('user2', 'tokenC');
+      a.account
+        ..addListener(a.sync.accountChanged)
+        ..current = account('tokenC', key2);
+      await Future<void>.delayed(const Duration(milliseconds: 50));
+      expect(a.sync.mergeCount, 1);
+
+      await a.account.logOut();
+      expect(a.sync.mergeCount, isNull);
+      expect(server.stored('user2'), isEmpty);
+    });
+
+    test('a phone with no data joins without a question', () async {
+      final fresh =
+          Phone('deviceF', server, account('tokenB'), owner: false);
+      await a.ledger.addManual(amountFils: 100, at: now);
+      await a.sync.syncNow();
+      expect(await fresh.sync.syncNow(), isTrue);
+      expect(fresh.sync.mergeCount, isNull);
+      expect(await fresh.amounts(), [100]);
+      await fresh.close();
+    });
+
+    test('a phone with data asks even on its first account', () async {
+      final used = Phone('deviceU', server, account('tokenB'), owner: false);
+      await used.ledger.addManual(amountFils: 100, at: now);
+      await used.ledger.addManual(amountFils: 200, at: now);
+      expect(await used.sync.syncNow(), isFalse);
+      expect(used.sync.mergeCount, 2);
+      await used.close();
+    });
+
+    test('a phone that already synced this session before the question '
+        'existed is not asked', () async {
+      final old = Phone('deviceP', server, account('tokenB'), owner: false);
+      await old.ledger.addManual(amountFils: 100, at: now);
+      old.prefs.values[SyncRepository.accountPref] =
+          SyncRepository.sessionMarker('tokenB');
+      expect(await old.sync.syncNow(), isTrue);
+      expect(old.sync.mergeCount, isNull);
+      await old.close();
+    });
+
+    test('the same account in a new session is not asked again', () async {
+      await a.ledger.addManual(amountFils: 100, at: now);
+      await a.sync.syncNow();
+      server.addAccount('user1', 'tokenA2');
+      a.account.current = account('tokenA2');
+      expect(await a.sync.syncNow(), isTrue);
+      expect(a.sync.mergeCount, isNull);
+    });
+  });
+
+  test('removing transactions from other phones keeps this phone\'s own',
+      () async {
+    await a.ledger.addManual(amountFils: 100, at: now);
     await a.sync.syncNow();
-    expect(server.stored('user2'), hasLength(1));
+    await b.ledger.addManual(amountFils: 200, at: now);
+    await b.sync.syncNow();
+    expect((await b.amounts())..sort(), [100, 200]);
+
+    await b.account.logOut();
+    expect(await b.sync.countFromOtherPhones(), 1);
+    expect(await b.sync.removeFromOtherPhones(), 1);
+    expect(await b.amounts(), [200]);
+    expect(await b.sync.countFromOtherPhones(), 0);
+  });
+
+  test('removing is refused while signed in', () async {
+    await expectLater(a.sync.removeFromOtherPhones(), throwsStateError);
   });
 
   test('a record locked with another key is skipped, the rest syncs',
@@ -397,6 +498,37 @@ void main() {
     await tester.runAsync(() => phone.sync.syncNow());
     await tester.pump();
     expect(find.textContaining('did not finish'), findsOneWidget);
+    await tester.runAsync(phone.close);
+  });
+
+  testWidgets('the question about adding this phone\'s data is shown',
+      (tester) async {
+    final phone = (await tester.runAsync(() async {
+      final p = Phone('deviceQ', server, account('tokenA'), owner: false);
+      await p.ledger.addManual(amountFils: 100, at: now);
+      await p.sync.syncNow();
+      return p;
+    }))!;
+    var loggedOut = false;
+    await tester.pumpWidget(MaterialApp(
+      locale: const Locale('en'),
+      localizationsDelegates: AppLocalizations.localizationsDelegates,
+      supportedLocales: AppLocalizations.supportedLocales,
+      home: Scaffold(
+        body: SyncSection(sync: phone.sync, onLogOut: () => loggedOut = true),
+      ),
+    ));
+    expect(find.byKey(const Key('mergeCard')), findsOneWidget);
+    expect(find.textContaining('1 transaction that is not in this account'),
+        findsOneWidget);
+    expect(find.byKey(const Key('syncNowButton')), findsNothing);
+    await tester.tap(find.byKey(const Key('mergeLogOut')));
+    expect(loggedOut, isTrue);
+
+    await tester.runAsync(() => phone.sync.approveMerge());
+    await tester.pump();
+    expect(find.byKey(const Key('mergeCard')), findsNothing);
+    expect(find.textContaining('Last synced'), findsOneWidget);
     await tester.runAsync(phone.close);
   });
 }

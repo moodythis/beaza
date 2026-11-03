@@ -100,6 +100,17 @@ class DriftSettingsRepository extends SettingsRepository implements Syncable {
       .write(const SettingsRowsCompanion(pendingSync: Value(true)));
 
   @override
+  Future<int> localCount() async => await _row() == null ? 0 : 1;
+
+  /// Settings have no device: the limit stays as it is; the person can
+  /// change it.
+  @override
+  Future<int> countFromOtherPhones() async => 0;
+
+  @override
+  Future<int> removeFromOtherPhones() async => 0;
+
+  @override
   Future<int> applyRemote(List<RemoteItem> items) async {
     var changed = 0;
     for (final item in items) {

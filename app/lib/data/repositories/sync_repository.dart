@@ -45,6 +45,10 @@ class SyncRepository extends ChangeNotifier {
   static const String sincePref = 'sync.since';
   static const String lastPref = 'sync.last';
 
+  /// Which account this phone's data belongs to (a hash of the account's
+  /// data key, which stays the same across password changes and sessions).
+  static const String ownerPref = 'sync.owner';
+
   static const int pushBatch = 100;
 
   /// Upper bound of push rounds per list in one sync; the rest goes next time.
@@ -62,6 +66,13 @@ class SyncRepository extends ChangeNotifier {
 
   /// Why the last sync failed, or null.
   AccountFailure? get failure => _failure;
+
+  int? _mergeCount;
+
+  /// Set when this phone holds data and was signed in to an account it never
+  /// synced with: the number of transactions that would be added. Nothing is
+  /// sent or fetched until the person chooses [approveMerge] or logs out.
+  int? get mergeCount => _mergeCount;
 
   int _unreadable = 0;
 
@@ -93,8 +104,42 @@ class SyncRepository extends ChangeNotifier {
     if (token == _lastToken) return;
     _lastToken = token;
     _failure = null;
+    _mergeCount = null;
     if (token != null) unawaited(syncNow());
     _notify();
+  }
+
+  /// The person agreed to add this phone's data to the signed-in account.
+  Future<bool> approveMerge() async {
+    final account = _account.current;
+    if (account == null) return false;
+    await _prefs.write(ownerPref, ownerMarker(account.dataKey));
+    _mergeCount = null;
+    _notify();
+    return syncNow();
+  }
+
+  /// Transactions on this phone last changed by another phone (they came
+  /// through an account).
+  Future<int> countFromOtherPhones() async {
+    var n = 0;
+    for (final c in _collections) {
+      n += await c.countFromOtherPhones();
+    }
+    return n;
+  }
+
+  /// Removes, from this phone only, the transactions that came from other
+  /// phones: the undo for adding data to the wrong account. Only while
+  /// signed out, so nothing about it reaches any account. Signing in again
+  /// brings back whatever really belongs to that account.
+  Future<int> removeFromOtherPhones() async {
+    if (_account.signedIn) throw StateError('log out first');
+    var n = 0;
+    for (final c in _collections) {
+      n += await c.removeFromOtherPhones();
+    }
+    return n;
   }
 
   /// Call when something changed on this phone. Syncs a moment later.
@@ -138,7 +183,8 @@ class SyncRepository extends ChangeNotifier {
 
   Future<bool> _syncOnce(bool pushOnly) async {
     final account = _account.current;
-    if (account == null) return false;
+    if (account == null || _mergeCount != null) return false;
+    if (!await _ownerAgreed(account)) return false;
     _syncing = true;
     _failure = null;
     _notify();
@@ -159,6 +205,37 @@ class SyncRepository extends ChangeNotifier {
       _syncing = false;
       _notify();
     }
+  }
+
+  /// True if this phone's data may be mixed with [account]'s. Asks first
+  /// (through [mergeCount]) when the phone holds data and the account is not
+  /// the one it last synced with, so an accidental log-in to someone else's
+  /// account never uploads this phone's spending or brings theirs here.
+  Future<bool> _ownerAgreed(SavedAccount account) async {
+    final owner = ownerMarker(account.dataKey);
+    final known = await _prefs.read(ownerPref);
+    if (known == owner) return true;
+    // Already synced in this very session by an app version from before
+    // this check: it is this account's data.
+    final sameSession = known == null &&
+        await _prefs.read(accountPref) == sessionMarker(account.token);
+    var transactions = 0, rows = 0;
+    if (!sameSession) {
+      for (final c in _collections) {
+        final n = await c.localCount();
+        rows += n;
+        if (c.collection == transactionsCollection) transactions += n;
+      }
+    }
+    if (rows == 0) {
+      await _prefs.write(ownerPref, owner);
+      return true;
+    }
+    if (_account.current?.token == account.token) {
+      _mergeCount = transactions;
+      _notify();
+    }
+    return false;
   }
 
   /// The change number to pull after. After logging in to an account (or a
@@ -237,6 +314,17 @@ class SyncRepository extends ChangeNotifier {
     }
     return _cipher!;
   }
+
+  /// The collection whose count is shown when asking to merge.
+  static const String transactionsCollection = 'txn';
+
+  /// Tells accounts apart without keeping anything secret in the database.
+  static String ownerMarker(DataKey key) => hash.sha256
+      .convert([
+        ...utf8.encode('beaza/sync/owner/'),
+        ...key.exportForSecureStorage(),
+      ])
+      .toString();
 
   /// Tells sessions apart without keeping the token itself in the database.
   static String sessionMarker(String token) =>

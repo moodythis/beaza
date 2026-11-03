@@ -46,6 +46,16 @@ abstract interface class Syncable {
   /// Marks every row to be sent again, for example after logging in to a
   /// different account.
   Future<void> markAllPending();
+
+  /// Rows holding data on this phone (deleted ones not counted).
+  Future<int> localCount();
+
+  /// Rows last changed by another phone.
+  Future<int> countFromOtherPhones();
+
+  /// Deletes those rows from this phone only (no tombstones: nothing about
+  /// it is ever synced). Returns how many were removed.
+  Future<int> removeFromOtherPhones();
 }
 
 /// Last writer wins: true if the version from ([time], [device]) should

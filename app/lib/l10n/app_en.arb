@@ -257,5 +257,42 @@
         "type": "String"
       }
     }
+  },
+  "mergeTitle": "Add this phone's data to this account?",
+  "mergeBody": "{count, plural, =0{This phone has a daily limit and settings that are not in this account yet.} =1{This phone has 1 transaction that is not in this account yet.} other{This phone has {count} transactions that are not in this account yet.}} If you add it, it is encrypted and added to the account, and the account's transactions come to this phone.",
+  "@mergeBody": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "mergeWarning": "Anyone who can sign in to this account will see it. If this is not your account, log out: nothing has been sent.",
+  "mergeConfirm": "Add to this account",
+  "mergeLogOut": "Log out instead",
+  "otherPhonesBody": "{count, plural, =1{1 transaction on this phone came from another phone through an account.} other{{count} transactions on this phone came from other phones through an account.}} If they are not yours (for example after signing in to the wrong account), you can remove them from this phone.",
+  "@otherPhonesBody": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "removeOtherPhones": "Remove from this phone",
+  "removeOtherPhonesConfirm": "{count, plural, =1{Remove 1 transaction that came from another phone?} other{Remove {count} transactions that came from other phones?}} Transactions made on this phone stay. Nothing changes on the server; signing in to an account brings back what belongs to it.",
+  "@removeOtherPhonesConfirm": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "removedOtherPhones": "{count, plural, =1{Removed 1 transaction} other{Removed {count} transactions}}",
+  "@removedOtherPhones": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
   }
 }
