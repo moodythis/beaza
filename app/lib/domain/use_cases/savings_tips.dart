@@ -126,7 +126,7 @@ List<SavingsTip> savingsTips(
   // 4. What 20% less on the biggest discretionary category would keep.
   for (final t in now) {
     if (!kDiscretionary.contains(t.bucket) ||
-        used.contains(t.bucket) ||
+        t.bucket == spike?.bucket ||
         t.totalFils < kTipsMinCategoryFils) {
       continue;
     }
