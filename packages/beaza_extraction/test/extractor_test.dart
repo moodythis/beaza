@@ -156,4 +156,67 @@ void main() {
     expect(sum(run('ilabank', text, t)),
         'transaction|transferIn|transfer|50000|BHD|null|null|2026-11-02T09:11:00.000Z');
   });
+
+  group('formats found on the review screen (values invented)', () {
+    test('BisB card in US dollars: a transaction flagged as foreign', () {
+      final r = run(
+          'BisB',
+          'Dear CLIENT, thank you for using your Debit card 7744 for USD 22.00 at GOOGLE *SAMPLE APP g #US-000001 on 02/11 @16:19. Avail Bal BHD 99.999. Tel 17515151',
+          DateTime.utc(2026, 11, 2, 13, 20));
+      expect(r.status, ExtractionStatus.transaction);
+      expect(r.currency, 'USD');
+      expect(r.flags, contains(ExtractionFlag.foreignCurrency));
+      expect(r.amountFils, 22000);
+      expect(r.last4, '7744');
+      expect(r.merchantRaw, 'GOOGLE *SAMPLE APP g #US-000001');
+      expect(r.timestamp, DateTime.utc(2026, 11, 2, 13, 19));
+    });
+
+    test('BisB account credited: income, time taken from the receipt', () {
+      final r = run(
+          'BisB',
+          'Your account 0000XXXXXX5566 has been credited with BHD120.000. Available Bal. BHD199.999',
+          DateTime.utc(2026, 11, 3, 0, 36));
+      expect(r.status, ExtractionStatus.transaction);
+      expect(r.direction, TxDirection.incoming);
+      expect(r.amountFils, 120000);
+      expect(r.last4, '5566');
+      expect(r.flags, contains(ExtractionFlag.timestampFromReceipt));
+    });
+
+    test('ila loan campaign is a promotion, not a transfer', () {
+      final r = run(
+          'ila Bank',
+          'Apply for an ila loan or transfer your existing loan for a chance to have it paid off, up to BHD20,000. Campaign period: 9 September 2026 to 31 March 2027.',
+          DateTime.utc(2026, 11, 2, 8, 36));
+      expect(r.status, ExtractionStatus.nonTransaction);
+      expect(r.kind, MessageKind.promotion);
+    });
+
+    test('ila savings rate news is not a transaction', () {
+      final r = run(
+          'ila Bank',
+          'Our Savings+ rates have increased.\n\nEarn more with a flexible high yield savings account now offering up to 2.80% p.a. paid monthly on BHD and USD accounts, with full flexibility and no lock-in period. Deposit today via the ila Bank app.',
+          DateTime.utc(2026, 11, 2, 9, 45));
+      expect(r.status, ExtractionStatus.nonTransaction);
+    });
+
+    test('Al Salam maintenance notice is not a transaction', () {
+      final r = run(
+          'AlSalamBank',
+          'To enhance your banking experience, system maintenance will take place on 16 October 2026 from 2:00 to 6:00 AM. Some services may be temporarily unavailable.',
+          DateTime.utc(2026, 10, 14, 11, 43));
+      expect(r.status, ExtractionStatus.nonTransaction);
+      expect(r.kind, MessageKind.information);
+    });
+
+    test('a bank message with an amount but no known format still goes to review',
+        () {
+      final r = run(
+          'BisB',
+          'Dear Client, your account was debited with BHD 3.000 for service charges on 02/11/2026.',
+          DateTime.utc(2026, 11, 2, 10, 0));
+      expect(r.status, ExtractionStatus.unparsed);
+    });
+  });
 }
