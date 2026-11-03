@@ -47,6 +47,11 @@ try {
   let r = await call('GET', '/v1/health');
   check('health', r.status === 200 && r.body.ok === true, r);
 
+  // Google sign-in is configured: a malformed token is refused as a token
+  // (400), not with 503 google_disabled.
+  r = await call('POST', '/v1/google/check', { idToken: 'not-a-token' });
+  check('Google sign-in is on', r.status === 400 && r.body.error === 'bad_id_token', r);
+
   r = await call('POST', '/v1/register', { email, authKey, recoveryAuthKey, bundle, consent });
   check('register', r.status === 200 && typeof r.body.token === 'string', r);
   const token = r.body.token as string;
