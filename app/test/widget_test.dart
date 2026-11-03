@@ -163,7 +163,7 @@ void main() {
     await tester.pumpAndSettle();
 
     expect(find.byKey(const Key('smsCard')), findsNothing);
-    expect(find.text('SAMPLE BAKERY - MAL BAH BH-000001'), findsOneWidget);
+    expect(find.text('Sample Bakery - Mal Bah'), findsOneWidget);
     expect(find.text('BHD 9.700'), findsOneWidget);
   });
 
