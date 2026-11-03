@@ -44,7 +44,8 @@ class AccountViewModel extends ChangeNotifier {
 
   /// Google's account picker, then whether that account exists. Null when
   /// cancelled or failed ([failure] says why).
-  Future<GoogleStart?> startGoogle() => _run(repository.startGoogle);
+  Future<GoogleStart?> startGoogle() =>
+      _run<GoogleStart?>(repository.startGoogle);
 
   Future<RecoveryKey?> signUpWithGoogle(GoogleStart start, Consent consent) =>
       _run(() => repository.signUpWithGoogle(start, consent));
