@@ -16,6 +16,8 @@ dependencies:
     path: ../packages/beaza_extraction
   beaza_crypto:
     path: ../packages/beaza_crypto
+  beaza_assistant:
+    path: ../packages/beaza_assistant
   http: ^1.2.0
   crypto: ^3.0.3
   drift: ">=2.32.0 <3.0.0"

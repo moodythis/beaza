@@ -3,10 +3,12 @@ import 'dart:async';
 import 'package:beaza/data/repositories/ledger_repository.dart';
 import 'package:beaza/data/repositories/settings_repository.dart';
 import 'package:beaza/data/services/device_service.dart';
+import 'package:beaza/data/services/voice_input.dart';
 import 'package:beaza/domain/use_cases/data_export.dart';
 import 'package:beaza/domain/use_cases/message_intake.dart';
 import 'package:beaza/domain/use_cases/savings_tips.dart';
 import 'package:beaza/domain/use_cases/spending_by_category.dart';
+import 'package:beaza_assistant/beaza_assistant.dart' show DraftTransaction, ExpenseParser;
 import 'package:beaza_extraction/beaza_extraction.dart';
 import 'package:flutter/foundation.dart';
 
@@ -40,6 +42,7 @@ class HomeViewModel extends ChangeNotifier {
     required SettingsRepository settings,
     MessageIntake? intake,
     DeviceService? device,
+    this.voice,
     this.export,
     DateTime Function()? clock,
     this.arrivalDelay = const Duration(seconds: 3),
@@ -62,6 +65,27 @@ class HomeViewModel extends ChangeNotifier {
   final MessageIntake? _intake;
   final DeviceService? _device;
   final DateTime Function() _clock;
+
+  /// Speech to text for quick add; null hides the microphone.
+  final VoiceInput? voice;
+
+  static const ExpenseParser _parser = ExpenseParser();
+
+  /// Cash expenses in the person's words ("شريت كرك بربيتين وشاورما بـ 800
+  /// فلس"): drafts to show for confirmation, nothing saved yet.
+  List<DraftTransaction> draftsFrom(String text) => _parser.parse(text, _clock());
+
+  /// Saves the drafts the person confirmed, at the time they confirm.
+  Future<void> addDrafts(List<DraftTransaction> drafts) async {
+    for (final d in drafts) {
+      await _ledger.addManual(
+        amountFils: d.amountFils,
+        merchant: d.merchantRaw,
+        at: d.timestamp,
+        category: d.category,
+      );
+    }
+  }
 
   /// For the history screen.
   LedgerRepository get ledger => _ledger;

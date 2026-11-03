@@ -11,6 +11,7 @@ import 'package:beaza/data/services/key_store.dart';
 import 'package:beaza/data/services/sms_source.dart';
 import 'package:beaza/data/services/storage.dart';
 import 'package:beaza/data/services/sync_api.dart';
+import 'package:beaza/data/services/voice_input.dart';
 import 'package:beaza/domain/use_cases/data_export.dart';
 import 'package:beaza/domain/use_cases/guardrail_alerts.dart';
 import 'package:beaza/domain/use_cases/message_intake.dart';
@@ -82,6 +83,7 @@ Future<void> main() async {
       settings: storage.settings,
       intake: buildIntake(storage),
       device: device,
+      voice: PlatformVoiceInput(),
       export: DataExport(
         ledger: storage.ledger,
         settings: storage.settings,

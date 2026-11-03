@@ -10,6 +10,7 @@ import android.content.pm.PackageManager
 import android.net.Uri
 import android.os.Build
 import android.provider.Settings
+import android.speech.RecognizerIntent
 import java.io.IOException
 import io.flutter.embedding.android.FlutterActivity
 import io.flutter.embedding.engine.FlutterEngine
@@ -21,6 +22,7 @@ class MainActivity : FlutterActivity(), PermissionRequester {
     private var pendingSms: MethodChannel.Result? = null
     private var pendingNotify: MethodChannel.Result? = null
     private var pendingSave: Pair<String, MethodChannel.Result>? = null
+    private var pendingListen: MethodChannel.Result? = null
     private var smsReceiver: BroadcastReceiver? = null
 
     override fun configureFlutterEngine(flutterEngine: FlutterEngine) {
@@ -134,8 +136,45 @@ class MainActivity : FlutterActivity(), PermissionRequester {
         }
     }
 
+    /**
+     * Opens the phone's own speech screen and answers with what was said, or
+     * null if cancelled. Beaza never records audio itself (no microphone
+     * permission). Offline recognition is asked for; whether the phone's
+     * speech service honours it depends on the phone.
+     */
+    override fun listen(language: String, result: MethodChannel.Result) {
+        if (pendingListen != null) {
+            result.error("busy", "Voice input is already open", null)
+            return
+        }
+        val intent = Intent(RecognizerIntent.ACTION_RECOGNIZE_SPEECH).apply {
+            putExtra(RecognizerIntent.EXTRA_LANGUAGE_MODEL, RecognizerIntent.LANGUAGE_MODEL_FREE_FORM)
+            putExtra(RecognizerIntent.EXTRA_LANGUAGE, language)
+            putExtra(RecognizerIntent.EXTRA_PREFER_OFFLINE, true)
+            putExtra(RecognizerIntent.EXTRA_MAX_RESULTS, 1)
+        }
+        pendingListen = result
+        try {
+            startActivityForResult(intent, LISTEN_REQUEST)
+        } catch (e: ActivityNotFoundException) {
+            pendingListen = null
+            result.error("no_speech", e.message, null)
+        }
+    }
+
     override fun onActivityResult(requestCode: Int, resultCode: Int, data: Intent?) {
         super.onActivityResult(requestCode, resultCode, data)
+        if (requestCode == LISTEN_REQUEST) {
+            val result = pendingListen ?: return
+            pendingListen = null
+            val text = if (resultCode == RESULT_OK) {
+                data?.getStringArrayListExtra(RecognizerIntent.EXTRA_RESULTS)?.firstOrNull()
+            } else {
+                null
+            }
+            result.success(text)
+            return
+        }
         if (requestCode != SAVE_FILE_REQUEST) return
         val (text, result) = pendingSave ?: return
         pendingSave = null
@@ -188,6 +227,7 @@ class MainActivity : FlutterActivity(), PermissionRequester {
         private const val SMS_PERMISSION_REQUEST = 4101
         private const val NOTIFY_PERMISSION_REQUEST = 4102
         private const val SAVE_FILE_REQUEST = 4103
+        private const val LISTEN_REQUEST = 4104
 
         /** True while the app screen's engine is running. */
         @Volatile

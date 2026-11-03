@@ -11,10 +11,13 @@ abstract class LedgerRepository extends ChangeNotifier {
   Future<List<LedgerEntry>> entries();
 
   /// An expense the user typed in (cash or a missed message).
+  /// A purchase the person entered. [category] (one of kCategories) wins
+  /// over the shop dictionary, for words it does not know ("كرك").
   Future<void> addManual({
     required int amountFils,
     String? merchant,
     required DateTime at,
+    String? category,
   });
 
   /// A transaction found in a bank message. Only extracted fields are kept,
@@ -98,6 +101,7 @@ class InMemoryLedgerRepository extends LedgerRepository {
     required int amountFils,
     String? merchant,
     required DateTime at,
+    String? category,
   }) async {
     if (amountFils <= 0) {
       throw ArgumentError.value(amountFils, 'amountFils', 'must be positive');
@@ -109,7 +113,8 @@ class InMemoryLedgerRepository extends LedgerRepository {
       type: TxnType.purchase,
       direction: TxDirection.outgoing,
       merchantRaw: merchant,
-      category: const MerchantNormalizer().normalize(merchant)?.category,
+      category:
+          category ?? const MerchantNormalizer().normalize(merchant)?.category,
       timestamp: at.toUtc(),
       confidence: 1.0,
       templateVersion: manualTemplate,

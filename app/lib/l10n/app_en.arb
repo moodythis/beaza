@@ -437,5 +437,20 @@
       "shop": { "type": "String" }
     }
   },
-  "historyButton": "History"
+  "historyButton": "History",
+  "quickAddTitle": "Quick add",
+  "quickAddHint": "Type or say: karak 200 fils and shawarma 800 fils",
+  "quickAddSpeak": "Speak",
+  "quickAddNone": "No amount found yet",
+  "quickAddCheck": "No unit written: check the amount",
+  "quickAddSave": "Add",
+  "quickAddUnnamed": "Expense",
+  "quickAddPrivacy": "Your phone's speech service turns your voice into text and may use the internet. Beaza records nothing.",
+  "voiceUnavailable": "Voice input is not available on this phone",
+  "quickAddTotal": "Total {total}",
+  "@quickAddTotal": {
+    "placeholders": {
+      "total": { "type": "String" }
+    }
+  }
 }

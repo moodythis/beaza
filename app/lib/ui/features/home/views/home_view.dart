@@ -15,6 +15,7 @@ import 'package:beaza/ui/features/account/views/account_view.dart';
 import 'package:beaza/ui/features/history/view_models/history_view_model.dart';
 import 'package:beaza/ui/features/history/views/history_view.dart';
 import 'package:beaza/ui/features/home/view_models/home_view_model.dart';
+import 'package:beaza/ui/features/home/views/quick_add_sheet.dart';
 import 'package:beaza/ui/features/review/view_models/review_view_model.dart';
 import 'package:beaza/ui/features/review/views/review_view.dart';
 import 'package:beaza_extraction/beaza_extraction.dart';
@@ -96,11 +97,26 @@ class HomeView extends StatelessWidget {
             ),
         ],
       ),
-      floatingActionButton: FloatingActionButton.extended(
-        key: const Key('addExpense'),
-        onPressed: () => _addExpense(context),
-        icon: const Icon(Icons.add),
-        label: Text(l10n.addExpense),
+      floatingActionButton: Column(
+        mainAxisSize: MainAxisSize.min,
+        crossAxisAlignment: CrossAxisAlignment.end,
+        children: [
+          FloatingActionButton.small(
+            key: const Key('quickAdd'),
+            heroTag: 'quickAdd',
+            tooltip: l10n.quickAddTitle,
+            onPressed: () => showQuickAdd(context, viewModel),
+            child: const Icon(Icons.keyboard_voice_outlined),
+          ),
+          const SizedBox(height: 12),
+          FloatingActionButton.extended(
+            key: const Key('addExpense'),
+            heroTag: 'addExpense',
+            onPressed: () => _addExpense(context),
+            icon: const Icon(Icons.add),
+            label: Text(l10n.addExpense),
+          ),
+        ],
       ),
       body: ListenableBuilder(
         listenable: viewModel,

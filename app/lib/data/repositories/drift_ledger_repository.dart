@@ -102,6 +102,7 @@ class DriftLedgerRepository extends LedgerRepository implements Syncable {
     required int amountFils,
     String? merchant,
     required DateTime at,
+    String? category,
   }) {
     if (amountFils <= 0) {
       throw ArgumentError.value(amountFils, 'amountFils', 'must be positive');
@@ -114,7 +115,8 @@ class DriftLedgerRepository extends LedgerRepository implements Syncable {
         type: TxnType.purchase,
         direction: TxDirection.outgoing,
         merchantRaw: merchant,
-        category: const MerchantNormalizer().normalize(merchant)?.category,
+        category: category ??
+            const MerchantNormalizer().normalize(merchant)?.category,
         timestamp: at.toUtc(),
         confidence: 1.0,
         templateVersion: InMemoryLedgerRepository.manualTemplate,

@@ -224,5 +224,20 @@
       "shop": { "type": "String" }
     }
   },
-  "historyButton": "السجل"
+  "historyButton": "السجل",
+  "quickAddTitle": "إضافة سريعة",
+  "quickAddHint": "اكتب أو قل: شريت كرك بربيتين وشاورما بـ 800 فلس",
+  "quickAddSpeak": "تكلّم",
+  "quickAddNone": "ما لقيت مبلغ بعد",
+  "quickAddCheck": "ما كُتبت العملة، تأكد من المبلغ",
+  "quickAddSave": "أضف",
+  "quickAddUnnamed": "مصروف",
+  "quickAddPrivacy": "خدمة الكلام في جوالك تحوّل صوتك لنص، وقد تستخدم الإنترنت. بيزة ما تسجّل شي.",
+  "voiceUnavailable": "الإدخال بالصوت غير متوفر في هذا الجوال",
+  "quickAddTotal": "المجموع {total}",
+  "@quickAddTotal": {
+    "placeholders": {
+      "total": { "type": "String" }
+    }
+  }
 }

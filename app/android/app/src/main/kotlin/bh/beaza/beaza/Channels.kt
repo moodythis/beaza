@@ -18,6 +18,7 @@ interface PermissionRequester {
     fun requestNotifications(result: MethodChannel.Result)
     fun saveText(name: String, text: String, result: MethodChannel.Result)
     fun openAppSettings(result: MethodChannel.Result)
+    fun listen(language: String, result: MethodChannel.Result)
 }
 
 /**
@@ -92,6 +93,11 @@ object Channels {
                 "batteryRestricted" -> result.success(batteryRestricted(context))
                 "openAppSettings" ->
                     permissions?.openAppSettings(result) ?: result.success(null)
+                "listen" -> {
+                    val language = call.argument<String>("language") ?: "ar-BH"
+                    permissions?.listen(language, result)
+                        ?: result.error("no_screen", "Voice input needs the app screen", null)
+                }
                 "saveText" -> {
                     val name = call.argument<String>("name") ?: "beaza-export.json"
                     val text = call.argument<String>("text") ?: ""
