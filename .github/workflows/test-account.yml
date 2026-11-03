@@ -1,0 +1,59 @@
+name: Make a test account
+
+# Makes an email account on the live server for a tester. The password and
+# recovery key are made here and never printed: they leave only encrypted
+# with the RSA public key given as input, and only the holder of the
+# private key can read them.
+on:
+  workflow_dispatch:
+    inputs:
+      email:
+        description: Email for the test account (no email is ever sent)
+        required: true
+      public_key:
+        description: RSA public key (PEM, base64 encoded) to lock the result
+        required: true
+      url:
+        description: Server URL
+        default: https://beaza-sync.moodythis.workers.dev
+
+jobs:
+  make:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+      - uses: dart-lang/setup-dart@v1
+        with:
+          sdk: stable
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+      - name: Make the keys as the phone does
+        working-directory: packages/beaza_crypto
+        env:
+          EMAIL: ${{ inputs.email }}
+        run: |
+          PASSWORD="$(openssl rand -base64 12 | tr -d '/+=' | cut -c1-14)"
+          echo "::add-mask::$PASSWORD"
+          dart pub get
+          PASSWORD="$PASSWORD" dart run tool/new_account.dart > "$RUNNER_TEMP/account.json"
+          printf '%s' "$PASSWORD" > "$RUNNER_TEMP/password"
+      - name: Register on the server
+        working-directory: server
+        run: node scripts/register.ts "${{ inputs.url }}" "$RUNNER_TEMP/account.json"
+      - name: Lock the password and recovery key for the requester
+        env:
+          PUBLIC_KEY: ${{ inputs.public_key }}
+        run: |
+          echo "$PUBLIC_KEY" | base64 -d > "$RUNNER_TEMP/pub.pem"
+          node -e '
+            const fs = require("fs");
+            const a = JSON.parse(fs.readFileSync(process.argv[1], "utf8"));
+            const p = fs.readFileSync(process.argv[2], "utf8");
+            process.stdout.write(JSON.stringify({ password: p, recoveryKey: a.recoveryKey }));
+          ' "$RUNNER_TEMP/account.json" "$RUNNER_TEMP/password" \
+          | openssl pkeyutl -encrypt -pubin -inkey "$RUNNER_TEMP/pub.pem" \
+              -pkeyopt rsa_padding_mode:oaep -pkeyopt rsa_oaep_md:sha256 \
+          | base64 -w0 > "$RUNNER_TEMP/locked.txt"
+          echo "LOCKED:$(cat "$RUNNER_TEMP/locked.txt")"
+          rm -f "$RUNNER_TEMP/password" "$RUNNER_TEMP/account.json"
