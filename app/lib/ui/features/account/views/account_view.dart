@@ -201,7 +201,8 @@ class _AccountViewState extends State<AccountView> {
   /// Google's picker, then log in (account exists) or sign up.
   Future<void> _google(BuildContext context) async {
     final start = await vm.startGoogle();
-    if (start == null || !context.mounted) return;
+    // A remembered phone is already signed in: the screen updates by itself.
+    if (start == null || start.loggedIn || !context.mounted) return;
     await Navigator.of(context).push(MaterialPageRoute<void>(
       builder: (_) => start.exists
           ? GoogleLogInView(viewModel: vm, start: start)

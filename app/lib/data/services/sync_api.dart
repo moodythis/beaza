@@ -205,7 +205,9 @@ class SyncApi {
   }
 
   /// A Google account: no password, the recovery key is the only lock.
-  Future<String> googleRegister({
+  /// Also returns a device key so this phone can log in again with Google
+  /// alone.
+  Future<({String token, String? deviceKey})> googleRegister({
     required String idToken,
     required List<int> recoveryAuthKey,
     required KeyBundle bundle,
@@ -216,23 +218,36 @@ class SyncApi {
       'recoveryAuthKey': toBase64(recoveryAuthKey),
       'bundle': bundle.toJson(),
       'consent': consent.toJson(),
+      'remember': true,
     });
-    return body['token'] as String;
+    return (
+      token: body['token'] as String,
+      deviceKey: body['deviceKey'] as String?,
+    );
   }
 
   /// Logging in on a phone with Google needs a key that opens the data as
   /// well: the password key ([authKey]) or the recovery proof.
-  Future<({String token, KeyBundle bundle})> googleLogin(
+  /// [deviceKey]: this phone was remembered; then no new device key comes
+  /// back. Otherwise the server remembers the phone and returns one.
+  Future<({String token, KeyBundle bundle, String? deviceKey})> googleLogin(
     String idToken, {
     List<int>? authKey,
     List<int>? recoveryAuthKey,
+    String? deviceKey,
   }) async {
     final body = await _send('POST', '/v1/google/login', {
       'idToken': idToken,
       if (authKey != null) 'authKey': toBase64(authKey),
       if (recoveryAuthKey != null) 'recoveryAuthKey': toBase64(recoveryAuthKey),
+      if (deviceKey != null) 'deviceKey': deviceKey else 'remember': true,
     });
-    return _session(body);
+    final session = _session(body);
+    return (
+      token: session.token,
+      bundle: session.bundle,
+      deviceKey: body['deviceKey'] as String?,
+    );
   }
 
   /// Deletes a Google account; [idToken] is a fresh one for the same account.

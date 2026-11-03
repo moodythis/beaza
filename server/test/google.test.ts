@@ -168,6 +168,60 @@ describe('Google accounts', () => {
     assert.equal(login.status, 404);
   });
 
+  it('a remembered phone logs in again with Google alone', async () => {
+    const s = googleServer();
+    const { account } = await signUp(s, 'person@gmail.com');
+    const first = await s.call('POST', '/v1/google/login', {
+      idToken: await idToken(s),
+      authKey: account.authKey,
+      remember: true,
+    });
+    const deviceKey = first.body.deviceKey as string;
+    assert.ok(deviceKey);
+
+    const again = await s.call('POST', '/v1/google/login', { idToken: await idToken(s), deviceKey });
+    assert.equal(again.status, 200);
+    assert.ok(again.body.token);
+    assert.equal(again.body.deviceKey, undefined, 'no new key for a device log-in');
+
+    // A made-up device key, or the right one with another Google account, fails.
+    const madeUp = await s.call('POST', '/v1/google/login', {
+      idToken: await idToken(s),
+      deviceKey: toB64(randomBytes(32)),
+    });
+    assert.equal(madeUp.status, 401);
+    const otherGoogle = await s.call('POST', '/v1/google/login', {
+      idToken: await idToken(s, { sub: 'someone-else' }),
+      deviceKey,
+    });
+    assert.equal(otherGoogle.status, 404);
+  });
+
+  it('a device key alone does not link an email account to Google', async () => {
+    const s = googleServer();
+    await signUp(s, 'person@gmail.com');
+    const res = await s.call('POST', '/v1/google/login', {
+      idToken: await idToken(s),
+      deviceKey: toB64(randomBytes(32)),
+    });
+    assert.equal(res.status, 401);
+    const check = await s.call('POST', '/v1/google/check', { idToken: await idToken(s) });
+    assert.equal(check.body.password, true, 'still unlinked');
+  });
+
+  it('sign-up can remember the phone, and deleting the account forgets it', async () => {
+    const s = googleServer();
+    const fields = googleFields();
+    const res = await s.call('POST', '/v1/google/register', {
+      idToken: await idToken(s), ...fields, remember: true,
+    });
+    const deviceKey = res.body.deviceKey as string;
+    assert.ok(deviceKey);
+    await s.call('POST', '/v1/account/delete', { idToken: await idToken(s) }, res.body.token);
+    const after = await s.call('POST', '/v1/google/login', { idToken: await idToken(s), deviceKey });
+    assert.equal(after.status, 404);
+  });
+
   it('a Google account has no password: password log-in never works', async () => {
     const s = googleServer();
     await googleSignUp(s);

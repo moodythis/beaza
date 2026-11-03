@@ -35,7 +35,7 @@ export class TestD1 implements D1Like {
   db = new DatabaseSync(':memory:');
 
   constructor() {
-    for (const file of ['0001_init.sql', '0002_consent.sql', '0003_google.sql']) {
+    for (const file of ['0001_init.sql', '0002_consent.sql', '0003_google.sql', '0004_devices.sql']) {
       this.db.exec(readFileSync(new URL(`../migrations/${file}`, import.meta.url), 'utf8'));
     }
   }

@@ -196,7 +196,11 @@ async function keyedHash(ctx: Ctx, text: string): Promise<string> {
 
 /** What the server stores to check a key: a hash that includes the user id,
  * so two users with the same key would still store different hashes. */
-async function storedHash(label: 'auth' | 'recovery', userId: string, key: Uint8Array) {
+async function storedHash(
+  label: 'auth' | 'recovery' | 'device',
+  userId: string,
+  key: Uint8Array,
+) {
   return toHex(await sha256(utf8(`beaza/v1/${label}/${userId}/`), key));
 }
 
@@ -396,7 +400,10 @@ async function googleRegister(ctx: Ctx) {
     if (/UNIQUE constraint failed/i.test(String(error))) throw new HttpError(409, 'email_taken');
     throw error;
   }
-  return { token: await createSession(ctx, id) };
+  return {
+    token: await createSession(ctx, id),
+    ...(body.remember === true ? { deviceKey: await rememberDevice(ctx, id) } : {}),
+  };
 }
 
 /** Logging in with Google needs Google's token plus a key that opens the
@@ -406,10 +413,14 @@ async function googleRegister(ctx: Ctx) {
 async function googleLogin(ctx: Ctx) {
   const body = await readJson(ctx.request);
   const who = await ctx.google(body.idToken);
-  const byPassword = body.authKey !== undefined;
-  const key = byPassword
-    ? checkKey(body.authKey, 'bad_auth_key')
-    : checkKey(body.recoveryAuthKey, 'bad_recovery_auth_key');
+  const kind =
+    body.deviceKey !== undefined ? 'device' : body.authKey !== undefined ? 'auth' : 'recovery';
+  const key =
+    kind === 'device'
+      ? checkKey(body.deviceKey, 'bad_device_key')
+      : kind === 'auth'
+        ? checkKey(body.authKey, 'bad_auth_key')
+        : checkKey(body.recoveryAuthKey, 'bad_recovery_auth_key');
 
   const accountKey = `google:sub:${await keyedHash(ctx, who.sub)}`;
   const ipKey = `google:ip:${await keyedHash(ctx, ctx.ip)}`;
@@ -418,9 +429,19 @@ async function googleLogin(ctx: Ctx) {
 
   const user = await findGoogleUser(ctx, who);
   if (!user) throw new HttpError(404, 'no_account');
-  const ok = byPassword
-    ? safeEqual(await storedHash('auth', user.id, key), user.auth_hash)
-    : safeEqual(await storedHash('recovery', user.id, key), user.recovery_auth_hash);
+  const hash = await storedHash(kind, user.id, key);
+  let ok: boolean;
+  if (kind === 'device') {
+    // Only for an account already linked to this Google account.
+    ok =
+      user.google_sub === who.sub &&
+      (await ctx.db
+        .prepare('SELECT 1 AS one FROM devices WHERE key_hash = ? AND user_id = ?')
+        .bind(hash, user.id)
+        .first()) !== null;
+  } else {
+    ok = safeEqual(hash, kind === 'auth' ? user.auth_hash : user.recovery_auth_hash);
+  }
   if (!ok) {
     await recordAttempt(ctx, accountKey, HOUR);
     await recordAttempt(ctx, ipKey, 15 * MINUTE);
@@ -430,7 +451,32 @@ async function googleLogin(ctx: Ctx) {
     await ctx.db.prepare('UPDATE users SET google_sub = ? WHERE id = ?').bind(who.sub, user.id).run();
   }
   await ctx.db.prepare('DELETE FROM attempts WHERE key = ?').bind(accountKey).run();
-  return { token: await createSession(ctx, user.id), bundle: JSON.parse(user.bundle) };
+  return {
+    token: await createSession(ctx, user.id),
+    bundle: JSON.parse(user.bundle),
+    ...(body.remember === true && kind !== 'device'
+      ? { deviceKey: await rememberDevice(ctx, user.id) }
+      : {}),
+  };
+}
+
+/** A key that lets this phone log in again with Google alone. It opens no
+ * data: the phone keeps the data key itself, in its Keystore. Only its hash
+ * is stored; at most 20 per account (the oldest go first). */
+async function rememberDevice(ctx: Ctx, userId: string): Promise<string> {
+  const key = randomBytes(32);
+  await ctx.db.batch([
+    ctx.db
+      .prepare('INSERT INTO devices (key_hash, user_id, created_at) VALUES (?, ?, ?)')
+      .bind(await storedHash('device', userId, key), userId, ctx.now),
+    ctx.db
+      .prepare(
+        `DELETE FROM devices WHERE user_id = ?1 AND key_hash NOT IN
+           (SELECT key_hash FROM devices WHERE user_id = ?1 ORDER BY created_at DESC LIMIT 20)`,
+      )
+      .bind(userId),
+  ]);
+  return toB64(key);
 }
 
 /** Sign-up needs three separate, explicit statements: consent to the current
@@ -611,6 +657,7 @@ async function deleteAccount(ctx: Ctx) {
   await ctx.db.batch([
     ctx.db.prepare('DELETE FROM records WHERE user_id = ?').bind(userId),
     ctx.db.prepare('DELETE FROM sessions WHERE user_id = ?').bind(userId),
+    ctx.db.prepare('DELETE FROM devices WHERE user_id = ?').bind(userId),
     ctx.db.prepare('DELETE FROM users WHERE id = ?').bind(userId),
   ]);
   return { ok: true };

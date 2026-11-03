@@ -73,26 +73,52 @@ class GoogleServer {
               'recoveryAuthKey': body['recoveryAuthKey'],
               'bundle': body['bundle'],
             };
-            return _ok({'token': _session(sub)});
+            return _ok({
+              'token': _session(sub),
+              if (body['remember'] == true) 'deviceKey': _device(sub),
+            });
           case 'POST /v1/google/login':
             final user = users[sub];
             if (user == null) return _error(404, 'no_account');
+            if (body.containsKey('deviceKey')) {
+              if (devices[body['deviceKey']] != sub) {
+                return _error(401, 'invalid_credentials');
+              }
+              return _ok({'token': _session(sub!), 'bundle': user['bundle']});
+            }
             final field =
                 body.containsKey('authKey') ? 'authKey' : 'recoveryAuthKey';
             if (user[field] == null || user[field] != body[field]) {
               return _error(401, 'invalid_credentials');
             }
-            return _ok({'token': _session(sub!), 'bundle': user['bundle']});
+            return _ok({
+              'token': _session(sub!),
+              'bundle': user['bundle'],
+              if (body['remember'] == true) 'deviceKey': _device(sub),
+            });
           case 'POST /v1/account/delete':
             final owner = sessions[token];
             if (owner == null || owner != sub) {
               return _error(401, 'invalid_credentials');
             }
             users.remove(owner);
+            devices.removeWhere((_, s) => s == owner);
+            return _ok({'ok': true});
+          case 'POST /v1/logout':
+            sessions.remove(token);
             return _ok({'ok': true});
         }
         return _error(404, 'not_found');
       });
+
+  /// Device key -> Google account.
+  final devices = <String, String>{};
+
+  String _device(String sub) {
+    final key = 'device${devices.length}'.padRight(43, 'd');
+    devices[key] = sub;
+    return key;
+  }
 
   String _session(String sub) {
     final token = 'token${_tokens++}'.padRight(43, 'x');
@@ -182,6 +208,50 @@ void main() {
     await phone(server, FakeGoogle(), other).logInWithGoogle(start,
         recoveryKey: created.recoveryKey.format());
     expect(other.saved!.dataKey, created.dataKey);
+  });
+
+  test('after logging out, Google alone logs this phone in again; other '
+      'phones still need the password', () async {
+    final server = GoogleServer();
+    final created = await const KeyWork.forTests(fast)
+        .createAccount('a long password');
+    server.users['sara'] = {
+      'authKey': toBase64(created.authKey!),
+      'recoveryAuthKey': toBase64(created.recoveryAuthKey),
+      'bundle': created.bundle.toJson(),
+    };
+    final store = MemoryAccountStore();
+    final a = phone(server, FakeGoogle(), store);
+    await a.logInWithGoogle((await a.startGoogle())!,
+        password: 'a long password');
+    expect(store.remembered, isNotNull);
+
+    await a.logOut();
+    expect(a.signedIn, isFalse);
+    final again = (await a.startGoogle())!;
+    expect(again.loggedIn, isTrue);
+    expect(a.signedIn, isTrue);
+    expect(store.saved!.dataKey, created.dataKey);
+
+    final other = phone(server, FakeGoogle());
+    final start = (await other.startGoogle())!;
+    expect(start.loggedIn, isFalse);
+    expect(start.hasPassword, isTrue);
+  });
+
+  test('a phone the server forgot asks for the password again', () async {
+    final server = GoogleServer();
+    final store = MemoryAccountStore();
+    final a = phone(server, FakeGoogle(), store);
+    await a.signUpWithGoogle((await a.startGoogle())!, consent);
+    expect(store.remembered, isNotNull);
+    await a.logOut();
+    server.devices.clear();
+
+    final start = (await a.startGoogle())!;
+    expect(start.loggedIn, isFalse);
+    expect(start.exists, isTrue);
+    expect(store.remembered, isNull);
   });
 
   test('a wrong recovery key is refused and nothing is saved', () async {

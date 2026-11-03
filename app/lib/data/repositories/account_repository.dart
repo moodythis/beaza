@@ -51,6 +51,7 @@ class GoogleStart {
     required this.email,
     required this.exists,
     this.hasPassword = false,
+    this.loggedIn = false,
   });
 
   final String idToken;
@@ -60,6 +61,9 @@ class GoogleStart {
   /// The account has a password (made with email and password, or linked):
   /// log in with it instead of the recovery key.
   final bool hasPassword;
+
+  /// This phone was remembered: Google alone logged it in, nothing to type.
+  final bool loggedIn;
 }
 
 /// The sync account on this phone. Without an account nothing leaves the
@@ -209,6 +213,34 @@ class RemoteAccountRepository extends AccountRepository {
     final idToken = await _googleToken();
     if (idToken == null) return null;
     final found = await _guard(() => _api.googleCheck(idToken));
+    if (found.exists) {
+      final remembered = await _store.readRemembered();
+      if (remembered != null && remembered.email == found.email) {
+        try {
+          final session = await _guard(() =>
+              _api.googleLogin(idToken, deviceKey: remembered.deviceKey));
+          await _save(SavedAccount(
+              email: found.email,
+              token: session.token,
+              dataKey: remembered.dataKey,
+              google: true));
+          return GoogleStart(
+              idToken: idToken,
+              email: found.email,
+              exists: true,
+              hasPassword: found.password,
+              loggedIn: true);
+        } on AccountFailure catch (e) {
+          // The server forgot this phone (or the account changed): ask for
+          // the password or recovery key as usual.
+          if (e.problem != AccountProblem.wrongCredentials &&
+              e.problem != AccountProblem.server) {
+            rethrow;
+          }
+          await _store.clearRemembered();
+        }
+      }
+    }
     return GoogleStart(
       idToken: idToken,
       email: found.email,
@@ -222,7 +254,7 @@ class RemoteAccountRepository extends AccountRepository {
       GoogleStart start, Consent consent) async {
     if (!consent.adult) throw ArgumentError('consent must include age');
     final created = await _work.createGoogleAccount();
-    final token = await _guard(() => _api.googleRegister(
+    final made = await _guard(() => _api.googleRegister(
           idToken: start.idToken,
           recoveryAuthKey: created.recoveryAuthKey,
           bundle: created.bundle,
@@ -230,9 +262,10 @@ class RemoteAccountRepository extends AccountRepository {
         ));
     await _save(SavedAccount(
         email: start.email,
-        token: token,
+        token: made.token,
         dataKey: created.dataKey,
         google: true));
+    await _remember(start.email, made.deviceKey, created.dataKey);
     return created.recoveryKey;
   }
 
@@ -241,6 +274,7 @@ class RemoteAccountRepository extends AccountRepository {
       {String? password, String? recoveryKey}) async {
     final DataKey dataKey;
     final String token;
+    final String? deviceKey;
     if (password != null) {
       final keys = await _passwordKeys(start.email, password);
       final session = await _guard(
@@ -251,9 +285,10 @@ class RemoteAccountRepository extends AccountRepository {
         throw const AccountFailure(AccountProblem.server);
       }
       token = session.token;
+      deviceKey = session.deviceKey;
     } else {
       final key = _parseRecoveryKey(recoveryKey ?? '');
-      final ({String token, KeyBundle bundle}) session;
+      final ({String token, KeyBundle bundle, String? deviceKey}) session;
       try {
         session = await _guard(() async => _api.googleLogin(start.idToken,
             recoveryAuthKey: await key.authKey()));
@@ -269,9 +304,18 @@ class RemoteAccountRepository extends AccountRepository {
         throw const AccountFailure(AccountProblem.wrongRecoveryKey);
       }
       token = session.token;
+      deviceKey = session.deviceKey;
     }
     await _save(SavedAccount(
         email: start.email, token: token, dataKey: dataKey, google: true));
+    await _remember(start.email, deviceKey, dataKey);
+  }
+
+  /// Next time on this phone, Google alone logs in (kept after log-out).
+  Future<void> _remember(String email, String? deviceKey, DataKey dataKey) async {
+    if (deviceKey == null) return;
+    await _store.writeRemembered(
+        RememberedGoogle(email: email, deviceKey: deviceKey, dataKey: dataKey));
   }
 
   @override
@@ -280,6 +324,7 @@ class RemoteAccountRepository extends AccountRepository {
     final idToken = await _googleToken();
     if (idToken == null) return false;
     await _guard(() => _api.deleteGoogleAccount(account.token, idToken));
+    await _store.clearRemembered();
     await _forget();
     return true;
   }
@@ -374,6 +419,7 @@ class RemoteAccountRepository extends AccountRepository {
     final account = _requireAccount();
     final keys = await _passwordKeys(account.email, password);
     await _guard(() => _api.deleteAccount(account.token, keys.authKey));
+    await _store.clearRemembered();
     await _forget();
   }
 

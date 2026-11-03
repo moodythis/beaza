@@ -1,3 +1,5 @@
+import 'dart:convert';
+
 import 'package:beaza_crypto/beaza_crypto.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 
@@ -22,11 +24,30 @@ class SavedAccount {
   final DataKey dataKey;
 }
 
+/// A Google account this phone may log in to again with Google alone, kept
+/// after logging out: the server's device key (which opens no data) and the
+/// data key, both in the Keystore.
+class RememberedGoogle {
+  const RememberedGoogle({
+    required this.email,
+    required this.deviceKey,
+    required this.dataKey,
+  });
+
+  final String email;
+  final String deviceKey;
+  final DataKey dataKey;
+}
+
 /// Where the account lives between launches.
 abstract class AccountStore {
   Future<SavedAccount?> read();
   Future<void> write(SavedAccount account);
   Future<void> clear();
+
+  Future<RememberedGoogle?> readRemembered();
+  Future<void> writeRemembered(RememberedGoogle remembered);
+  Future<void> clearRemembered();
 }
 
 /// Keeps the account in the Android Keystore, next to the database key.
@@ -40,6 +61,7 @@ class SecureAccountStore implements AccountStore {
   static const _token = 'beaza.account.token';
   static const _dataKey = 'beaza.account.dataKey';
   static const _google = 'beaza.account.google';
+  static const _remembered = 'beaza.remembered.google';
 
   @override
   Future<SavedAccount?> read() async {
@@ -72,6 +94,35 @@ class SecureAccountStore implements AccountStore {
     await _storage.delete(key: _dataKey);
     await _storage.delete(key: _google);
   }
+
+  @override
+  Future<RememberedGoogle?> readRemembered() async {
+    final text = await _storage.read(key: _remembered);
+    if (text == null) return null;
+    try {
+      final j = jsonDecode(text) as Map<String, Object?>;
+      return RememberedGoogle(
+        email: j['email']! as String,
+        deviceKey: j['deviceKey']! as String,
+        dataKey: DataKey.fromBytes(fromBase64(j['dataKey']! as String)),
+      );
+    } on Object {
+      return null;
+    }
+  }
+
+  @override
+  Future<void> writeRemembered(RememberedGoogle r) => _storage.write(
+        key: _remembered,
+        value: jsonEncode({
+          'email': r.email,
+          'deviceKey': r.deviceKey,
+          'dataKey': toBase64(r.dataKey.exportForSecureStorage()),
+        }),
+      );
+
+  @override
+  Future<void> clearRemembered() => _storage.delete(key: _remembered);
 }
 
 /// For tests.
@@ -86,4 +137,15 @@ class MemoryAccountStore implements AccountStore {
 
   @override
   Future<void> clear() async => saved = null;
+
+  RememberedGoogle? remembered;
+
+  @override
+  Future<RememberedGoogle?> readRemembered() async => remembered;
+
+  @override
+  Future<void> writeRemembered(RememberedGoogle r) async => remembered = r;
+
+  @override
+  Future<void> clearRemembered() async => remembered = null;
 }
