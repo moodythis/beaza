@@ -1,0 +1,23 @@
+name: Smoke test
+
+# Checks the deployed sync server end to end with a throw-away account.
+on:
+  workflow_dispatch:
+    inputs:
+      url:
+        description: Server URL
+        default: https://beaza-sync.moodythis.workers.dev
+
+jobs:
+  smoke:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: server
+    steps:
+      - uses: actions/checkout@v5
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+      - name: Run
+        run: node scripts/smoke.ts "${{ inputs.url }}"
