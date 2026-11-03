@@ -9,11 +9,8 @@
   },
   // Placeholder on a reserved domain (RFC 2606): it can never reach anyone.
   // Replace with the real project address before release.
-  "vars": {
-    "PRIVACY_CONTACT": "privacy@beaza.example",
-    // Web OAuth client id; Google ID tokens must be issued for it.
-    "GOOGLE_CLIENT_ID": "16049310186-eb57dja4q527kmotnt4krj40anri2331.apps.googleusercontent.com"
-  },
+  // GOOGLE_CLIENT_ID: the Web OAuth client id Google ID tokens must be for.
+  "vars": { "PRIVACY_CONTACT": "privacy@beaza.example", "GOOGLE_CLIENT_ID": "16049310186-eb57dja4q527kmotnt4krj40anri2331.apps.googleusercontent.com" },
   "d1_databases": [
     {
       "binding": "DB",
