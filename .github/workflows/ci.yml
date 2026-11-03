@@ -113,6 +113,21 @@ jobs:
         run: flutter analyze
       - name: Test
         run: flutter test --reporter expanded
+      # The real phone code against the real server code, over HTTP: two
+      # phones, real encryption and Argon2id. Catches what each side's own
+      # tests (with their own pretend counterpart) cannot.
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+      - name: Two phones on the real server code
+        run: |
+          node ../server/scripts/serve-local.ts 8787 > "$RUNNER_TEMP/server.log" 2>&1 &
+          for i in $(seq 1 30); do
+            curl -sf http://127.0.0.1:8787/v1/health && break
+            sleep 1
+          done
+          flutter test test_live --reporter expanded \
+            --dart-define=BEAZA_LIVE_SERVER=http://127.0.0.1:8787
       # Release build signed with the debug key: installable for testing, no
       # INTERNET permission (the template adds it only to debug builds).
       # The permission list below is printed so every run documents it.
