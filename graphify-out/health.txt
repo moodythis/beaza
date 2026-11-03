@@ -1,0 +1,42 @@
+[graphify] MultiDiGraph edge-collapse diagnostic
+input: <in-memory>
+input_stage: provided JSON (normal graph.json is post-build)
+effective_directed: <direct-call>
+nodes: 2080
+unverified_code_nodes: 0
+raw_edges: 3377
+valid_candidate_edges: 3340
+missing_endpoint_edges: 1
+dangling_endpoint_edges: 20
+external_reference_edges: 16
+self_loop_edges: 5
+exact_duplicate_edges: 0
+directed_unique_endpoint_pairs: 2867
+directed_same_endpoint_collapsed_edges: 473
+undirected_unique_endpoint_pairs: 2866
+undirected_same_endpoint_collapsed_edges: 474
+same_endpoint_group_count: 272
+relation_variant_groups: 23
+source_file_variant_groups: 0
+source_location_variant_groups: 257
+context_variant_groups: 0
+post_build_graph_type: Graph
+post_build_edges: 2902
+producer_suppression_sites: 12
+producer_suppression_examples:
+  - L1856 seen_ids arity=unknown
+  - L2419 seen_ids arity=unknown
+  - L2421 seen_doc_refs arity=unknown
+  - L3088 seen_ids arity=unknown
+  - L3235 seen_ids arity=unknown
+  - L4376 seen_keys arity=unknown
+  - L4562 seen_keys arity=unknown
+  - L8269 seen_ids arity=unknown
+examples:
+  - app_lib_data_services_database -> textcolumn_get edges=19 relations=['references'] locations=['L102', 'L124', 'L125', 'L17', 'L20', 'L21', 'L22', 'L23', 'L24', 'L25', 'L26', 'L27', 'L28', 'L29', 'L34', 'L37', 'L40', 'L47', 'L88'] contexts=['variable_type']
+  - app_lib_data_services_database -> intcolumn_get edges=16 relations=['references'] locations=['L103', 'L106', 'L111', 'L112', 'L19', 'L32', 'L45', 'L46', 'L65', 'L66', 'L67', 'L68', 'L69', 'L71', 'L72', 'L89'] contexts=['variable_type']
+  - packages_beaza_extraction_lib_src_classifier -> static_final_regexp edges=11 relations=['references'] locations=['L47', 'L52', 'L58', 'L60', 'L66', 'L73', 'L79', 'L86', 'L91', 'L94', 'L97'] contexts=['variable_type']
+  - github_workflows_ci_app_steps -> github_workflows_ci_steps_name edges=10 relations=['contains'] locations=['L104', 'L106', 'L108', 'L110', 'L112', 'L114', 'L122', 'L134', 'L136', 'L140'] contexts=['']
+  - dartpad_classifier_dartpad -> static_final_regexp edges=10 relations=['references'] locations=['L44', 'L49', 'L55', 'L57', 'L63', 'L70', 'L76', 'L83', 'L88', 'L90'] contexts=['variable_type']
+note: normal graph.json is post-build; raw producer loss must be measured earlier.
+GRAPH HEALTH WARNING: 20 dangling-endpoint edges; 1 missing-endpoint edges; 5 self-loop edges; 473 collapsed (directed) edges; 474 collapsed (undirected) edges
