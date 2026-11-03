@@ -51,6 +51,7 @@ String? bankName(AppLocalizations l10n, String templateVersion) {
     'bisb' => l10n.bankBisb,
     'ila' => l10n.bankIla,
     'alsalam' => l10n.bankAlSalam,
+    'nbb' => l10n.bankNbb,
     'benefitpay' => l10n.bankBenefitPay,
     _ => null,
   };

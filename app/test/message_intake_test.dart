@@ -52,6 +52,14 @@ class FakeSms implements SmsSource {
   Stream<void> get arrivals => arrivalsController.stream;
 }
 
+class MessageIntakeTestHelper {
+  static ExtractionResult extract(FakeSms sms, String id) {
+    final m = sms.inbox.firstWhere((m) => m.$1 == id);
+    return BeazaExtractor().process(
+        RawMessage(text: m.$4, sender: m.$2, receivedAt: m.$3));
+  }
+}
+
 DateTime bh(int day, int hour, [int minute = 0]) =>
     DateTime.utc(2026, 11, day, hour, minute).subtract(kBahrainOffset);
 
@@ -122,6 +130,31 @@ void main() {
     );
     await restored.scan();
     expect(await ledger.entries(), hasLength(2));
+  });
+
+  test('a new template set reads messages an older one dropped', () async {
+    // An older version saw message 6 and called it not a transaction.
+    sms.inbox.add(('6', 'NBB', bh(2, 19),
+        'Thank you for using NBB Debit Card at SAMPLE SHOP MANAMA for BHD2.050 on 02/11/2026 18:59, A/C ending 4810 balance BHD99.999.'));
+    for (final id in ['1', '2', '3', '6']) {
+      await seen.add('sms:$id', bh(2, 19, 30));
+    }
+    await seen.add('templates:old', bh(2, 19, 30));
+    await ledger.addExtracted(
+        MessageIntakeTestHelper.extract(sms, '1'),
+        messageKey: 'sms:1');
+
+    final report = await intake.scan();
+    expect(sms.bodiesRead, containsAll(['1', '6']));
+    final amounts = (await ledger.entries()).map((e) => e.result.amountFils);
+    expect(amounts, unorderedEquals([300, 1500, 2050]));
+    // Only the messages this scan saw for the first time are counted.
+    expect(report.added, 0);
+    expect(await seen.contains(MessageIntake.templateMarker), isTrue);
+
+    sms.bodiesRead.clear();
+    await intake.scan();
+    expect(sms.bodiesRead, isEmpty);
   });
 
   test('overlapping scans share one run', () async {

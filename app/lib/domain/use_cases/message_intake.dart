@@ -84,6 +84,12 @@ class MessageIntake {
 
   static String keyFor(InboxMessage m) => 'sms:${m.id}';
 
+  /// Present in the seen list once the inbox has been read with the current
+  /// template set. A new set (for example a newly supported bank) reads the
+  /// window once more, so messages an older version dropped get a second
+  /// look. Rows already in the ledger keep their ids, so nothing doubles up.
+  static String get templateMarker => 'templates:$kTemplateSetVersion';
+
   /// Safe to call often: overlapping calls share one scan.
   Future<IntakeReport> scan() =>
       _running ??= _scan().whenComplete(() => _running = null);
@@ -139,11 +145,16 @@ class MessageIntake {
   Future<IntakeReport> _scan() async {
     final now = _clock();
     final listed = await _sms.listInbox(since: now.subtract(window));
+    final again = !await _seen.contains(templateMarker);
 
     final wanted = <InboxMessage>[];
+    final seenBefore = <String>{};
     for (final m in listed) {
       if (_senders.detect(m.sender) == SenderFamily.unknown) continue;
-      if (await _seen.contains(keyFor(m))) continue;
+      if (await _seen.contains(keyFor(m))) {
+        if (!again) continue;
+        seenBefore.add(m.id);
+      }
       wanted.add(m);
     }
 
@@ -162,10 +173,10 @@ class MessageIntake {
           case ExtractionStatus.transaction:
             await _ledger.addExtracted(result, messageKey: keyFor(m));
             await _seen.add(keyFor(m), now);
-            added++;
+            if (!seenBefore.contains(m.id)) added++;
           case ExtractionStatus.nonTransaction:
             await _seen.add(keyFor(m), now);
-            other++;
+            if (!seenBefore.contains(m.id)) other++;
           case ExtractionStatus.unparsed:
             unclear++;
         }
@@ -173,6 +184,7 @@ class MessageIntake {
     }
 
     await _seen.pruneBefore(now.subtract(window + const Duration(days: 1)));
+    await _seen.add(templateMarker, now);
     return IntakeReport(
       added: added,
       notTransactions: other,

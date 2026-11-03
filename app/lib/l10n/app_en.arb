@@ -332,6 +332,7 @@
   "bankIla": "ila",
   "bankAlSalam": "Al Salam Bank",
   "bankBenefitPay": "BenefitPay",
+  "bankNbb": "NBB",
   "continueWithGoogle": "Continue with Google",
   "googleAccountAs": "Google account: {email}",
   "@googleAccountAs": {

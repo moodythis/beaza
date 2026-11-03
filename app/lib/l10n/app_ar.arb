@@ -126,6 +126,7 @@
   "bankIla": "ila",
   "bankAlSalam": "بنك السلام",
   "bankBenefitPay": "بنفت باي",
+  "bankNbb": "بنك البحرين الوطني",
   "continueWithGoogle": "المتابعة بحساب Google",
   "googleAccountAs": "حساب Google: {email}",
   "googleSignUpIntro": "لا حاجة إلى كلمة مرور: يؤكد Google أنك صاحب الحساب. تُقفل بياناتك بمفتاح استرجاع لا يملكه أحد غيرك. احتفظ به، فستحتاجه للدخول من هاتف آخر.",
