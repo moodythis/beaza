@@ -23,6 +23,16 @@ jobs:
         run: dart analyze
       - name: Test
         run: dart test --reporter expanded
+      - name: Evaluate on the seed set (FR-6.3)
+        run: |
+          dart run bin/evaluate.dart --data eval/seed.jsonl --check
+          dart run bin/evaluate.dart --data eval/seed.jsonl --system B1,B2,B3 --out eval/results
+          cat eval/results/report.md >> "$GITHUB_STEP_SUMMARY"
+      - name: Upload evaluation report
+        uses: actions/upload-artifact@v4
+        with:
+          name: evaluation-report
+          path: packages/beaza_extraction/eval/results/
 
   crypto:
     name: beaza_crypto (analyze and test)

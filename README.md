@@ -28,7 +28,8 @@ for cashless micro-expenses in Bahrain. Flutter and Dart, Android first.
 | Optional account, end-to-end encrypted sync, merge protection | Done, tested (including a two-phone test against the real server code) |
 | Data export to a JSON file | Done, tested |
 | Notification intake (wallet apps), merchant normalizer and categorizer | Later |
-| Tier 2 model, evaluation harness | Later |
+| Evaluation harness | B1 (rules) built: `packages/beaza_extraction/eval` |
+| Tier 2 model (B2, B3) | Later |
 | Changing the account email | Later |
 
 ## Without a laptop

@@ -22,6 +22,7 @@ dart test
 | Validator and public ExtractionResult | Done, tests included |
 | BeazaExtractor facade (sender filter, whole pipeline) | Written, tests run in CI |
 | Reconciler: duplicates, own accounts, spending total | Done, tests included |
-| Daily guardrail (limit, 50/80/100% alerts) | Next |
+| Daily guardrail (limit, 50/80/100% alerts) | Done, tests included |
 | Merchant normalizer and categorizer | Needs more merchant data |
+| Evaluation harness (FR-6.2 to 6.4) | Done for B1, see [eval/README.md](eval/README.md) |
 | Tier 2 model | Later |
