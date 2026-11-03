@@ -3,11 +3,15 @@ import 'package:beaza/data/repositories/sync_repository.dart';
 import 'package:beaza/domain/use_cases/spending_by_category.dart';
 import 'package:beaza/l10n/app_localizations.dart';
 import 'package:beaza/ui/core/amount_dialog.dart';
+import 'package:beaza/ui/core/category_picker.dart';
 import 'package:beaza/ui/core/category_style.dart';
 import 'package:beaza/ui/core/entry_text.dart';
+import 'package:beaza/ui/core/entry_tile.dart';
 import 'package:beaza/ui/core/formatting.dart';
 import 'package:beaza/ui/core/language_controller.dart';
 import 'package:beaza/ui/features/account/views/account_view.dart';
+import 'package:beaza/ui/features/history/view_models/history_view_model.dart';
+import 'package:beaza/ui/features/history/views/history_view.dart';
 import 'package:beaza/ui/features/home/view_models/home_view_model.dart';
 import 'package:beaza/ui/features/review/view_models/review_view_model.dart';
 import 'package:beaza/ui/features/review/views/review_view.dart';
@@ -54,6 +58,18 @@ class HomeView extends StatelessWidget {
                     : 'ar',
               ),
             ),
+          IconButton(
+            key: const Key('historyButton'),
+            tooltip: l10n.historyButton,
+            icon: const Icon(Icons.history),
+            onPressed: () => Navigator.of(context).push(
+              MaterialPageRoute<void>(
+                builder: (_) => HistoryView(
+                  viewModel: HistoryViewModel(ledger: viewModel.ledger)..load(),
+                ),
+              ),
+            ),
+          ),
           if (account != null)
             ListenableBuilder(
               listenable: Listenable.merge([account!, if (sync != null) sync!]),
@@ -190,34 +206,11 @@ class HomeView extends StatelessWidget {
   }
 
   Future<void> _chooseCategory(BuildContext context, LedgerEntry entry) async {
-    final l10n = AppLocalizations.of(context);
     final current = bucketOf(entry.result);
-    final picked = await showModalBottomSheet<String>(
-      context: context,
-      showDragHandle: true,
-      isScrollControlled: true,
-      builder: (context) => SafeArea(
-        child: ListView(
-          shrinkWrap: true,
-          children: [
-            Padding(
-              padding: const EdgeInsets.fromLTRB(16, 0, 16, 8),
-              child: Text(
-                l10n.chooseCategory,
-                style: Theme.of(context).textTheme.titleMedium,
-              ),
-            ),
-            for (final c in kCategories)
-              ListTile(
-                key: Key('pick_$c'),
-                leading: Icon(categoryIcon(c)),
-                title: Text(categoryName(l10n, c)),
-                trailing: c == current ? const Icon(Icons.check) : null,
-                onTap: () => Navigator.of(context).pop(c),
-              ),
-          ],
-        ),
-      ),
+    final picked = await pickCategory(
+      context,
+      current: current,
+      shop: shopName(entry.result),
     );
     if (picked == null || picked == current) return;
     await viewModel.setCategory(entry, picked);
@@ -447,41 +440,6 @@ class MicroCard extends StatelessWidget {
           l10n.microToday(today.count, l10n.bhd(formatFils(today.totalFils))),
         ),
         subtitle: Text(l10n.microWeek(l10n.bhd(formatFils(week.totalFils)))),
-      ),
-    );
-  }
-}
-
-class EntryTile extends StatelessWidget {
-  const EntryTile({super.key, required this.entry, this.onTap});
-
-  final LedgerEntry entry;
-
-  /// Opens the category list.
-  final VoidCallback? onTap;
-
-  @override
-  Widget build(BuildContext context) {
-    final l10n = AppLocalizations.of(context);
-    final r = entry.result;
-    final subtitle = entrySubtitle(l10n, r);
-    return ListTile(
-      contentPadding: EdgeInsets.zero,
-      onTap: onTap,
-      leading: Tooltip(
-        message: categoryName(l10n, bucketOf(r)),
-        child: CircleAvatar(
-          backgroundColor:
-              Theme.of(context).colorScheme.surfaceContainerHighest,
-          foregroundColor: Theme.of(context).colorScheme.onSurfaceVariant,
-          child: Icon(categoryIcon(bucketOf(r)), size: 20),
-        ),
-      ),
-      title: Text(entryTitle(l10n, r)),
-      subtitle: subtitle.isEmpty ? null : Text(subtitle),
-      trailing: Text(
-        l10n.bhd(formatFils(r.amountFils ?? 0)),
-        style: Theme.of(context).textTheme.titleSmall,
       ),
     );
   }

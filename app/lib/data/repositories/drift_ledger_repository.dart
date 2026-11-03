@@ -46,7 +46,11 @@ class DriftLedgerRepository extends LedgerRepository implements Syncable {
   }
 
   @override
-  Future<void> setCategory(LedgerEntry entry, String category) async {
+  Future<void> setCategory(
+    LedgerEntry entry,
+    String category, {
+    bool sameShop = true,
+  }) async {
     final rows = await _liveRows();
     final i = entry.index;
     if (i < 0 || i >= rows.length) return;
@@ -54,11 +58,19 @@ class DriftLedgerRepository extends LedgerRepository implements Syncable {
     // The list may have changed since the screen read it: only change the
     // row the person tapped.
     if (row.amountFils != entry.result.amountFils ||
-        row.timestampMs != entry.result.timestamp?.toUtc().millisecondsSinceEpoch) {
+        row.timestampMs !=
+            entry.result.timestamp?.toUtc().millisecondsSinceEpoch) {
       return;
     }
+    final key = shopKey(_toResult(row));
+    final ids = <String>[
+      for (final r in rows)
+        if (r.id == row.id ||
+            (sameShop && key != null && shopKey(_toResult(r)) == key))
+          if (r.category != category || r.id == row.id) r.id,
+    ];
     final now = _clock().toUtc().millisecondsSinceEpoch;
-    await (_db.update(_db.ledgerRows)..where((r) => r.id.equals(row.id))).write(
+    await (_db.update(_db.ledgerRows)..where((r) => r.id.isIn(ids))).write(
       LedgerRowsCompanion(
         category: Value(category),
         updatedAtMs: Value(now),
@@ -67,6 +79,22 @@ class DriftLedgerRepository extends LedgerRepository implements Syncable {
       ),
     );
     notifyListeners();
+  }
+
+  /// The category the person already gave this shop: the newest row of the
+  /// shop that has one. A shop's rows share a category unless the person
+  /// changed it, so this is their last choice.
+  Future<String?> _rememberedCategory(ExtractionResult r) async {
+    final key = shopKey(r);
+    if (key == null) return null;
+    final rows = await (_db.select(_db.ledgerRows)
+          ..where((x) => x.deletedAtMs.isNull() & x.category.isNotNull())
+          ..orderBy([(x) => OrderingTerm.desc(x.updatedAtMs)]))
+        .get();
+    for (final x in rows) {
+      if (shopKey(_toResult(x)) == key) return x.category;
+    }
+    return null;
   }
 
   @override
@@ -96,8 +124,13 @@ class DriftLedgerRepository extends LedgerRepository implements Syncable {
   }
 
   @override
-  Future<void> addExtracted(ExtractionResult result, {String? messageKey}) {
+  Future<void> addExtracted(ExtractionResult result,
+      {String? messageKey}) async {
     checkCompleteTransaction(result);
+    final remembered = await _rememberedCategory(result);
+    if (remembered != null && remembered != result.category) {
+      result = result.withMerchant(category: remembered);
+    }
     return _insert(
       result,
       source: sourceMessage,

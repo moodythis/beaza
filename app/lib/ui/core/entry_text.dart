@@ -3,6 +3,13 @@ import 'package:beaza/l10n/app_localizations.dart';
 import 'package:beaza/ui/core/formatting.dart';
 import 'package:beaza_extraction/beaza_extraction.dart';
 
+/// The shop's name when the message names one, for "applies to every
+/// purchase from ...". Null otherwise.
+String? shopName(ExtractionResult r) {
+  final name = (r.merchantNorm ?? r.merchantRaw)?.trim();
+  return name == null || name.isEmpty ? null : name;
+}
+
 /// What a transaction is called in a list. The shop when the message names
 /// one; otherwise what kind of payment it was, so a transfer, a cash
 /// withdrawal and a typed-in expense can be told apart. (Bank messages for

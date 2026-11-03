@@ -94,6 +94,65 @@ void main() {
       expect(rows.every((r) => r.category == null), isTrue);
     });
 
+    test('a category given to a shop is remembered for old and new ones',
+        () async {
+      ExtractionResult shop(String name, int fils, int hour, String ref) =>
+          ExtractionResult(
+            status: ExtractionStatus.transaction,
+            amountFils: fils,
+            currency: 'BHD',
+            type: TxnType.purchase,
+            direction: TxDirection.outgoing,
+            merchantRaw: '$name MANAMA',
+            merchantNorm: name,
+            channel: Channel.card,
+            reference: ref,
+            timestamp: bh(2, hour),
+          );
+      await ledger.addExtracted(shop('Waleed Al Kabah', 2050, 8, 'a'),
+          messageKey: 'sms:1');
+      await ledger.addExtracted(shop('Waleed Al Kabah', 3000, 9, 'b'),
+          messageKey: 'sms:2');
+      await ledger.addExtracted(shop('Other Place', 500, 10, 'c'),
+          messageKey: 'sms:3');
+      final es = await ledger.entries();
+      await ledger.setCategory(es.first, 'health');
+
+      var cats = (await ledger.entries())
+          .map((e) => '${e.result.merchantNorm}:${e.result.category}')
+          .toList();
+      expect(cats, [
+        'Waleed Al Kabah:health',
+        'Waleed Al Kabah:health',
+        'Other Place:null',
+      ]);
+
+      // A later message from the same shop starts in that category.
+      await ledger.addExtracted(shop('Waleed Al Kabah', 700, 11, 'd'),
+          messageKey: 'sms:4');
+      cats = (await ledger.entries()).map((e) => '${e.result.category}').toList();
+      expect(cats, ['health', 'health', 'null', 'health']);
+    });
+
+    test('sameShop: false changes only the tapped row', () async {
+      for (var i = 0; i < 2; i++) {
+        await ledger.addExtracted(
+            ExtractionResult(
+              status: ExtractionStatus.transaction,
+              amountFils: 1000 + i,
+              currency: 'BHD',
+              direction: TxDirection.outgoing,
+              merchantNorm: 'Same Shop',
+              timestamp: bh(2, 8 + i),
+            ),
+            messageKey: 'sms:$i');
+      }
+      final es = await ledger.entries();
+      await ledger.setCategory(es.first, 'food', sameShop: false);
+      expect((await ledger.entries()).map((e) => e.result.category),
+          ['food', null]);
+    });
+
     test('a typed-in expense with a known shop gets its category', () async {
       await ledger.addManual(amountFils: 1000, merchant: 'Talabat', at: bh(2, 9));
       expect((await ledger.entries()).single.result.category, 'food');

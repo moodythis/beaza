@@ -380,5 +380,20 @@
         "type": "int"
       }
     }
-  }
+  },
+  "historyTitle": "History",
+  "historyEmpty": "No transactions yet",
+  "historyDaySpent": "Spent {total}",
+  "@historyDaySpent": {
+    "placeholders": {
+      "total": { "type": "String" }
+    }
+  },
+  "categoryAppliesTo": "Applies to every purchase from {shop}",
+  "@categoryAppliesTo": {
+    "placeholders": {
+      "shop": { "type": "String" }
+    }
+  },
+  "historyButton": "History"
 }

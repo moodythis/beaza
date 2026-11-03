@@ -26,9 +26,16 @@ abstract class LedgerRepository extends ChangeNotifier {
   /// person deleted does not come back.
   Future<void> addExtracted(ExtractionResult result, {String? messageKey});
 
-  /// Puts a transaction in another category (one of kCategories). Only this
-  /// transaction changes; the change syncs like any other edit.
-  Future<void> setCategory(LedgerEntry entry, String category);
+  /// Puts a transaction in another category (one of kCategories).
+  ///
+  /// With [sameShop] (the default) every other transaction from the same
+  /// shop changes too, and later ones from that shop start in this category:
+  /// the app remembers the choice. Each changed row syncs like any edit.
+  Future<void> setCategory(
+    LedgerEntry entry,
+    String category, {
+    bool sameShop = true,
+  });
 
   /// How many transactions read from messages are copies of an earlier one
   /// (same fields, made at least [duplicateGap] later). Copies like this
@@ -38,6 +45,14 @@ abstract class LedgerRepository extends ChangeNotifier {
   /// Removes those copies (they stay as deleted entries so other phones get
   /// the removal). Returns how many.
   Future<int> removeDuplicates() async => 0;
+}
+
+/// What identifies a shop for remembering its category: the clean name, or
+/// the printed one, in capitals. Null when the transaction names no shop.
+String? shopKey(ExtractionResult r) {
+  final name = (r.merchantNorm ?? r.merchantRaw)?.trim();
+  if (name == null || name.isEmpty) return null;
+  return name.toUpperCase();
 }
 
 /// Two identical transactions made by reading messages are treated as one
@@ -103,11 +118,32 @@ class InMemoryLedgerRepository extends LedgerRepository {
   }
 
   @override
-  Future<void> setCategory(LedgerEntry entry, String category) async {
+  Future<void> setCategory(
+    LedgerEntry entry,
+    String category, {
+    bool sameShop = true,
+  }) async {
     final i = entry.index;
     if (i < 0 || i >= _results.length) return;
-    _results[i] = _results[i].withMerchant(category: category);
+    final key = shopKey(_results[i]);
+    for (var j = 0; j < _results.length; j++) {
+      if (j == i || (sameShop && key != null && shopKey(_results[j]) == key)) {
+        _results[j] = _results[j].withMerchant(category: category);
+      }
+    }
     notifyListeners();
+  }
+
+  /// The category the person already gave this shop (the newest one added).
+  String? _rememberedCategory(ExtractionResult r) {
+    final key = shopKey(r);
+    if (key == null) return null;
+    for (final other in _results.reversed) {
+      if (shopKey(other) == key && other.category != null) {
+        return other.category;
+      }
+    }
+    return null;
   }
 
   @override
@@ -115,7 +151,10 @@ class InMemoryLedgerRepository extends LedgerRepository {
       {String? messageKey}) async {
     checkCompleteTransaction(result);
     if (messageKey != null && !_messageKeys.add(messageKey)) return;
-    _results.add(result);
+    final remembered = _rememberedCategory(result);
+    _results.add(remembered == null || remembered == result.category
+        ? result
+        : result.withMerchant(category: remembered));
     notifyListeners();
   }
 }

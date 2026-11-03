@@ -167,5 +167,20 @@
         "type": "int"
       }
     }
-  }
+  },
+  "historyTitle": "السجل",
+  "historyEmpty": "لا توجد معاملات بعد",
+  "historyDaySpent": "المصروف {total}",
+  "@historyDaySpent": {
+    "placeholders": {
+      "total": { "type": "String" }
+    }
+  },
+  "categoryAppliesTo": "ينطبق على كل مشتريات {shop}",
+  "@categoryAppliesTo": {
+    "placeholders": {
+      "shop": { "type": "String" }
+    }
+  },
+  "historyButton": "السجل"
 }

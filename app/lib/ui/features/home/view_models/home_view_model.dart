@@ -58,6 +58,9 @@ class HomeViewModel extends ChangeNotifier {
   final DeviceService? _device;
   final DateTime Function() _clock;
 
+  /// For the history screen.
+  LedgerRepository get ledger => _ledger;
+
   /// Saves a copy of the person's data (account screen); null hides it.
   final DataExport? export;
   final Duration arrivalDelay;
