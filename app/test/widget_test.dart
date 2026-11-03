@@ -67,6 +67,10 @@ void main() {
     await tester.tap(find.text('MYSTERY SHOP'));
     await tester.pumpAndSettle();
     expect(find.text('Choose a category'), findsOneWidget);
+    await tester.scrollUntilVisible(
+        find.byKey(const Key('pick_health')), 100,
+        scrollable: find.descendant(
+            of: find.byType(BottomSheet), matching: find.byType(Scrollable)));
     await tester.tap(find.byKey(const Key('pick_health')));
     await tester.pumpAndSettle();
     expect(find.byKey(const Key('cat_health')), findsOneWidget);

@@ -195,6 +195,7 @@ class HomeView extends StatelessWidget {
     final picked = await showModalBottomSheet<String>(
       context: context,
       showDragHandle: true,
+      isScrollControlled: true,
       builder: (context) => SafeArea(
         child: ListView(
           shrinkWrap: true,
