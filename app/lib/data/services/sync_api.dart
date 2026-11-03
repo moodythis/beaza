@@ -192,9 +192,16 @@ class SyncApi {
   /// well as the session, so a stolen session alone cannot delete it.
   /// Whether this Google account already has a Beaza account; Google has
   /// just confirmed the person owns it.
-  Future<({bool exists, String email})> googleCheck(String idToken) async {
+  /// [password]: the account has a password (an email account with the same
+  /// Gmail, or one already linked), so the phone asks for it.
+  Future<({bool exists, String email, bool password})> googleCheck(
+      String idToken) async {
     final body = await _send('POST', '/v1/google/check', {'idToken': idToken});
-    return (exists: body['exists'] as bool, email: body['email'] as String);
+    return (
+      exists: body['exists'] as bool,
+      email: body['email'] as String,
+      password: body['password'] as bool? ?? false,
+    );
   }
 
   /// A Google account: no password, the recovery key is the only lock.
@@ -213,14 +220,17 @@ class SyncApi {
     return body['token'] as String;
   }
 
-  /// Logging in on a phone with Google needs the recovery proof as well.
+  /// Logging in on a phone with Google needs a key that opens the data as
+  /// well: the password key ([authKey]) or the recovery proof.
   Future<({String token, KeyBundle bundle})> googleLogin(
-    String idToken,
-    List<int> recoveryAuthKey,
-  ) async {
+    String idToken, {
+    List<int>? authKey,
+    List<int>? recoveryAuthKey,
+  }) async {
     final body = await _send('POST', '/v1/google/login', {
       'idToken': idToken,
-      'recoveryAuthKey': toBase64(recoveryAuthKey),
+      if (authKey != null) 'authKey': toBase64(authKey),
+      if (recoveryAuthKey != null) 'recoveryAuthKey': toBase64(recoveryAuthKey),
     });
     return _session(body);
   }

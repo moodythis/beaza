@@ -50,8 +50,10 @@ class AccountViewModel extends ChangeNotifier {
   Future<RecoveryKey?> signUpWithGoogle(GoogleStart start, Consent consent) =>
       _run(() => repository.signUpWithGoogle(start, consent));
 
-  Future<bool> logInWithGoogle(GoogleStart start, String recoveryKey) =>
-      _ok(() => repository.logInWithGoogle(start, recoveryKey));
+  Future<bool> logInWithGoogle(GoogleStart start,
+          {String? password, String? recoveryKey}) =>
+      _ok(() => repository.logInWithGoogle(start,
+          password: password, recoveryKey: recoveryKey));
 
   Future<bool> deleteGoogleAccount() async {
     final done = await _run(repository.deleteGoogleAccount) ?? false;

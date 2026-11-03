@@ -53,7 +53,17 @@ class GoogleServer {
         final token = r.headers['authorization']?.substring('Bearer '.length);
         switch ('${r.method} ${r.url.path}') {
           case 'POST /v1/google/check':
-            return _ok({'exists': users.containsKey(sub), 'email': '$sub@gmail.com'});
+            final user = users[sub];
+            return _ok({
+              'exists': user != null,
+              'email': '$sub@gmail.com',
+              'password': user != null &&
+                  (user['bundle'] as Map).containsKey('password'),
+            });
+          case 'POST /v1/kdf':
+            final user = users[(body['email'] as String).split('@').first];
+            final password = (user!['bundle'] as Map)['password'] as Map;
+            return _ok({'salt': password['salt'], 'kdf': password['kdf']});
           case 'POST /v1/google/register':
             if ((body['bundle'] as Map).containsKey('password')) {
               return _error(400, 'bad_bundle');
@@ -67,7 +77,9 @@ class GoogleServer {
           case 'POST /v1/google/login':
             final user = users[sub];
             if (user == null) return _error(404, 'no_account');
-            if (user['recoveryAuthKey'] != body['recoveryAuthKey']) {
+            final field =
+                body.containsKey('authKey') ? 'authKey' : 'recoveryAuthKey';
+            if (user[field] == null || user[field] != body[field]) {
               return _error(401, 'invalid_credentials');
             }
             return _ok({'token': _session(sub!), 'bundle': user['bundle']});
@@ -135,9 +147,41 @@ void main() {
     final b = phone(server, FakeGoogle(), storeB);
     final again = (await b.startGoogle())!;
     expect(again.exists, isTrue);
-    await b.logInWithGoogle(again, recoveryKey.format());
+    await b.logInWithGoogle(again, recoveryKey: recoveryKey.format());
     expect(storeB.saved!.dataKey, storeA.saved!.dataKey);
     expect(storeB.saved!.google, isTrue);
+  });
+
+  test('a Gmail that already has an email account logs in with its '
+      'password through Google', () async {
+    final server = GoogleServer();
+    final created = await const KeyWork.forTests(fast)
+        .createAccount('a long password');
+    server.users['sara'] = {
+      'authKey': toBase64(created.authKey!),
+      'recoveryAuthKey': toBase64(created.recoveryAuthKey),
+      'bundle': created.bundle.toJson(),
+    };
+
+    final store = MemoryAccountStore();
+    final b = phone(server, FakeGoogle(), store);
+    final start = (await b.startGoogle())!;
+    expect(start.exists, isTrue);
+    expect(start.hasPassword, isTrue);
+
+    expect(
+        await problemOf(
+            () => b.logInWithGoogle(start, password: 'wrong password!')),
+        AccountProblem.wrongCredentials);
+    await b.logInWithGoogle(start, password: 'a long password');
+    expect(store.saved!.dataKey, created.dataKey);
+    expect(store.saved!.google, isTrue);
+
+    // The recovery key works too (forgot the password).
+    final other = MemoryAccountStore();
+    await phone(server, FakeGoogle(), other).logInWithGoogle(start,
+        recoveryKey: created.recoveryKey.format());
+    expect(other.saved!.dataKey, created.dataKey);
   });
 
   test('a wrong recovery key is refused and nothing is saved', () async {
@@ -149,9 +193,9 @@ void main() {
     final b = phone(server, FakeGoogle(), store);
     final start = (await b.startGoogle())!;
     final other = RecoveryKey.generate().format();
-    expect(await problemOf(() => b.logInWithGoogle(start, other)),
+    expect(await problemOf(() => b.logInWithGoogle(start, recoveryKey: other)),
         AccountProblem.wrongRecoveryKey);
-    expect(await problemOf(() => b.logInWithGoogle(start, 'ABCD')),
+    expect(await problemOf(() => b.logInWithGoogle(start, recoveryKey: 'ABCD')),
         AccountProblem.recoveryKeyFormat);
     expect(store.saved, isNull);
   });

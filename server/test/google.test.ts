@@ -73,7 +73,7 @@ describe('Google accounts', () => {
   it('check, sign up, then log in on another phone with the recovery key', async () => {
     const s = googleServer();
     const before = await s.call('POST', '/v1/google/check', { idToken: await idToken(s) });
-    assert.deepEqual(before.body, { exists: false, email: 'person@gmail.com' });
+    assert.deepEqual(before.body, { exists: false, email: 'person@gmail.com', password: false });
 
     const account = await googleSignUp(s);
     const info = await s.call('GET', '/v1/account', undefined, account.token);
@@ -94,7 +94,7 @@ describe('Google accounts', () => {
   it('log-in needs the right recovery key, and wrong ones are limited', async () => {
     const s = googleServer();
     await googleSignUp(s);
-    for (let i = 0; i < 5; i++) {
+    for (let i = 0; i < 10; i++) {
       const res = await s.call('POST', '/v1/google/login', {
         idToken: await idToken(s),
         recoveryAuthKey: toB64(randomBytes(32)),
@@ -116,6 +116,56 @@ describe('Google accounts', () => {
     });
     assert.equal(res.status, 404);
     assert.equal(res.body.error, 'no_account');
+  });
+
+  it('an email account with the same Gmail is found, and linked after the password', async () => {
+    const s = googleServer();
+    const { account, token } = await signUp(s, 'person@gmail.com');
+    const check = await s.call('POST', '/v1/google/check', { idToken: await idToken(s) });
+    assert.deepEqual(check.body, { exists: true, email: 'person@gmail.com', password: true });
+
+    const wrong = await s.call('POST', '/v1/google/login', {
+      idToken: await idToken(s),
+      authKey: toB64(randomBytes(32)),
+    });
+    assert.equal(wrong.status, 401);
+
+    const login = await s.call('POST', '/v1/google/login', {
+      idToken: await idToken(s),
+      authKey: account.authKey,
+    });
+    assert.equal(login.status, 200);
+    assert.deepEqual(login.body.bundle, account.bundle);
+
+    // Linked: the recovery key works through Google too, and the password
+    // still works on its own.
+    const byRecovery = await s.call('POST', '/v1/google/login', {
+      idToken: await idToken(s),
+      recoveryAuthKey: account.recoveryAuthKey,
+    });
+    assert.equal(byRecovery.status, 200);
+    const plain = await s.call('POST', '/v1/login', { email: account.email, authKey: account.authKey });
+    assert.equal(plain.status, 200);
+
+    // Deleting it can now be confirmed with Google.
+    const del = await s.call('POST', '/v1/account/delete', { idToken: await idToken(s) }, token);
+    assert.equal(del.status, 200);
+  });
+
+  it('an email account already linked to another Google account is not taken over', async () => {
+    const s = googleServer();
+    const { account } = await signUp(s, 'person@gmail.com');
+    await s.call('POST', '/v1/google/login', {
+      idToken: await idToken(s, { sub: 'first' }),
+      authKey: account.authKey,
+    });
+    const other = await s.call('POST', '/v1/google/check', { idToken: await idToken(s, { sub: 'second' }) });
+    assert.equal(other.body.exists, false);
+    const login = await s.call('POST', '/v1/google/login', {
+      idToken: await idToken(s, { sub: 'second' }),
+      authKey: account.authKey,
+    });
+    assert.equal(login.status, 404);
   });
 
   it('a Google account has no password: password log-in never works', async () => {

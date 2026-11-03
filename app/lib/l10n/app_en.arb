@@ -315,7 +315,13 @@
   "entryManual": "Added by you",
   "entryTransfer": "Transfer sent",
   "entryTransferTo": "Transfer to account ending {last4}",
-  "@entryTransferTo": {"placeholders": {"last4": {"type": "String"}}},
+  "@entryTransferTo": {
+    "placeholders": {
+      "last4": {
+        "type": "String"
+      }
+    }
+  },
   "entryCash": "Cash withdrawal",
   "entryBill": "Bill payment",
   "entryRefund": "Refund",
@@ -328,9 +334,18 @@
   "bankBenefitPay": "BenefitPay",
   "continueWithGoogle": "Continue with Google",
   "googleAccountAs": "Google account: {email}",
-  "@googleAccountAs": {"placeholders": {"email": {"type": "String"}}},
+  "@googleAccountAs": {
+    "placeholders": {
+      "email": {
+        "type": "String"
+      }
+    }
+  },
   "googleSignUpIntro": "No password is needed: Google confirms it is you. Your data is locked with a recovery key that only you will have. Keep it: you need it to log in on another phone.",
   "googleLogInIntro": "Google confirmed it is you. Type your recovery key to open your data on this phone. The server never sees it.",
   "deleteGoogleConfirm": "Delete this account and everything synced to it? Google will ask you to confirm it is you. Data on this phone stays.",
-  "errorGoogle": "Google sign-in did not work. Try again, or use email and password."
+  "errorGoogle": "Google sign-in did not work. Try again, or use email and password.",
+  "googlePasswordIntro": "This Gmail already has a Beaza account. Type its password once to open your data on this phone; after that Google is linked to it.",
+  "useRecoveryKeyInstead": "Forgot the password? Use the recovery key",
+  "usePasswordInstead": "Use the password instead"
 }

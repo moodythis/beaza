@@ -304,22 +304,50 @@ async function register(ctx: Ctx) {
 }
 
 // ---- Google accounts ----
-// Google proves who the person is; the recovery key, which never leaves the
-// phone, is the only lock on the data key (packages/beaza_crypto/README.md).
-// Logging in on a phone needs both: a Google ID token and the recovery proof.
+// Google proves who the person is, but the server cannot open anyone's data,
+// so a phone also needs what locks the data key: the password, or the
+// recovery key (the only lock on accounts made with Google).
 
 /** Whether this Google account already has a Beaza account. Google has
  * just proved the caller owns it, so the answer reveals nothing to others. */
+type GoogleUser = {
+  id: string;
+  auth_hash: string;
+  recovery_auth_hash: string;
+  bundle: string;
+  google_sub: string | null;
+};
+
+/** The account for a Google identity: the one already linked to it, or an
+ * email-and-password account with the same (Google-verified) email that is
+ * not linked to another Google account yet. */
+async function findGoogleUser(ctx: Ctx, who: GoogleIdentity): Promise<GoogleUser | null> {
+  const linked = await ctx.db
+    .prepare('SELECT id, auth_hash, recovery_auth_hash, bundle, google_sub FROM users WHERE google_sub = ?')
+    .bind(who.sub)
+    .first<GoogleUser>();
+  if (linked) return linked;
+  return ctx.db
+    .prepare(
+      `SELECT id, auth_hash, recovery_auth_hash, bundle, google_sub FROM users
+       WHERE email = ? AND google_sub IS NULL`,
+    )
+    .bind(checkEmail(who.email))
+    .first<GoogleUser>();
+}
+
+/** Whether this Google account already has a Beaza account, and whether
+ * that account has a password (then the phone asks for it; otherwise for the
+ * recovery key). Google has just proved the caller owns the account and its
+ * email, so the answer tells them nothing about anyone else. */
 async function googleCheck(ctx: Ctx) {
   const ipKey = `google:ip:${await keyedHash(ctx, ctx.ip)}`;
   await assertNotLimited(ctx, ipKey, 40, 15 * MINUTE);
   await recordAttempt(ctx, ipKey, 15 * MINUTE);
   const who = await ctx.google((await readJson(ctx.request)).idToken);
-  const row = await ctx.db
-    .prepare('SELECT id FROM users WHERE google_sub = ?')
-    .bind(who.sub)
-    .first();
-  return { exists: row !== null, email: who.email };
+  const user = await findGoogleUser(ctx, who);
+  const password = user ? (JSON.parse(user.bundle) as Bundle).password !== undefined : false;
+  return { exists: user !== null, email: who.email, password };
 }
 
 async function googleRegister(ctx: Ctx) {
@@ -371,25 +399,35 @@ async function googleRegister(ctx: Ctx) {
   return { token: await createSession(ctx, id) };
 }
 
+/** Logging in with Google needs Google's token plus a key that opens the
+ * data: the password key (accounts that have a password) or the recovery
+ * proof. An email-and-password account with the same email is linked to the
+ * Google account on its first successful Google log-in. */
 async function googleLogin(ctx: Ctx) {
   const body = await readJson(ctx.request);
   const who = await ctx.google(body.idToken);
-  const key = checkKey(body.recoveryAuthKey, 'bad_recovery_auth_key');
+  const byPassword = body.authKey !== undefined;
+  const key = byPassword
+    ? checkKey(body.authKey, 'bad_auth_key')
+    : checkKey(body.recoveryAuthKey, 'bad_recovery_auth_key');
 
   const accountKey = `google:sub:${await keyedHash(ctx, who.sub)}`;
   const ipKey = `google:ip:${await keyedHash(ctx, ctx.ip)}`;
-  await assertNotLimited(ctx, accountKey, 5, HOUR);
+  await assertNotLimited(ctx, accountKey, 10, HOUR);
   await assertNotLimited(ctx, ipKey, 40, 15 * MINUTE);
 
-  const user = await ctx.db
-    .prepare('SELECT id, recovery_auth_hash, bundle FROM users WHERE google_sub = ?')
-    .bind(who.sub)
-    .first<{ id: string; recovery_auth_hash: string; bundle: string }>();
+  const user = await findGoogleUser(ctx, who);
   if (!user) throw new HttpError(404, 'no_account');
-  if (!safeEqual(await storedHash('recovery', user.id, key), user.recovery_auth_hash)) {
+  const ok = byPassword
+    ? safeEqual(await storedHash('auth', user.id, key), user.auth_hash)
+    : safeEqual(await storedHash('recovery', user.id, key), user.recovery_auth_hash);
+  if (!ok) {
     await recordAttempt(ctx, accountKey, HOUR);
     await recordAttempt(ctx, ipKey, 15 * MINUTE);
     throw new HttpError(401, 'invalid_credentials');
+  }
+  if (user.google_sub === null) {
+    await ctx.db.prepare('UPDATE users SET google_sub = ? WHERE id = ?').bind(who.sub, user.id).run();
   }
   await ctx.db.prepare('DELETE FROM attempts WHERE key = ?').bind(accountKey).run();
   return { token: await createSession(ctx, user.id), bundle: JSON.parse(user.bundle) };

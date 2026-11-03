@@ -50,11 +50,16 @@ class GoogleStart {
     required this.idToken,
     required this.email,
     required this.exists,
+    this.hasPassword = false,
   });
 
   final String idToken;
   final String email;
   final bool exists;
+
+  /// The account has a password (made with email and password, or linked):
+  /// log in with it instead of the recovery key.
+  final bool hasPassword;
 }
 
 /// The sync account on this phone. Without an account nothing leaves the
@@ -109,8 +114,10 @@ abstract class AccountRepository extends ChangeNotifier {
   Future<RecoveryKey> signUpWithGoogle(GoogleStart start, Consent consent) =>
       throw UnsupportedError('Google sign-in');
 
-  /// Logs in to a Google account with its recovery key.
-  Future<void> logInWithGoogle(GoogleStart start, String recoveryKey) =>
+  /// Logs in with Google plus the password or the recovery key, whichever
+  /// is given. An email account with the same Gmail is linked to Google.
+  Future<void> logInWithGoogle(GoogleStart start,
+          {String? password, String? recoveryKey}) =>
       throw UnsupportedError('Google sign-in');
 
   /// Deletes a Google account after Google confirms it is the same
@@ -203,7 +210,11 @@ class RemoteAccountRepository extends AccountRepository {
     if (idToken == null) return null;
     final found = await _guard(() => _api.googleCheck(idToken));
     return GoogleStart(
-        idToken: idToken, email: found.email, exists: found.exists);
+      idToken: idToken,
+      email: found.email,
+      exists: found.exists,
+      hasPassword: found.password,
+    );
   }
 
   @override
@@ -226,29 +237,41 @@ class RemoteAccountRepository extends AccountRepository {
   }
 
   @override
-  Future<void> logInWithGoogle(GoogleStart start, String recoveryKey) async {
-    final key = _parseRecoveryKey(recoveryKey);
-    final ({String token, KeyBundle bundle}) session;
-    try {
-      session = await _guard(
-          () async => _api.googleLogin(start.idToken, await key.authKey()));
-    } on AccountFailure catch (e) {
-      if (e.problem == AccountProblem.wrongCredentials) {
+  Future<void> logInWithGoogle(GoogleStart start,
+      {String? password, String? recoveryKey}) async {
+    final DataKey dataKey;
+    final String token;
+    if (password != null) {
+      final keys = await _passwordKeys(start.email, password);
+      final session = await _guard(
+          () => _api.googleLogin(start.idToken, authKey: keys.authKey));
+      try {
+        dataKey = await session.bundle.openWithPassword(keys);
+      } on DecryptionFailed {
+        throw const AccountFailure(AccountProblem.server);
+      }
+      token = session.token;
+    } else {
+      final key = _parseRecoveryKey(recoveryKey ?? '');
+      final ({String token, KeyBundle bundle}) session;
+      try {
+        session = await _guard(() async => _api.googleLogin(start.idToken,
+            recoveryAuthKey: await key.authKey()));
+      } on AccountFailure catch (e) {
+        if (e.problem == AccountProblem.wrongCredentials) {
+          throw const AccountFailure(AccountProblem.wrongRecoveryKey);
+        }
+        rethrow;
+      }
+      try {
+        dataKey = await session.bundle.openWithRecoveryKey(key);
+      } on DecryptionFailed {
         throw const AccountFailure(AccountProblem.wrongRecoveryKey);
       }
-      rethrow;
-    }
-    final DataKey dataKey;
-    try {
-      dataKey = await session.bundle.openWithRecoveryKey(key);
-    } on DecryptionFailed {
-      throw const AccountFailure(AccountProblem.wrongRecoveryKey);
+      token = session.token;
     }
     await _save(SavedAccount(
-        email: start.email,
-        token: session.token,
-        dataKey: dataKey,
-        google: true));
+        email: start.email, token: token, dataKey: dataKey, google: true));
   }
 
   @override
