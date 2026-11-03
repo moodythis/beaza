@@ -280,7 +280,7 @@ function render(sections: Section[], heading: string, lang: string, dir: string)
   return `<section lang="${lang}" dir="${dir}"><h1>${escape(heading)}</h1>${body}</section>`;
 }
 
-const documents = {
+export const documents = {
   privacy: {
     version: PRIVACY_VERSION,
     title: { ar: 'إشعار الخصوصية لتطبيق بيزة', en: 'Beaza privacy notice' },

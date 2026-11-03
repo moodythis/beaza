@@ -137,5 +137,106 @@
   "otherLanguage": "عربي",
   "@otherLanguage": {
     "description": "Language button: the other language, in that language"
-  }
+  },
+  "accountTitle": "Account & sync",
+  "accountIntro": "Create an account to keep your spending in step across your phones. Everything is encrypted on this phone before it is sent, so the server cannot read your amounts, merchants or limits. Without an account, nothing leaves this phone.",
+  "createAccount": "Create account",
+  "logIn": "Log in",
+  "logOut": "Log out",
+  "emailLabel": "Email",
+  "passwordLabel": "Password",
+  "repeatPasswordLabel": "Repeat password",
+  "newPasswordLabel": "New password",
+  "passwordHelp": "At least 10 characters. A few words are easy to remember and hard to guess.",
+  "invalidEmail": "Enter a valid email",
+  "passwordTooShort": "Use at least 10 characters",
+  "passwordsDiffer": "The passwords are not the same",
+  "consentPrivacy": "I have read the privacy notice and agree that my encrypted data is stored on the sync server.",
+  "consentTerms": "I accept the terms of use.",
+  "consentAdult": "I am 18 or older.",
+  "privacyNotice": "Privacy notice",
+  "termsOfUse": "Terms of use",
+  "legalVersion": "Version {version}",
+  "@legalVersion": {
+    "placeholders": {
+      "version": {
+        "type": "String",
+        "example": "2026-11-03"
+      }
+    }
+  },
+  "readDocument": "Read",
+  "makingKeys": "Making your encryption keys… this takes a few seconds.",
+  "forgotPassword": "Forgot your password?",
+  "recoverTitle": "Recover your account",
+  "recoverIntro": "Enter the recovery key you saved when you created the account, then choose a new password.",
+  "recoveryKeyLabel": "Recovery key",
+  "recoverButton": "Recover account",
+  "recoveryKeyTitle": "Your recovery key",
+  "recoveryKeyBody": "If you forget your password, this key is the only way back to your synced data. Nobody else has it, not even Beaza, and it will not be shown again. Save it somewhere safe, such as a password manager or on paper.",
+  "copyKey": "Copy key",
+  "keyCopied": "Copied. Paste it somewhere safe.",
+  "confirmKeyLabel": "Type the last 4 characters to confirm you saved it",
+  "done": "Done",
+  "signedInAs": "Signed in as {email}",
+  "@signedInAs": {
+    "placeholders": {
+      "email": {
+        "type": "String"
+      }
+    }
+  },
+  "serverHoldsTitle": "What the server holds about you",
+  "memberSince": "Account created: {date}",
+  "@memberSince": {
+    "placeholders": {
+      "date": {
+        "type": "String"
+      }
+    }
+  },
+  "consentGiven": "Agreed to privacy notice {privacy} and terms {terms} on {date}",
+  "@consentGiven": {
+    "placeholders": {
+      "privacy": {
+        "type": "String"
+      },
+      "terms": {
+        "type": "String"
+      },
+      "date": {
+        "type": "String"
+      }
+    }
+  },
+  "encryptedRecords": "{count, plural, =0{No encrypted records yet} =1{1 encrypted record, unreadable to the server} other{{count} encrypted records, unreadable to the server}}",
+  "@encryptedRecords": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "syncNext": "Sync between phones arrives in the next update.",
+  "deleteAccount": "Delete account",
+  "deleteAccountBody": "This deletes your account and all synced data from the server, and withdraws your consent. The data on this phone stays. Enter your password to confirm.",
+  "accountDeleted": "Account deleted",
+  "errorWrongCredentials": "Wrong email or password",
+  "errorEmailTaken": "This email already has an account. Log in instead.",
+  "errorRateLimited": "Too many tries. Try again in {minutes} min.",
+  "@errorRateLimited": {
+    "placeholders": {
+      "minutes": {
+        "type": "int"
+      }
+    }
+  },
+  "errorNetwork": "Can't reach the server. Check your internet connection.",
+  "errorWeakServer": "The server asked for weak security settings, so the app stopped. Nothing was sent.",
+  "errorKeyTypo": "One of the characters looks wrong. Check the key again.",
+  "errorKeyFormat": "The key has 32 letters and numbers, in 8 groups of 4.",
+  "errorWrongKey": "This recovery key does not belong to this account.",
+  "errorOutdated": "The privacy notice or terms have changed. Update the app to continue.",
+  "errorSessionExpired": "Your session has ended. Log in again.",
+  "errorServer": "Something went wrong. Try again."
 }

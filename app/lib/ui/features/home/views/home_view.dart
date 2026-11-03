@@ -1,7 +1,9 @@
+import 'package:beaza/data/repositories/account_repository.dart';
 import 'package:beaza/l10n/app_localizations.dart';
 import 'package:beaza/ui/core/amount_dialog.dart';
 import 'package:beaza/ui/core/formatting.dart';
 import 'package:beaza/ui/core/language_controller.dart';
+import 'package:beaza/ui/features/account/views/account_view.dart';
 import 'package:beaza/ui/features/home/view_models/home_view_model.dart';
 import 'package:beaza/ui/features/review/view_models/review_view_model.dart';
 import 'package:beaza/ui/features/review/views/review_view.dart';
@@ -10,12 +12,20 @@ import 'package:flutter/material.dart';
 
 /// Home: spent versus limit, what is left, micro-expenses and today's list.
 class HomeView extends StatelessWidget {
-  const HomeView({super.key, required this.viewModel, this.language});
+  const HomeView({
+    super.key,
+    required this.viewModel,
+    this.language,
+    this.account,
+  });
 
   final HomeViewModel viewModel;
 
   /// Null hides the language button.
   final LanguageController? language;
+
+  /// Null hides the account button.
+  final AccountRepository? account;
 
   @override
   Widget build(BuildContext context) {
@@ -34,6 +44,22 @@ class HomeView extends StatelessWidget {
                 Localizations.localeOf(context).languageCode == 'ar'
                     ? 'en'
                     : 'ar',
+              ),
+            ),
+          if (account != null)
+            ListenableBuilder(
+              listenable: account!,
+              builder: (context, _) => IconButton(
+                key: const Key('accountButton'),
+                tooltip: l10n.accountTitle,
+                icon: Icon(account!.signedIn
+                    ? Icons.cloud_done_outlined
+                    : Icons.account_circle_outlined),
+                onPressed: () => Navigator.of(context).push(
+                  MaterialPageRoute<void>(
+                    builder: (_) => AccountView(repository: account!),
+                  ),
+                ),
               ),
             ),
         ],

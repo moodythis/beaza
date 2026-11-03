@@ -4,6 +4,9 @@
     <uses-permission android:name="android.permission.RECEIVE_SMS" />
     <!-- Daily limit alerts (Android 13+ asks the user). -->
     <uses-permission android:name="android.permission.POST_NOTIFICATIONS" />
+    <!-- Sync between the user's phones, only after they create an account.
+         Everything sent is encrypted on the phone first (beaza_crypto). -->
+    <uses-permission android:name="android.permission.INTERNET" />
 
     <!-- The database key lives in the Keystore, so a cloud backup of the
          encrypted file could never be opened: keep the app out of backups. -->

@@ -1,8 +1,11 @@
 import 'package:beaza/app.dart';
+import 'package:beaza/data/repositories/account_repository.dart';
+import 'package:beaza/data/services/account_store.dart';
 import 'package:beaza/data/services/alert_notifier.dart';
 import 'package:beaza/data/services/key_store.dart';
 import 'package:beaza/data/services/sms_source.dart';
 import 'package:beaza/data/services/storage.dart';
+import 'package:beaza/data/services/sync_api.dart';
 import 'package:beaza/domain/use_cases/guardrail_alerts.dart';
 import 'package:beaza/domain/use_cases/message_intake.dart';
 import 'package:beaza/l10n/app_localizations.dart';
@@ -76,7 +79,16 @@ Future<void> main() async {
       homeViewModel.checkMessages();
       alerts.evaluate();
     });
-    runApp(BeazaApp(homeViewModel: homeViewModel, language: language));
+    // The sync account. Nothing is sent anywhere until the user creates an
+    // account or logs in.
+    final account =
+        RemoteAccountRepository(api: SyncApi(), store: SecureAccountStore());
+    await account.load().catchError((Object _) {});
+    runApp(BeazaApp(
+      homeViewModel: homeViewModel,
+      language: language,
+      account: account,
+    ));
 
     await notifier.requestPermission().catchError((Object _) => false);
     await homeViewModel.checkMessages();

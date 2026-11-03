@@ -14,6 +14,9 @@ dependencies:
   intl: any
   beaza_extraction:
     path: ../packages/beaza_extraction
+  beaza_crypto:
+    path: ../packages/beaza_crypto
+  http: ^1.2.0
   drift: ">=2.32.0 <3.0.0"
   sqlite3: ">=3.0.0 <4.0.0"
   path: ^1.9.0
