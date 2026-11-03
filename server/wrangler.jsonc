@@ -7,6 +7,9 @@
     "enabled": true,
     "traces": { "enabled": true }
   },
+  // Placeholder on a reserved domain (RFC 2606): it can never reach anyone.
+  // Replace with the real project address before release.
+  "vars": { "PRIVACY_CONTACT": "privacy@beaza.example" },
   "d1_databases": [
     {
       "binding": "DB",
