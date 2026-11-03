@@ -215,6 +215,10 @@ class BahrainiMoneyParser {
     if (half != null && _unitAt(t, i + 1) == _Unit.dinar) {
       return _Part(half == 'ربع' ? 250 : 500, i + 2);
     }
+    // "نص ربية" is 50 fils (from the user, 4 Nov 2026).
+    if (half != null && half != 'ربع' && _unitAt(t, i + 1) == _Unit.rupee) {
+      return _Part(50, i + 2);
+    }
     return null;
   }
 
@@ -234,6 +238,10 @@ class BahrainiMoneyParser {
   /// "ونص" +500, "وربع" +250, "إلا ربع" -250 after a dinar amount.
   _Part _fraction(List<String> t, int j, int base) {
     String at(int k) => k < t.length ? t[k] : '';
+    // "دينار ونص ربية" is a dinar and half a rupee, not a dinar and a half.
+    if (_rupeeUnits.contains(at(j + 1)) || _rupeeUnits.contains(at(j + 2))) {
+      return _Part(base, j);
+    }
     if (at(j) == 'ونص' || at(j) == 'ونصف') return _Part(base + 500, j + 1);
     if (at(j) == 'وربع') return _Part(base + 250, j + 1);
     if (at(j) == 'و' && (at(j + 1) == 'نص' || at(j + 1) == 'نصف')) {
