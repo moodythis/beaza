@@ -2,6 +2,7 @@ import { readFileSync } from 'node:fs';
 import { DatabaseSync } from 'node:sqlite';
 import { handle } from '../src/app.ts';
 import type { D1Like, D1Statement, Value } from '../src/d1.ts';
+import { PRIVACY_VERSION, TERMS_VERSION } from '../src/legal.ts';
 import { randomBytes, toB64 } from '../src/util.ts';
 
 // ---- a D1 look-alike on Node's built-in SQLite ----
@@ -34,7 +35,9 @@ export class TestD1 implements D1Like {
   db = new DatabaseSync(':memory:');
 
   constructor() {
-    this.db.exec(readFileSync(new URL('../migrations/0001_init.sql', import.meta.url), 'utf8'));
+    for (const file of ['0001_init.sql', '0002_consent.sql']) {
+      this.db.exec(readFileSync(new URL(`../migrations/${file}`, import.meta.url), 'utf8'));
+    }
   }
   prepare(sql: string) {
     return new Statement(this.db, sql);
@@ -107,7 +110,8 @@ export function newAccountFields(email = 'user@example.com') {
       key: toB64(randomBytes(105)),
     },
   };
-  return { email, authKey, recoveryAuthKey, bundle };
+  const consent = { privacy: PRIVACY_VERSION, terms: TERMS_VERSION, adult: true };
+  return { email, authKey, recoveryAuthKey, bundle, consent };
 }
 
 export type Account = ReturnType<typeof newAccountFields>;

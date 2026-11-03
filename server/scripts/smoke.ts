@@ -1,6 +1,7 @@
 // Full check of a deployed server, using a throw-away account that is
 // deleted at the end. Run by the "Smoke test" workflow:
 //   node scripts/smoke.ts https://beaza-sync.<name>.workers.dev
+import { PRIVACY_VERSION, TERMS_VERSION } from '../src/legal.ts';
 import { randomBytes, toB64 } from '../src/util.ts';
 
 const base = (process.argv[2] ?? '').replace(/\/$/, '');
@@ -40,16 +41,17 @@ const bundle = {
   },
 };
 const blob = toB64(randomBytes(200));
+const consent = { privacy: PRIVACY_VERSION, terms: TERMS_VERSION, adult: true };
 
 try {
   let r = await call('GET', '/v1/health');
   check('health', r.status === 200 && r.body.ok === true, r);
 
-  r = await call('POST', '/v1/register', { email, authKey, recoveryAuthKey, bundle });
+  r = await call('POST', '/v1/register', { email, authKey, recoveryAuthKey, bundle, consent });
   check('register', r.status === 200 && typeof r.body.token === 'string', r);
   const token = r.body.token as string;
 
-  r = await call('POST', '/v1/register', { email, authKey, recoveryAuthKey, bundle });
+  r = await call('POST', '/v1/register', { email, authKey, recoveryAuthKey, bundle, consent });
   check('same email again is refused', r.status === 409, r);
 
   r = await call('POST', '/v1/kdf', { email });
@@ -74,6 +76,15 @@ try {
 
   r = await call('GET', '/v1/records');
   check('no session is refused', r.status === 401, r);
+
+  r = await call('GET', '/v1/account', undefined, token);
+  check('account info shows the consent and one record',
+    r.status === 200 && r.body.consent.privacy === PRIVACY_VERSION && r.body.consent.terms === TERMS_VERSION && r.body.encryptedRecords === 1, r);
+
+  const page = await fetch(base + '/privacy');
+  const html = await page.text();
+  check('privacy page is up in both languages',
+    page.status === 200 && html.includes('إشعار الخصوصية') && html.includes('Beaza privacy notice'), page.status);
 
   r = await call('POST', '/v1/account/delete', { authKey }, token);
   check('delete the account', r.status === 200, r);

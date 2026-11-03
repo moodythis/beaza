@@ -16,4 +16,8 @@ export interface D1Like {
   batch(statements: D1Statement[]): Promise<unknown[]>;
 }
 
-export type Env = { DB: D1Like };
+export type Env = {
+  DB: D1Like;
+  /** Optional contact shown on the privacy page (a Worker variable). */
+  PRIVACY_CONTACT?: string;
+};

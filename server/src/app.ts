@@ -18,6 +18,7 @@ import {
   MAX_BODY,
 } from './validate.ts';
 import type { Bundle } from './validate.ts';
+import { legalPage, PRIVACY_VERSION, TERMS_VERSION } from './legal.ts';
 
 const MINUTE = 60_000;
 const HOUR = 60 * MINUTE;
@@ -57,6 +58,18 @@ export async function handle(
 ): Promise<Response> {
   const url = new URL(request.url);
   const route = `${request.method} ${url.pathname}`;
+  if (route === 'GET /privacy' || route === 'GET /terms') {
+    (options.log ?? console.log)(JSON.stringify({ route, status: 200 }));
+    const kind = url.pathname === '/privacy' ? 'privacy' : 'terms';
+    return new Response(legalPage(kind, env.PRIVACY_CONTACT), {
+      headers: {
+        'content-type': 'text/html; charset=utf-8',
+        'cache-control': 'public, max-age=300',
+        'x-content-type-options': 'nosniff',
+        'content-security-policy': "default-src 'none'; style-src 'unsafe-inline'",
+      },
+    });
+  }
   let response: Response;
   try {
     let cachedPepper: Uint8Array | undefined;
@@ -104,6 +117,8 @@ async function dispatch(route: string, url: URL, ctx: Ctx): Promise<Record<strin
       return pullRecords(ctx, url);
     case 'POST /v1/logout':
       return logout(ctx);
+    case 'GET /v1/account':
+      return accountInfo(ctx);
     case 'POST /v1/account/delete':
       return deleteAccount(ctx);
     default:
@@ -237,6 +252,7 @@ async function register(ctx: Ctx) {
   const recoveryAuthKey = checkKey(body.recoveryAuthKey, 'bad_recovery_auth_key');
   const bundle = checkBundle(body.bundle);
   if (!bundle.password) throw new HttpError(400, 'bad_bundle');
+  const consent = checkConsent(body.consent);
 
   const taken = await ctx.db.prepare('SELECT id FROM users WHERE email = ?').bind(email).first();
   if (taken) throw new HttpError(409, 'email_taken');
@@ -245,8 +261,9 @@ async function register(ctx: Ctx) {
   try {
     await ctx.db
       .prepare(
-        `INSERT INTO users (id, email, auth_hash, recovery_auth_hash, bundle, seq, created_at)
-         VALUES (?, ?, ?, ?, ?, 0, ?)`,
+        `INSERT INTO users (id, email, auth_hash, recovery_auth_hash, bundle, seq, created_at,
+                            privacy_version, terms_version, consent_at)
+         VALUES (?, ?, ?, ?, ?, 0, ?, ?, ?, ?)`,
       )
       .bind(
         id,
@@ -255,6 +272,9 @@ async function register(ctx: Ctx) {
         await storedHash('recovery', id, recoveryAuthKey),
         JSON.stringify(bundle),
         ctx.now,
+        consent.privacy,
+        consent.terms,
+        ctx.now,
       )
       .run();
   } catch (error) {
@@ -262,6 +282,27 @@ async function register(ctx: Ctx) {
     throw error;
   }
   return { token: await createSession(ctx, id) };
+}
+
+/** Sign-up needs three separate, explicit statements: consent to the current
+ * privacy notice, acceptance of the current terms, and being 18 or over.
+ * Refusing anything else keeps the record meaningful (GDPR Art. 7(1)). */
+function checkConsent(value: unknown): { privacy: string; terms: string } {
+  if (
+    !isObject(value) ||
+    value.adult !== true ||
+    typeof value.privacy !== 'string' ||
+    typeof value.terms !== 'string'
+  ) {
+    throw new HttpError(400, 'consent_required');
+  }
+  if (value.privacy !== PRIVACY_VERSION || value.terms !== TERMS_VERSION) {
+    throw new HttpError(400, 'documents_outdated', {
+      privacy: PRIVACY_VERSION,
+      terms: TERMS_VERSION,
+    });
+  }
+  return { privacy: value.privacy, terms: value.terms };
 }
 
 /** Tells a phone which salt and Argon2id setting to use for an email. For an
@@ -355,6 +396,42 @@ async function changeRecoveryKey(ctx: Ctx) {
     .bind(await storedHash('recovery', userId, recoveryAuthKey), JSON.stringify(bundle), userId)
     .run();
   return { ok: true };
+}
+
+/** Everything the server holds about the person that can be shown in
+ * readable form (GDPR Art. 15; Bahrain PDPL right of access). The records
+ * themselves are encrypted; only their number is meaningful here. */
+async function accountInfo(ctx: Ctx) {
+  const { userId } = await authenticate(ctx);
+  const user = await ctx.db
+    .prepare(
+      'SELECT email, created_at, privacy_version, terms_version, consent_at FROM users WHERE id = ?',
+    )
+    .bind(userId)
+    .first<{
+      email: string;
+      created_at: number;
+      privacy_version: string | null;
+      terms_version: string | null;
+      consent_at: number | null;
+    }>();
+  if (!user) throw new HttpError(401, 'unauthorized');
+  const records = await ctx.db
+    .prepare('SELECT COUNT(*) AS n FROM records WHERE user_id = ?')
+    .bind(userId)
+    .first<{ n: number }>();
+  const sessions = await ctx.db
+    .prepare('SELECT COUNT(*) AS n FROM sessions WHERE user_id = ? AND expires_at > ?')
+    .bind(userId, ctx.now)
+    .first<{ n: number }>();
+  return {
+    email: user.email,
+    createdAt: user.created_at,
+    consent: { privacy: user.privacy_version, terms: user.terms_version, at: user.consent_at },
+    encryptedRecords: records?.n ?? 0,
+    activeSessions: sessions?.n ?? 0,
+    current: { privacy: PRIVACY_VERSION, terms: TERMS_VERSION },
+  };
 }
 
 async function logout(ctx: Ctx) {
