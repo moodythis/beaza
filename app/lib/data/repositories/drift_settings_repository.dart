@@ -2,7 +2,7 @@ import 'package:beaza/data/repositories/settings_repository.dart';
 import 'package:beaza/data/repositories/syncable.dart';
 import 'package:beaza/data/services/database.dart';
 import 'package:beaza_extraction/beaza_extraction.dart';
-import 'package:drift/drift.dart' show Value;
+import 'package:drift/drift.dart';
 
 /// The single settings record, kept in the encrypted database.
 /// Until the user saves something it returns the defaults with no limit.
