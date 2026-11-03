@@ -42,6 +42,22 @@ jobs:
       - name: Test
         run: dart test --reporter expanded
 
+  server:
+    name: Sync server (tests)
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: server
+    steps:
+      - uses: actions/checkout@v5
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+      - name: Node version
+        run: node --version
+      - name: Test
+        run: npm test
+
   app:
     name: Flutter app (analyze, test, build APK)
     runs-on: ubuntu-latest

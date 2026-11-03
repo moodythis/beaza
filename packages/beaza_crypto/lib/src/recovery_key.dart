@@ -92,6 +92,18 @@ class RecoveryKey {
         info: utf8.encode('beaza/v1/recovery-wrap'),
       );
 
+  /// What the phone sends the server to prove it holds the recovery key when
+  /// the password is forgotten. Made with a different label than
+  /// [wrappingKey], so seeing it (the server stores only its hash) tells
+  /// nobody anything about the key that opens the data.
+  Future<List<int>> authKey() async => (await Hkdf(
+          hmac: Hmac.sha256(), outputLength: 32)
+      .deriveKey(
+        secretKey: SecretKey(_secret),
+        info: utf8.encode('beaza/v1/recovery-auth'),
+      ))
+      .extractBytes();
+
   @override
   bool operator ==(Object other) =>
       other is RecoveryKey && sameBytes(other._secret, _secret);

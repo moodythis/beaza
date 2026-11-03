@@ -14,6 +14,7 @@ server — or anyone who steals its database — cannot read any of it.
 | Record key | HKDF from the data key | Memory only | Encrypts records |
 | Recovery key (144 random bits + 16-bit checksum) | First phone | Written down by the user; never stored by the app or sent | Opens the data key when the password is lost; the only lock for Google accounts |
 | Password keys | Argon2id(password, salt) then HKDF | Memory only | `authKey` is sent to log in; `wrapKey` opens the data key and never leaves the phone |
+| Recovery proof | HKDF from the recovery key, label `recovery-auth` | Memory only | Sent to the server to prove the phone holds the recovery key (forgotten password). A different label from the key that opens the data, so the server's copy (a hash) says nothing about it |
 
 The server stores a **key bundle**: the data key locked twice (once with
 `wrapKey`, once with the recovery key), plus the salt and Argon2id setting.
@@ -42,8 +43,8 @@ It also stores a hash of `authKey`, never the password.
 - **Log in on another phone:** get salt and setting for the email → refuse a
   setting below the minimum → derive keys → send `authKey` → receive the
   bundle → open the data key with `wrapKey`.
-- **Forgot password:** open the data key with the recovery key → set a new
-  password (new salt). Records stay as they are because the data key does
+- **Forgot password:** send the recovery proof → receive the bundle → open the
+  data key with the recovery key → set a new password (new salt). Records stay as they are because the data key does
   not change.
 - **Lost recovery key:** any phone still logged in can make a new one.
 - **Lost everything** (all phones, password and recovery key): the server

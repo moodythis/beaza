@@ -1,0 +1,18 @@
+{
+  "$schema": "node_modules/wrangler/config-schema.json",
+  "name": "beaza-sync",
+  "main": "src/index.ts",
+  "compatibility_date": "2026-11-03",
+  "observability": {
+    "enabled": true,
+    "traces": { "enabled": true }
+  },
+  "d1_databases": [
+    {
+      "binding": "DB",
+      "database_name": "beaza-sync",
+      "database_id": "06e49cd5-1d5e-40b0-8339-4bd91fee16e2",
+      "migrations_dir": "migrations"
+    }
+  ]
+}

@@ -138,6 +138,25 @@ void main() {
     expect(account.dataKey.toString(), 'DataKey(hidden)');
   });
 
+  test('every account has a recovery proof, and it differs from the password key',
+      () async {
+    final email = await emailAccount();
+    final google = await AccountKeys.create();
+    for (final account in [email, google]) {
+      expect(account.recoveryAuthKey, hasLength(32));
+      expect(account.recoveryAuthKey, await account.recoveryKey.authKey());
+    }
+    expect(email.recoveryAuthKey, isNot(email.authKey));
+  });
+
+  test('a replaced recovery key comes with its own new proof', () async {
+    final account = await emailAccount();
+    final change =
+        await AccountKeys.replaceRecoveryKey(account.bundle, account.dataKey);
+    expect(change.recoveryAuthKey, await change.recoveryKey.authKey());
+    expect(change.recoveryAuthKey, isNot(account.recoveryAuthKey));
+  });
+
   test('the bundle the server stores holds no key or password in the clear',
       () async {
     final account = await emailAccount('secret words');
@@ -147,5 +166,6 @@ void main() {
     expect(stored.contains('secret words'), false);
     expect(stored.contains(account.recoveryKey.format()), false);
     expect(stored.contains(toBase64(account.authKey!)), false);
+    expect(stored.contains(toBase64(account.recoveryAuthKey)), false);
   });
 }

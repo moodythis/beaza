@@ -141,12 +141,16 @@ class NewAccount {
   const NewAccount({
     required this.dataKey,
     required this.recoveryKey,
+    required this.recoveryAuthKey,
     required this.bundle,
     required this.authKey,
   });
 
   final DataKey dataKey;
   final RecoveryKey recoveryKey;
+
+  /// Proof of holding the recovery key; the server keeps only its hash.
+  final List<int> recoveryAuthKey;
   final KeyBundle bundle;
 
   /// Null for Google accounts (Google proves who the user is).
@@ -188,6 +192,7 @@ abstract final class AccountKeys {
     return NewAccount(
       dataKey: dataKey,
       recoveryKey: recoveryKey,
+      recoveryAuthKey: await recoveryKey.authKey(),
       bundle: bundle,
       authKey: authKey,
     );
@@ -219,14 +224,19 @@ abstract final class AccountKeys {
   /// Replaces the recovery key (for example when the old one may have been
   /// seen by someone). The old key stops working once the server has the new
   /// bundle.
-  static Future<({KeyBundle bundle, RecoveryKey recoveryKey})>
-      replaceRecoveryKey(KeyBundle bundle, DataKey dataKey) async {
+  static Future<
+      ({
+        KeyBundle bundle,
+        RecoveryKey recoveryKey,
+        List<int> recoveryAuthKey,
+      })> replaceRecoveryKey(KeyBundle bundle, DataKey dataKey) async {
     final recoveryKey = RecoveryKey.generate();
     final locked = await Envelope.seal(dataKey._bytes,
         await recoveryKey.wrappingKey(), _context(bundle.keyId, 'recovery'));
     return (
       bundle: bundle._copyWith(byRecovery: locked),
       recoveryKey: recoveryKey,
+      recoveryAuthKey: await recoveryKey.authKey(),
     );
   }
 }

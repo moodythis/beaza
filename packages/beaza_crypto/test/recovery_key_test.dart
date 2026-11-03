@@ -67,6 +67,18 @@ void main() {
         RecoveryKeyProblem.character);
   });
 
+  test('the proof sent to the server is 32 bytes and stays the same', () async {
+    final proof = await fixed.authKey();
+    expect(proof, hasLength(32));
+    expect(await RecoveryKey.parse(fixed.format()).authKey(), proof);
+    expect(await RecoveryKey.generate().authKey(), isNot(proof));
+  });
+
+  test('the proof is not the key that opens the data', () async {
+    final proof = await fixed.authKey();
+    expect(await (await fixed.wrappingKey()).extractBytes(), isNot(proof));
+  });
+
   test('never printed, so it cannot leak into logs', () {
     expect(fixed.toString(), 'RecoveryKey(hidden)');
     expect('$fixed'.contains(fixed.format().substring(0, 4)), false);
