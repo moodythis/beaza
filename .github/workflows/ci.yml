@@ -37,6 +37,24 @@ jobs:
           name: evaluation-report
           path: packages/beaza_extraction/eval/results/
 
+  assistant:
+    name: beaza_assistant (analyze and test)
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: packages/beaza_assistant
+    steps:
+      - uses: actions/checkout@v5
+      - uses: dart-lang/setup-dart@v1
+        with:
+          sdk: stable
+      - name: Install dependencies
+        run: dart pub get
+      - name: Analyze
+        run: dart analyze
+      - name: Test
+        run: dart test --reporter expanded
+
   crypto:
     name: beaza_crypto (analyze and test)
     runs-on: ubuntu-latest
