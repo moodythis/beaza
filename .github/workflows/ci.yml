@@ -30,6 +30,7 @@ jobs:
           cat eval/results/report.md >> "$GITHUB_STEP_SUMMARY"
           dart run bin/evaluate.dart --data eval/real_nbb.jsonl --out eval/results/real_nbb
           cat eval/results/real_nbb/report.md >> "$GITHUB_STEP_SUMMARY"
+          dart run bin/evaluate.dart --data eval/real_other.jsonl --out eval/results/real_other
       - name: Upload evaluation report
         uses: actions/upload-artifact@v4
         with:

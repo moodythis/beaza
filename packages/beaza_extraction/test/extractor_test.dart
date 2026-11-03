@@ -306,4 +306,18 @@ void main() {
       expect(r.timestamp, DateTime.utc(2026, 11, 1, 21, 30));
     });
   });
+
+  group('KFH (real format, IBAN masked)', () {
+    test('Fawri+ payment to an IBAN', () {
+      final r = run(
+          'KFH',
+          'Dear Customer, Fawri+ payment BD 10.054, Ref. AUB103QXT00123FK credited to IBAN BH93BIBBXXXXXXXXXX6142 on 30/10/2025 at 14:36. Call 17221999 for Inquiries',
+          DateTime.utc(2025, 10, 30, 11, 37));
+      expect(sum(r),
+          'transaction|transferOut|transfer|10054|BHD|null|null|2025-10-30T11:36:00.000Z');
+      expect(r.counterpartyLast4, '6142');
+      expect(r.reference, 'AUB103QXT00123FK');
+      expect(r.toString().contains('BH93'), false);
+    });
+  });
 }

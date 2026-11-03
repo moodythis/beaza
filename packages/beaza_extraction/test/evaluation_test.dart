@@ -301,6 +301,13 @@ void main() {
       expect(ev.overall.acceptedRate, 1.0);
     });
 
+    test('B1 reads the other real messages exactly', () {
+      final real = parseGold(File('eval/real_other.jsonl').readAsStringSync(),
+          name: 'real_other.jsonl');
+      final ev = evaluate(RulesSystem(), real);
+      expect(ev.errors.map((e) => '${e.id} ${e.field}'), isEmpty);
+    });
+
     test('report has the summary and every section', () {
       final ev = evaluate(RulesSystem(), seed);
       final md = markdownReport(

@@ -282,6 +282,21 @@ class Tier1Extractor {
       ),
       dateLagsAfterMidnight: true,
     ),
+    // ---- KFH ----
+    // Only the recipient's IBAN is printed (full, so only its last 4 digits
+    // are kept); the sender's account is not named. "credited to IBAN" is
+    // read as money leaving, like the other banks' outgoing Fawri+ messages.
+    _Template(
+      'kfh.fawri.out',
+      {SenderFamily.kfh},
+      TxChannel.fawri,
+      TxDirection.outgoing,
+      RegExp(
+        r'Fawri\+? payment BHD\s?' + _amt +
+            r',? Ref\.?\s?(?<ref>\w+) credited to IBAN (?<cp>\S+) on (?<d>\d{2})/(?<mo>\d{2})/(?<y>\d{4}) at (?<h>\d{2}):(?<mi>\d{2})',
+        caseSensitive: false,
+      ),
+    ),
     // ---- BenefitPay notifications ----
     _Template(
       'benefitpay.fawri.received',
