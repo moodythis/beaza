@@ -72,6 +72,8 @@ const Map<String, int> _plainWords = {
   'ربيتين': 200,
   'روبيه': 100,
   'روبيتين': 200,
+  // Four annas, a quarter rupee: 25 fils (from the user, 4 Nov 2026).
+  'اربعانه': 25,
 };
 
 /// A bare number followed by one of these is not money ("آخر 7 أيام").
@@ -181,6 +183,12 @@ class BahrainiMoneyParser {
         ? stripJoined(w, kNumberWords.containsKey)
         : null;
     if (number != null || word != null) {
+      // "اربع آنة" written apart is the same 25 fils.
+      if ((word != null ? kNumberWords[word] : int.tryParse(number!)) == 4 &&
+          i + 1 < t.length &&
+          (t[i + 1] == 'انه' || t[i + 1] == 'انات')) {
+        return _Part(25, i + 2);
+      }
       final unit = _unitAt(t, i + 1);
       final whole = number != null ? int.tryParse(number) : kNumberWords[word];
       switch (unit) {
