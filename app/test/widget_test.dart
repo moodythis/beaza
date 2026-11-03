@@ -66,7 +66,7 @@ void main() {
     expect(find.text('المتبقي للصرف اليوم'), findsOneWidget);
     expect(find.text('4.000 د.ب'), findsOneWidget);
     expect(find.text('استخدمت نصف حد اليوم'), findsOneWidget);
-    expect(find.text('مصروف'), findsOneWidget);
+    expect(find.text('خصم من حسابك'), findsOneWidget);
   });
 
   testWidgets('over the limit shows the overrun', (tester) async {

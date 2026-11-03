@@ -2,6 +2,7 @@ import 'package:beaza/data/repositories/account_repository.dart';
 import 'package:beaza/data/repositories/sync_repository.dart';
 import 'package:beaza/l10n/app_localizations.dart';
 import 'package:beaza/ui/core/amount_dialog.dart';
+import 'package:beaza/ui/core/entry_text.dart';
 import 'package:beaza/ui/core/formatting.dart';
 import 'package:beaza/ui/core/language_controller.dart';
 import 'package:beaza/ui/features/account/views/account_view.dart';
@@ -418,11 +419,11 @@ class EntryTile extends StatelessWidget {
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context);
     final r = entry.result;
-    final at = r.timestamp;
+    final subtitle = entrySubtitle(l10n, r);
     return ListTile(
       contentPadding: EdgeInsets.zero,
-      title: Text(r.merchantRaw ?? l10n.unknownMerchant),
-      subtitle: at == null ? null : Text(formatBahrainTime(at)),
+      title: Text(entryTitle(l10n, r)),
+      subtitle: subtitle.isEmpty ? null : Text(subtitle),
       trailing: Text(
         l10n.bhd(formatFils(r.amountFils ?? 0)),
         style: Theme.of(context).textTheme.titleSmall,

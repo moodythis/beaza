@@ -311,5 +311,19 @@
   "exportBody": "Save a copy of all your transactions and settings as a file (JSON). It stays on your phone unless you share it.",
   "exportButton": "Export my data",
   "exportSaved": "Your data was saved",
-  "exportFailed": "Could not save the file"
+  "exportFailed": "Could not save the file",
+  "entryManual": "Added by you",
+  "entryTransfer": "Transfer sent",
+  "entryTransferTo": "Transfer to account ending {last4}",
+  "@entryTransferTo": {"placeholders": {"last4": {"type": "String"}}},
+  "entryCash": "Cash withdrawal",
+  "entryBill": "Bill payment",
+  "entryRefund": "Refund",
+  "entryCard": "Card purchase",
+  "entryWallet": "Wallet payment",
+  "entryDebit": "Debit from your account",
+  "bankBisb": "BisB",
+  "bankIla": "ila",
+  "bankAlSalam": "Al Salam Bank",
+  "bankBenefitPay": "BenefitPay"
 }

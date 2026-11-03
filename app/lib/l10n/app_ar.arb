@@ -112,5 +112,18 @@
   "exportBody": "احفظ نسخة من كل معاملاتك وإعداداتك في ملف (JSON). يبقى الملف في جوالك ما لم تشاركه.",
   "exportButton": "صدّر بياناتي",
   "exportSaved": "حُفظت بياناتك",
-  "exportFailed": "تعذّر حفظ الملف"
+  "exportFailed": "تعذّر حفظ الملف",
+  "entryManual": "أضفته بنفسك",
+  "entryTransfer": "تحويل مرسل",
+  "entryTransferTo": "تحويل إلى حساب ينتهي بـ {last4}",
+  "entryCash": "سحب نقدي",
+  "entryBill": "دفع فاتورة",
+  "entryRefund": "استرداد",
+  "entryCard": "شراء بالبطاقة",
+  "entryWallet": "دفع بالمحفظة",
+  "entryDebit": "خصم من حسابك",
+  "bankBisb": "بنك البحرين الإسلامي",
+  "bankIla": "ila",
+  "bankAlSalam": "بنك السلام",
+  "bankBenefitPay": "بنفت باي"
 }
