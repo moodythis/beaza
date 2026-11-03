@@ -1,0 +1,6 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- Beaza teal, the app's theme seed colour. -->
+    <color name="ic_launcher_background">#00796B</color>
+    <color name="notification_accent">#00796B</color>
+</resources>

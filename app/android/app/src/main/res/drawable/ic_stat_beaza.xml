@@ -1,0 +1,35 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Status-bar icon for alerts: white on transparent, as Android requires. -->
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="24dp"
+    android:height="24dp"
+    android:viewportWidth="72"
+    android:viewportHeight="72">
+    <group
+        android:translateX="-18"
+        android:translateY="-18">
+        <path
+            android:pathData="M34.91,73.09 A27,27 0 1,1 73.09,73.09"
+            android:strokeColor="#FFFFFF"
+            android:strokeAlpha="0.4"
+            android:strokeWidth="5.5"
+            android:strokeLineCap="round" />
+        <path
+            android:pathData="M34.91,73.09 A27,27 0 0,1 71.53,33.47"
+            android:strokeColor="#FFFFFF"
+            android:strokeWidth="5.5"
+            android:strokeLineCap="round" />
+        <path
+            android:pathData="M38.5,54 A15.5,15.5 0 1,0 69.5,54 A15.5,15.5 0 1,0 38.5,54 Z"
+            android:strokeColor="#FFFFFF"
+            android:strokeWidth="3" />
+        <path
+            android:pathData="M44,50.2 C44,56.7 47.5,57.5 54,57.5 C60.5,57.5 64,56.7 64,49.4"
+            android:strokeColor="#FFFFFF"
+            android:strokeWidth="3"
+            android:strokeLineCap="round" />
+        <path
+            android:pathData="M51.7,63 A2.3,2.3 0 1,0 56.3,63 A2.3,2.3 0 1,0 51.7,63 Z"
+            android:fillColor="#FFFFFF" />
+    </group>
+</vector>

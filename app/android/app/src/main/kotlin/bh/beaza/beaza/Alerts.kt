@@ -36,8 +36,11 @@ object Alerts {
             @Suppress("DEPRECATION")
             Notification.Builder(context)
         }
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
+            builder.setColor(context.getColor(R.color.notification_accent))
+        }
         val notification = builder
-            .setSmallIcon(android.R.drawable.ic_dialog_info)
+            .setSmallIcon(R.drawable.ic_stat_beaza)
             .setContentTitle(title)
             .setContentText(body)
             .setStyle(Notification.BigTextStyle().bigText(body))
