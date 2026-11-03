@@ -26,6 +26,10 @@ abstract class LedgerRepository extends ChangeNotifier {
   /// person deleted does not come back.
   Future<void> addExtracted(ExtractionResult result, {String? messageKey});
 
+  /// Puts a transaction in another category (one of kCategories). Only this
+  /// transaction changes; the change syncs like any other edit.
+  Future<void> setCategory(LedgerEntry entry, String category);
+
   /// How many transactions read from messages are copies of an earlier one
   /// (same fields, made at least [duplicateGap] later). Copies like this
   /// came from reading the same bank message twice.
@@ -90,10 +94,19 @@ class InMemoryLedgerRepository extends LedgerRepository {
       type: TxnType.purchase,
       direction: TxDirection.outgoing,
       merchantRaw: merchant,
+      category: const MerchantNormalizer().normalize(merchant)?.category,
       timestamp: at.toUtc(),
       confidence: 1.0,
       templateVersion: manualTemplate,
     ));
+    notifyListeners();
+  }
+
+  @override
+  Future<void> setCategory(LedgerEntry entry, String category) async {
+    final i = entry.index;
+    if (i < 0 || i >= _results.length) return;
+    _results[i] = _results[i].withMerchant(category: category);
     notifyListeners();
   }
 

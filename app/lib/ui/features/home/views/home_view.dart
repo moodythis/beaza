@@ -1,7 +1,9 @@
 import 'package:beaza/data/repositories/account_repository.dart';
 import 'package:beaza/data/repositories/sync_repository.dart';
+import 'package:beaza/domain/use_cases/spending_by_category.dart';
 import 'package:beaza/l10n/app_localizations.dart';
 import 'package:beaza/ui/core/amount_dialog.dart';
+import 'package:beaza/ui/core/category_style.dart';
 import 'package:beaza/ui/core/entry_text.dart';
 import 'package:beaza/ui/core/formatting.dart';
 import 'package:beaza/ui/core/language_controller.dart';
@@ -114,6 +116,8 @@ class HomeView extends StatelessWidget {
               ],
               const SizedBox(height: 12),
               MicroCard(today: state.summary.micro, week: state.weekMicro),
+              const SizedBox(height: 12),
+              CategoryCard(totals: state.weekByCategory),
               if (viewModel.duplicates > 0)
                 Card(
                   key: const Key('duplicatesCard'),
@@ -162,7 +166,11 @@ class HomeView extends StatelessWidget {
                   child: Text(l10n.emptyToday, textAlign: TextAlign.center),
                 )
               else
-                for (final entry in state.today) EntryTile(entry: entry),
+                for (final entry in state.today)
+                  EntryTile(
+                    entry: entry,
+                    onTap: () => _chooseCategory(context, entry),
+                  ),
             ],
           );
         },
@@ -179,6 +187,39 @@ class HomeView extends StatelessWidget {
     );
     if (input == null) return;
     await viewModel.addExpense(amountFils: input.fils, merchant: input.merchant);
+  }
+
+  Future<void> _chooseCategory(BuildContext context, LedgerEntry entry) async {
+    final l10n = AppLocalizations.of(context);
+    final current = bucketOf(entry.result);
+    final picked = await showModalBottomSheet<String>(
+      context: context,
+      showDragHandle: true,
+      builder: (context) => SafeArea(
+        child: ListView(
+          shrinkWrap: true,
+          children: [
+            Padding(
+              padding: const EdgeInsets.fromLTRB(16, 0, 16, 8),
+              child: Text(
+                l10n.chooseCategory,
+                style: Theme.of(context).textTheme.titleMedium,
+              ),
+            ),
+            for (final c in kCategories)
+              ListTile(
+                key: Key('pick_$c'),
+                leading: Icon(categoryIcon(c)),
+                title: Text(categoryName(l10n, c)),
+                trailing: c == current ? const Icon(Icons.check) : null,
+                onTap: () => Navigator.of(context).pop(c),
+              ),
+          ],
+        ),
+      ),
+    );
+    if (picked == null || picked == current) return;
+    await viewModel.setCategory(entry, picked);
   }
 
   Future<void> _editLimit(BuildContext context) async {
@@ -411,9 +452,12 @@ class MicroCard extends StatelessWidget {
 }
 
 class EntryTile extends StatelessWidget {
-  const EntryTile({super.key, required this.entry});
+  const EntryTile({super.key, required this.entry, this.onTap});
 
   final LedgerEntry entry;
+
+  /// Opens the category list.
+  final VoidCallback? onTap;
 
   @override
   Widget build(BuildContext context) {
@@ -422,11 +466,102 @@ class EntryTile extends StatelessWidget {
     final subtitle = entrySubtitle(l10n, r);
     return ListTile(
       contentPadding: EdgeInsets.zero,
+      onTap: onTap,
+      leading: Tooltip(
+        message: categoryName(l10n, bucketOf(r)),
+        child: CircleAvatar(
+          backgroundColor:
+              Theme.of(context).colorScheme.surfaceContainerHighest,
+          foregroundColor: Theme.of(context).colorScheme.onSurfaceVariant,
+          child: Icon(categoryIcon(bucketOf(r)), size: 20),
+        ),
+      ),
       title: Text(entryTitle(l10n, r)),
       subtitle: subtitle.isEmpty ? null : Text(subtitle),
       trailing: Text(
         l10n.bhd(formatFils(r.amountFils ?? 0)),
         style: Theme.of(context).textTheme.titleSmall,
+      ),
+    );
+  }
+}
+
+/// "Where did my money go?": the last 7 days by category.
+class CategoryCard extends StatelessWidget {
+  const CategoryCard({super.key, required this.totals});
+
+  final List<CategoryTotal> totals;
+
+  @override
+  Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context);
+    final theme = Theme.of(context);
+    final sum = totals.fold<int>(0, (a, t) => a + t.totalFils);
+    return Card(
+      key: const Key('categoryCard'),
+      child: Padding(
+        padding: const EdgeInsets.all(16),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(l10n.weekWhereTitle, style: theme.textTheme.titleMedium),
+            const SizedBox(height: 2),
+            Text(
+              totals.isEmpty
+                  ? l10n.weekWhereEmpty
+                  : l10n.weekWhereSubtitle(l10n.bhd(formatFils(sum))),
+              style: theme.textTheme.bodySmall,
+            ),
+            for (final t in totals) ...[
+              const SizedBox(height: 12),
+              Row(
+                key: Key('cat_${t.bucket}'),
+                children: [
+                  Icon(categoryIcon(t.bucket), size: 20),
+                  const SizedBox(width: 12),
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Row(
+                          children: [
+                            Expanded(
+                              child: Text(categoryName(l10n, t.bucket)),
+                            ),
+                            Text(
+                              l10n.bhd(formatFils(t.totalFils)),
+                              style: theme.textTheme.titleSmall,
+                            ),
+                          ],
+                        ),
+                        const SizedBox(height: 4),
+                        ClipRRect(
+                          borderRadius: BorderRadius.circular(4),
+                          child: LinearProgressIndicator(
+                            value: sum == 0 ? 0 : t.totalFils / sum,
+                            minHeight: 6,
+                            backgroundColor:
+                                theme.colorScheme.surfaceContainerHighest,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                  const SizedBox(width: 12),
+                  SizedBox(
+                    width: 44,
+                    child: Text(
+                      l10n.categoryShare(
+                          sum == 0 ? 0 : (100 * t.totalFils / sum).round()),
+                      textAlign: TextAlign.end,
+                      style: theme.textTheme.bodySmall,
+                    ),
+                  ),
+                ],
+              ),
+            ],
+          ],
+        ),
       ),
     );
   }

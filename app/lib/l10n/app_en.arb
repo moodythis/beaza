@@ -349,5 +349,36 @@
   "errorGoogle": "Google sign-in did not work. Try again, or use email and password.",
   "googlePasswordIntro": "This Gmail already has a Beaza account. Type its password once to open your data on this phone; after that Google is linked to it.",
   "useRecoveryKeyInstead": "Forgot the password? Use the recovery key",
-  "usePasswordInstead": "Use the password instead"
+  "usePasswordInstead": "Use the password instead",
+  "categoryFood": "Food & drink",
+  "categoryGroceries": "Groceries",
+  "categoryShopping": "Shopping",
+  "categoryTransport": "Transport",
+  "categoryBills": "Bills",
+  "categoryHealth": "Health",
+  "categoryEntertainment": "Entertainment",
+  "categoryEducation": "Education",
+  "categoryOther": "Other",
+  "categoryTransfer": "Transfers",
+  "categoryUnsorted": "Not sorted",
+  "chooseCategory": "Choose a category",
+  "weekWhereTitle": "Where did my money go?",
+  "weekWhereEmpty": "Nothing spent in the last 7 days",
+  "weekWhereSubtitle": "Last 7 days · {total}",
+  "@weekWhereSubtitle": {
+    "placeholders": {
+      "total": {
+        "type": "String",
+        "example": "BHD 42.500"
+      }
+    }
+  },
+  "categoryShare": "{percent}%",
+  "@categoryShare": {
+    "placeholders": {
+      "percent": {
+        "type": "int"
+      }
+    }
+  }
 }

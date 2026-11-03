@@ -5,6 +5,7 @@ import 'package:beaza/data/repositories/settings_repository.dart';
 import 'package:beaza/data/services/device_service.dart';
 import 'package:beaza/domain/use_cases/data_export.dart';
 import 'package:beaza/domain/use_cases/message_intake.dart';
+import 'package:beaza/domain/use_cases/spending_by_category.dart';
 import 'package:beaza_extraction/beaza_extraction.dart';
 import 'package:flutter/foundation.dart';
 
@@ -15,6 +16,7 @@ class HomeState {
     required this.summary,
     required this.today,
     required this.weekMicro,
+    this.weekByCategory = const [],
   });
 
   final DaySummary summary;
@@ -22,6 +24,9 @@ class HomeState {
   /// Today's counted spending, newest first.
   final List<LedgerEntry> today;
   final MicroStats weekMicro;
+
+  /// Spending of the last 7 days per category, largest first.
+  final List<CategoryTotal> weekByCategory;
 }
 
 class HomeViewModel extends ChangeNotifier {
@@ -109,6 +114,7 @@ class HomeViewModel extends ChangeNotifier {
         summary: guardrail.summarize(entries, day),
         today: guardrail.spendingOn(entries, day).reversed.toList(),
         weekMicro: guardrail.weeklyMicro(entries, day),
+        weekByCategory: spendingByCategory(entries, day.addDays(-6), day),
       );
       _error = null;
     } on Exception catch (e) {
@@ -118,6 +124,10 @@ class HomeViewModel extends ChangeNotifier {
       _notify();
     }
   }
+
+  /// Changes the category of one transaction (the person tapped it).
+  Future<void> setCategory(LedgerEntry entry, String category) =>
+      _ledger.setCategory(entry, category);
 
   /// Reads new bank messages if allowed. Called at start, on resume and
   /// when an SMS arrives. Also checks battery saving, which decides whether

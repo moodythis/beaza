@@ -16,7 +16,8 @@ import 'message_intake_test.dart' as fixtures;
 DateTime bh(int hour, [int minute = 0]) =>
     DateTime.utc(2026, 11, 2, hour, minute).subtract(kBahrainOffset);
 
-ExtractionResult purchase(int fils, DateTime at, {String? merchant}) =>
+ExtractionResult purchase(int fils, DateTime at,
+        {String? merchant, String? category}) =>
     ExtractionResult(
       status: ExtractionStatus.transaction,
       amountFils: fils,
@@ -24,6 +25,7 @@ ExtractionResult purchase(int fils, DateTime at, {String? merchant}) =>
       type: TxnType.purchase,
       direction: TxDirection.outgoing,
       merchantRaw: merchant,
+      category: category,
       timestamp: at,
     );
 
@@ -44,6 +46,41 @@ Future<void> pumpHome(
 }
 
 void main() {
+  testWidgets('the week card shows where the money went', (tester) async {
+    await pumpHome(tester, results: [
+      purchase(3900, bh(9), merchant: 'BAKERY', category: 'food'),
+      purchase(13200, bh(10), merchant: 'SHOP', category: 'shopping'),
+    ]);
+    expect(find.text('Where did my money go?'), findsOneWidget);
+    expect(find.text('Last 7 days · BHD 17.100'), findsOneWidget);
+    expect(find.byKey(const Key('cat_shopping')), findsOneWidget);
+    expect(find.byKey(const Key('cat_food')), findsOneWidget);
+    expect(find.text('77%'), findsOneWidget);
+    expect(find.text('23%'), findsOneWidget);
+  });
+
+  testWidgets('tapping a transaction changes its category', (tester) async {
+    await pumpHome(tester, results: [
+      purchase(3900, bh(9), merchant: 'MYSTERY SHOP'),
+    ]);
+    expect(find.byKey(const Key('cat_unsorted')), findsOneWidget);
+    await tester.tap(find.text('MYSTERY SHOP'));
+    await tester.pumpAndSettle();
+    expect(find.text('Choose a category'), findsOneWidget);
+    await tester.tap(find.byKey(const Key('pick_health')));
+    await tester.pumpAndSettle();
+    expect(find.byKey(const Key('cat_health')), findsOneWidget);
+    expect(find.byKey(const Key('cat_unsorted')), findsNothing);
+  });
+
+  testWidgets('the week card is in Arabic too', (tester) async {
+    await pumpHome(tester,
+        locale: const Locale('ar'),
+        results: [purchase(3900, bh(9), category: 'food')]);
+    expect(find.text('أين ذهبت أموالي؟'), findsOneWidget);
+    expect(find.text('أكل ومشروبات'), findsWidgets);
+  });
+
   testWidgets('remaining amount, bar text and level 1 in English',
       (tester) async {
     await pumpHome(tester, results: [purchase(6000, bh(9), merchant: 'CAFE')]);

@@ -136,5 +136,36 @@
   "errorGoogle": "تعذّر الدخول بحساب Google. حاول مرة أخرى، أو استخدم البريد الإلكتروني وكلمة المرور.",
   "googlePasswordIntro": "لهذا البريد في Gmail حساب في بيزة بالفعل. اكتب كلمة مروره مرة واحدة لفتح بياناتك على هذا الهاتف، وبعدها يُربط حساب Google به.",
   "useRecoveryKeyInstead": "نسيت كلمة المرور؟ استخدم مفتاح الاسترجاع",
-  "usePasswordInstead": "استخدم كلمة المرور بدلًا من ذلك"
+  "usePasswordInstead": "استخدم كلمة المرور بدلًا من ذلك",
+  "categoryFood": "أكل ومشروبات",
+  "categoryGroceries": "بقالة",
+  "categoryShopping": "تسوق",
+  "categoryTransport": "مواصلات",
+  "categoryBills": "فواتير",
+  "categoryHealth": "صحة",
+  "categoryEntertainment": "ترفيه",
+  "categoryEducation": "تعليم",
+  "categoryOther": "أخرى",
+  "categoryTransfer": "تحويلات",
+  "categoryUnsorted": "بدون تصنيف",
+  "chooseCategory": "اختر التصنيف",
+  "weekWhereTitle": "أين ذهبت أموالي؟",
+  "weekWhereEmpty": "لا مصروفات في آخر 7 أيام",
+  "weekWhereSubtitle": "آخر 7 أيام · {total}",
+  "@weekWhereSubtitle": {
+    "placeholders": {
+      "total": {
+        "type": "String",
+        "example": "BHD 42.500"
+      }
+    }
+  },
+  "categoryShare": "{percent}٪",
+  "@categoryShare": {
+    "placeholders": {
+      "percent": {
+        "type": "int"
+      }
+    }
+  }
 }

@@ -10,6 +10,7 @@ import 'package:beaza/data/services/database_opener.dart';
 import 'package:beaza/data/services/key_store.dart';
 import 'package:beaza/data/services/storage.dart';
 import 'package:beaza_extraction/beaza_extraction.dart';
+import 'package:drift/drift.dart' show OrderingTerm, Value;
 import 'package:flutter_test/flutter_test.dart';
 
 DateTime bh(int day, int hour) =>
@@ -66,6 +67,36 @@ void main() {
       await ledger.addManual(amountFils: 1000, at: bh(2, 8));
       final es = await ledger.entries();
       expect(es.map((e) => e.result.amountFils), [1000, 3000]);
+    });
+
+    test('setCategory changes one row and marks it for sync', () async {
+      await ledger.addManual(amountFils: 1000, at: bh(2, 8));
+      await ledger.addManual(amountFils: 2000, at: bh(2, 9));
+      final es = await ledger.entries();
+      await db.update(db.ledgerRows).write(
+          const LedgerRowsCompanion(pendingSync: Value(false)));
+      await ledger.setCategory(es.last, 'health');
+      final rows = await (db.select(db.ledgerRows)
+            ..orderBy([(r) => OrderingTerm.asc(r.timestampMs)]))
+          .get();
+      expect(rows.map((r) => r.category), [null, 'health']);
+      expect(rows.map((r) => r.pendingSync), [false, true]);
+      expect((await ledger.entries()).last.result.category, 'health');
+    });
+
+    test('setCategory ignores a screen that is out of date', () async {
+      await ledger.addManual(amountFils: 2000, at: bh(2, 9));
+      final stale = (await ledger.entries()).single;
+      // Another row arrives before the old one, so index 0 now means it.
+      await ledger.addManual(amountFils: 500, at: bh(2, 7));
+      await ledger.setCategory(stale, 'food');
+      final rows = await db.select(db.ledgerRows).get();
+      expect(rows.every((r) => r.category == null), isTrue);
+    });
+
+    test('a typed-in expense with a known shop gets its category', () async {
+      await ledger.addManual(amountFils: 1000, merchant: 'Talabat', at: bh(2, 9));
+      expect((await ledger.entries()).single.result.category, 'food');
     });
 
     test('delete leaves a tombstone and hides the row', () async {

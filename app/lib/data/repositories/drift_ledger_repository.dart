@@ -31,16 +31,42 @@ class DriftLedgerRepository extends LedgerRepository implements Syncable {
   static const String sourceManual = 'manual';
   static const String sourceMessage = 'message';
 
+  Future<List<LedgerRow>> _liveRows() => (_db.select(_db.ledgerRows)
+        ..where((r) => r.deletedAtMs.isNull() & r.excluded.equals(false))
+        ..orderBy([
+          (r) => OrderingTerm.asc(r.timestampMs),
+          (r) => OrderingTerm.asc(r.id),
+        ]))
+      .get();
+
   @override
   Future<List<LedgerEntry>> entries() async {
-    final rows = await (_db.select(_db.ledgerRows)
-          ..where((r) => r.deletedAtMs.isNull() & r.excluded.equals(false))
-          ..orderBy([
-            (r) => OrderingTerm.asc(r.timestampMs),
-            (r) => OrderingTerm.asc(r.id),
-          ]))
-        .get();
+    final rows = await _liveRows();
     return _reconciler.reconcile(rows.map(_toResult).toList(), _accounts);
+  }
+
+  @override
+  Future<void> setCategory(LedgerEntry entry, String category) async {
+    final rows = await _liveRows();
+    final i = entry.index;
+    if (i < 0 || i >= rows.length) return;
+    final row = rows[i];
+    // The list may have changed since the screen read it: only change the
+    // row the person tapped.
+    if (row.amountFils != entry.result.amountFils ||
+        row.timestampMs != entry.result.timestamp?.toUtc().millisecondsSinceEpoch) {
+      return;
+    }
+    final now = _clock().toUtc().millisecondsSinceEpoch;
+    await (_db.update(_db.ledgerRows)..where((r) => r.id.equals(row.id))).write(
+      LedgerRowsCompanion(
+        category: Value(category),
+        updatedAtMs: Value(now),
+        deviceId: Value(_deviceId),
+        pendingSync: const Value(true),
+      ),
+    );
+    notifyListeners();
   }
 
   @override
@@ -60,6 +86,7 @@ class DriftLedgerRepository extends LedgerRepository implements Syncable {
         type: TxnType.purchase,
         direction: TxDirection.outgoing,
         merchantRaw: merchant,
+        category: const MerchantNormalizer().normalize(merchant)?.category,
         timestamp: at.toUtc(),
         confidence: 1.0,
         templateVersion: InMemoryLedgerRepository.manualTemplate,
