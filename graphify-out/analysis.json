@@ -304,55 +304,6 @@
       "textcolumn_get"
     ],
     "5": [
-      "github_workflows_ci",
-      "github_workflows_ci_app_defaults",
-      "github_workflows_ci_app_name",
-      "github_workflows_ci_app_runs_on",
-      "github_workflows_ci_app_steps",
-      "github_workflows_ci_contract_name",
-      "github_workflows_ci_contract_runs_on",
-      "github_workflows_ci_contract_steps",
-      "github_workflows_ci_crypto_defaults",
-      "github_workflows_ci_crypto_name",
-      "github_workflows_ci_crypto_runs_on",
-      "github_workflows_ci_crypto_steps",
-      "github_workflows_ci_defaults_run",
-      "github_workflows_ci_extraction_defaults",
-      "github_workflows_ci_extraction_name",
-      "github_workflows_ci_extraction_runs_on",
-      "github_workflows_ci_extraction_steps",
-      "github_workflows_ci_jobs",
-      "github_workflows_ci_jobs_app",
-      "github_workflows_ci_jobs_contract",
-      "github_workflows_ci_jobs_crypto",
-      "github_workflows_ci_jobs_extraction",
-      "github_workflows_ci_jobs_server",
-      "github_workflows_ci_name",
-      "github_workflows_ci_on",
-      "github_workflows_ci_on_pull_request",
-      "github_workflows_ci_on_push",
-      "github_workflows_ci_on_workflow_dispatch",
-      "github_workflows_ci_run_working_directory",
-      "github_workflows_ci_server_defaults",
-      "github_workflows_ci_server_name",
-      "github_workflows_ci_server_runs_on",
-      "github_workflows_ci_server_steps",
-      "github_workflows_ci_steps_name",
-      "github_workflows_ci_steps_run",
-      "github_workflows_ci_steps_uses",
-      "github_workflows_ci_steps_with",
-      "github_workflows_ci_steps_working_directory",
-      "github_workflows_ci_with_cache",
-      "github_workflows_ci_with_channel",
-      "github_workflows_ci_with_distribution",
-      "github_workflows_ci_with_java_version",
-      "github_workflows_ci_with_name",
-      "github_workflows_ci_with_node_version",
-      "github_workflows_ci_with_path",
-      "github_workflows_ci_with_retention_days",
-      "github_workflows_ci_with_sdk"
-    ],
-    "6": [
       "app_lib_data_repositories_sync_repository",
       "app_lib_data_repositories_sync_repository_account",
       "app_lib_data_repositories_sync_repository_accountchanged",
@@ -400,7 +351,7 @@
       "datetime_get",
       "timer"
     ],
-    "7": [
+    "6": [
       "packages_beaza_extraction_lib_src_tier1",
       "packages_beaza_extraction_lib_src_tier1_accountlast4",
       "packages_beaza_extraction_lib_src_tier1_amountfils",
@@ -444,50 +395,50 @@
       "static_final_list",
       "txchannel"
     ],
-    "8": [
-      "ref_node_fs",
-      "ref_node_url",
-      "server_scripts_contract",
-      "server_scripts_contract_check",
-      "server_scripts_contract_consent",
-      "server_scripts_contract_s",
-      "server_scripts_contract_sample",
-      "server_scripts_contract_stored",
-      "server_scripts_contract_token",
-      "server_scripts_legal_dart",
-      "server_scripts_legal_dart_dart_file",
-      "server_scripts_legal_dart_dartsource",
-      "server_scripts_legal_dart_sections",
-      "server_scripts_legal_dart_str",
-      "server_scripts_register",
-      "server_scripts_register_a",
-      "server_scripts_register_body",
-      "server_scripts_register_url_file",
-      "server_scripts_smoke",
-      "server_scripts_smoke_authkey",
-      "server_scripts_smoke_base",
-      "server_scripts_smoke_blob",
-      "server_scripts_smoke_bundle",
-      "server_scripts_smoke_call",
-      "server_scripts_smoke_check",
-      "server_scripts_smoke_consent",
-      "server_scripts_smoke_recoveryauthkey",
-      "server_src_legal",
-      "server_src_legal_ar",
-      "server_src_legal_documents",
-      "server_src_legal_en",
-      "server_src_legal_escape",
-      "server_src_legal_legaldocument",
-      "server_src_legal_legalpage",
-      "server_src_legal_privacy_version",
-      "server_src_legal_render",
-      "server_src_legal_section",
-      "server_src_legal_terms_version",
-      "server_src_legal_termsar",
-      "server_src_legal_termsen",
-      "server_test_legal_sync_test"
+    "7": [
+      "github_workflows_ci_app_defaults",
+      "github_workflows_ci_app_name",
+      "github_workflows_ci_app_runs_on",
+      "github_workflows_ci_app_steps",
+      "github_workflows_ci_contract_name",
+      "github_workflows_ci_contract_runs_on",
+      "github_workflows_ci_contract_steps",
+      "github_workflows_ci_crypto_defaults",
+      "github_workflows_ci_crypto_name",
+      "github_workflows_ci_crypto_runs_on",
+      "github_workflows_ci_crypto_steps",
+      "github_workflows_ci_defaults_run",
+      "github_workflows_ci_extraction_defaults",
+      "github_workflows_ci_extraction_name",
+      "github_workflows_ci_extraction_runs_on",
+      "github_workflows_ci_extraction_steps",
+      "github_workflows_ci_jobs",
+      "github_workflows_ci_jobs_app",
+      "github_workflows_ci_jobs_contract",
+      "github_workflows_ci_jobs_crypto",
+      "github_workflows_ci_jobs_extraction",
+      "github_workflows_ci_jobs_server",
+      "github_workflows_ci_run_working_directory",
+      "github_workflows_ci_server_defaults",
+      "github_workflows_ci_server_name",
+      "github_workflows_ci_server_runs_on",
+      "github_workflows_ci_server_steps",
+      "github_workflows_ci_steps_name",
+      "github_workflows_ci_steps_run",
+      "github_workflows_ci_steps_uses",
+      "github_workflows_ci_steps_with",
+      "github_workflows_ci_steps_working_directory",
+      "github_workflows_ci_with_cache",
+      "github_workflows_ci_with_channel",
+      "github_workflows_ci_with_distribution",
+      "github_workflows_ci_with_java_version",
+      "github_workflows_ci_with_name",
+      "github_workflows_ci_with_node_version",
+      "github_workflows_ci_with_path",
+      "github_workflows_ci_with_retention_days",
+      "github_workflows_ci_with_sdk"
     ],
-    "9": [
+    "8": [
       "app_test_sync_test",
       "app_test_sync_test_a",
       "app_test_sync_test_account",
@@ -528,7 +479,7 @@
       "app_test_sync_test_tokens",
       "phone"
     ],
-    "10": [
+    "9": [
       "dartpad_detector_dartpad",
       "dartpad_detector_dartpad_aliases",
       "dartpad_detector_dartpad_arabicratio",
@@ -568,7 +519,7 @@
       "dartpad_detector_dartpad_strictmixed",
       "dartpad_detector_dartpad_words"
     ],
-    "11": [
+    "10": [
       "app_pubspec",
       "app_pubspec_beaza_crypto_path",
       "app_pubspec_beaza_extraction_path",
@@ -607,7 +558,7 @@
       "app_pubspec_user_defines_sqlite3",
       "app_pubspec_version"
     ],
-    "12": [
+    "11": [
       "channel",
       "extractionstatus",
       "packages_beaza_extraction_lib_src_validator",
@@ -645,6 +596,43 @@
       "packages_beaza_extraction_lib_src_validator_validator",
       "txdirection",
       "txntype"
+    ],
+    "12": [
+      "app_lib_data_repositories_drift_ledger_repository_driftledgerrepository",
+      "app_lib_data_repositories_drift_settings_repository_driftsettingsrepository",
+      "app_lib_data_repositories_syncable_syncable",
+      "app_test_formatting_test",
+      "app_test_formatting_test_main",
+      "app_test_live_two_phones_test",
+      "app_test_live_two_phones_test_account",
+      "app_test_live_two_phones_test_close",
+      "app_test_live_two_phones_test_consent",
+      "app_test_live_two_phones_test_db",
+      "app_test_live_two_phones_test_email",
+      "app_test_live_two_phones_test_ledger",
+      "app_test_live_two_phones_test_main",
+      "app_test_live_two_phones_test_merchants",
+      "app_test_live_two_phones_test_password",
+      "app_test_live_two_phones_test_phone",
+      "app_test_live_two_phones_test_server",
+      "app_test_live_two_phones_test_settings",
+      "app_test_live_two_phones_test_sync",
+      "app_test_storage_test",
+      "app_test_storage_test_bh",
+      "app_test_storage_test_db",
+      "app_test_storage_test_goodkey",
+      "app_test_storage_test_ledger",
+      "app_test_storage_test_main",
+      "app_test_storage_test_settings",
+      "package_beaza_data_repositories_drift_ledger_repository_dart",
+      "package_beaza_data_repositories_drift_settings_repository_dart",
+      "package_beaza_data_services_account_store_dart",
+      "package_beaza_data_services_database_opener_dart",
+      "package_beaza_data_services_key_store_dart",
+      "package_beaza_data_services_key_work_dart",
+      "package_beaza_data_services_storage_dart",
+      "package_beaza_ui_core_formatting_dart",
+      "package_flutter_test_flutter_test_dart"
     ],
     "13": [
       "packages_beaza_crypto_lib_src_account_keys",
@@ -720,78 +708,6 @@
       "streamsubscription"
     ],
     "15": [
-      "app_lib_app_beazaapp",
-      "app_lib_app_startuperrorapp",
-      "app_lib_ui_features_account_views_account_view_syncsection",
-      "app_lib_ui_features_account_views_account_widgets",
-      "app_lib_ui_features_account_views_account_widgets_accountproblemtext",
-      "app_lib_ui_features_account_views_account_widgets_accountstatus",
-      "app_lib_ui_features_account_views_account_widgets_autofillhint",
-      "app_lib_ui_features_account_views_account_widgets_build",
-      "app_lib_ui_features_account_views_account_widgets_busytext",
-      "app_lib_ui_features_account_views_account_widgets_controller",
-      "app_lib_ui_features_account_views_account_widgets_createstate",
-      "app_lib_ui_features_account_views_account_widgets_document",
-      "app_lib_ui_features_account_views_account_widgets_emailfield",
-      "app_lib_ui_features_account_views_account_widgets_emailpattern",
-      "app_lib_ui_features_account_views_account_widgets_helper",
-      "app_lib_ui_features_account_views_account_widgets_hidden",
-      "app_lib_ui_features_account_views_account_widgets_label",
-      "app_lib_ui_features_account_views_account_widgets_legallinks",
-      "app_lib_ui_features_account_views_account_widgets_legalview",
-      "app_lib_ui_features_account_views_account_widgets_minpasswordlength",
-      "app_lib_ui_features_account_views_account_widgets_openlegal",
-      "app_lib_ui_features_account_views_account_widgets_validateemail",
-      "app_lib_ui_features_account_views_account_widgets_validatepassword",
-      "app_lib_ui_features_account_views_account_widgets_validator",
-      "app_lib_ui_features_account_views_account_widgets_viewmodel",
-      "app_lib_ui_features_account_views_sign_up_view_agreement",
-      "app_lib_ui_features_home_views_home_view_entrytile",
-      "app_lib_ui_features_home_views_home_view_homeview",
-      "app_lib_ui_features_home_views_home_view_limitcard",
-      "app_lib_ui_features_home_views_home_view_microcard",
-      "app_lib_ui_features_home_views_home_view_smscard",
-      "formfieldvalidator",
-      "legaldocument",
-      "statelesswidget"
-    ],
-    "16": [
-      "server_src_app",
-      "server_src_app_accountinfo",
-      "server_src_app_assertnotlimited",
-      "server_src_app_authenticate",
-      "server_src_app_changepassword",
-      "server_src_app_changerecoverykey",
-      "server_src_app_checkconsent",
-      "server_src_app_createsession",
-      "server_src_app_ctx",
-      "server_src_app_default_kdf",
-      "server_src_app_deleteaccount",
-      "server_src_app_dispatch",
-      "server_src_app_kdf",
-      "server_src_app_keyedhash",
-      "server_src_app_login",
-      "server_src_app_logout",
-      "server_src_app_options",
-      "server_src_app_pullrecords",
-      "server_src_app_pushrecords",
-      "server_src_app_readjson",
-      "server_src_app_recordattempt",
-      "server_src_app_register",
-      "server_src_app_samedatakey",
-      "server_src_app_storedhash",
-      "server_src_app_userrow",
-      "server_src_util_hmacsha256",
-      "server_src_util_safeequal",
-      "server_src_util_sha256",
-      "server_src_util_tohex",
-      "server_src_util_utf8",
-      "server_src_validate_checkemail",
-      "server_src_validate_checkkey",
-      "server_src_validate_httperror",
-      "server_src_validate_httperror_constructor"
-    ],
-    "17": [
       "app_lib_data_services_account_store",
       "app_lib_data_services_account_store_accountstore",
       "app_lib_data_services_account_store_clear",
@@ -824,9 +740,9 @@
       "app_lib_data_services_key_store_tostring",
       "fluttersecurestorage",
       "package_flutter_secure_storage_flutter_secure_storage_dart",
-      "packages_beaza_crypto_lib_src_account_keys_datakey"
+      "string"
     ],
-    "18": [
+    "16": [
       "languagedetectionresult",
       "languagedetector",
       "messagelanguage",
@@ -861,7 +777,42 @@
       "packages_beaza_extraction_lib_src_detector_words",
       "senderfamily"
     ],
-    "19": [
+    "17": [
+      "server_src_app",
+      "server_src_app_accountinfo",
+      "server_src_app_assertnotlimited",
+      "server_src_app_authenticate",
+      "server_src_app_changepassword",
+      "server_src_app_changerecoverykey",
+      "server_src_app_createsession",
+      "server_src_app_ctx",
+      "server_src_app_default_kdf",
+      "server_src_app_deleteaccount",
+      "server_src_app_dispatch",
+      "server_src_app_kdf",
+      "server_src_app_keyedhash",
+      "server_src_app_login",
+      "server_src_app_logout",
+      "server_src_app_options",
+      "server_src_app_pullrecords",
+      "server_src_app_pushrecords",
+      "server_src_app_readjson",
+      "server_src_app_recordattempt",
+      "server_src_app_register",
+      "server_src_app_samedatakey",
+      "server_src_app_storedhash",
+      "server_src_app_userrow",
+      "server_src_util_hmacsha256",
+      "server_src_util_safeequal",
+      "server_src_util_sha256",
+      "server_src_util_tohex",
+      "server_src_util_utf8",
+      "server_src_validate_checkemail",
+      "server_src_validate_checkkey",
+      "server_src_validate_httperror",
+      "server_src_validate_httperror_constructor"
+    ],
+    "18": [
       "app_lib_data_services_sync_api",
       "app_lib_data_services_sync_api_activesessions",
       "app_lib_data_services_sync_api_adult",
@@ -894,6 +845,40 @@
       "app_lib_data_services_sync_api_tojson",
       "app_lib_data_services_sync_api_tostring",
       "client"
+    ],
+    "19": [
+      "server_scripts_contract",
+      "server_scripts_contract_check",
+      "server_scripts_contract_consent",
+      "server_scripts_contract_s",
+      "server_scripts_contract_sample",
+      "server_scripts_contract_stored",
+      "server_scripts_contract_token",
+      "server_scripts_register",
+      "server_scripts_register_a",
+      "server_scripts_register_body",
+      "server_scripts_register_url_file",
+      "server_scripts_smoke",
+      "server_scripts_smoke_authkey",
+      "server_scripts_smoke_base",
+      "server_scripts_smoke_blob",
+      "server_scripts_smoke_bundle",
+      "server_scripts_smoke_call",
+      "server_scripts_smoke_check",
+      "server_scripts_smoke_consent",
+      "server_scripts_smoke_recoveryauthkey",
+      "server_src_legal",
+      "server_src_legal_ar",
+      "server_src_legal_en",
+      "server_src_legal_escape",
+      "server_src_legal_legaldocument",
+      "server_src_legal_legalpage",
+      "server_src_legal_privacy_version",
+      "server_src_legal_render",
+      "server_src_legal_section",
+      "server_src_legal_terms_version",
+      "server_src_legal_termsar",
+      "server_src_legal_termsen"
     ],
     "20": [
       "",
@@ -929,72 +914,6 @@
       "package_drift_drift_dart"
     ],
     "21": [
-      "app_lib_data_repositories_account_repository_accountfailure",
-      "app_lib_data_services_sync_api_apiexception",
-      "app_lib_data_services_sync_api_networkexception",
-      "exception",
-      "package_beaza_crypto_beaza_crypto_dart",
-      "packages_beaza_crypto_lib_src_envelope_decryptionfailed",
-      "packages_beaza_crypto_lib_src_password_keys_weakkdfparams",
-      "packages_beaza_crypto_lib_src_record_cipher_recordcipher",
-      "packages_beaza_crypto_lib_src_recovery_key_recoverykeyexception",
-      "packages_beaza_crypto_test_account_keys_test",
-      "packages_beaza_crypto_test_account_keys_test_emailaccount",
-      "packages_beaza_crypto_test_account_keys_test_keys",
-      "packages_beaza_crypto_test_account_keys_test_login",
-      "packages_beaza_crypto_test_account_keys_test_main",
-      "packages_beaza_crypto_test_account_keys_test_openwithpassword",
-      "packages_beaza_crypto_test_account_keys_test_viaserver",
-      "packages_beaza_crypto_test_password_keys_test",
-      "packages_beaza_crypto_test_password_keys_test_derive",
-      "packages_beaza_crypto_test_password_keys_test_fast",
-      "packages_beaza_crypto_test_password_keys_test_main",
-      "packages_beaza_crypto_test_password_keys_test_salt",
-      "packages_beaza_crypto_test_record_cipher_test",
-      "packages_beaza_crypto_test_record_cipher_test_cipher",
-      "packages_beaza_crypto_test_record_cipher_test_expense",
-      "packages_beaza_crypto_test_record_cipher_test_id",
-      "packages_beaza_crypto_test_record_cipher_test_main",
-      "packages_beaza_crypto_test_recovery_key_test",
-      "packages_beaza_crypto_test_recovery_key_test_fixed",
-      "packages_beaza_crypto_test_recovery_key_test_main",
-      "packages_beaza_crypto_test_recovery_key_test_problemof",
-      "password_keys_test_dart"
-    ],
-    "22": [
-      "app_lib_data_repositories_drift_ledger_repository_driftledgerrepository",
-      "app_lib_data_repositories_drift_settings_repository_driftsettingsrepository",
-      "app_lib_data_repositories_syncable_syncable",
-      "app_test_live_two_phones_test",
-      "app_test_live_two_phones_test_account",
-      "app_test_live_two_phones_test_close",
-      "app_test_live_two_phones_test_consent",
-      "app_test_live_two_phones_test_db",
-      "app_test_live_two_phones_test_email",
-      "app_test_live_two_phones_test_ledger",
-      "app_test_live_two_phones_test_main",
-      "app_test_live_two_phones_test_merchants",
-      "app_test_live_two_phones_test_password",
-      "app_test_live_two_phones_test_phone",
-      "app_test_live_two_phones_test_server",
-      "app_test_live_two_phones_test_settings",
-      "app_test_live_two_phones_test_sync",
-      "app_test_storage_test",
-      "app_test_storage_test_bh",
-      "app_test_storage_test_db",
-      "app_test_storage_test_goodkey",
-      "app_test_storage_test_ledger",
-      "app_test_storage_test_main",
-      "app_test_storage_test_settings",
-      "package_beaza_data_repositories_drift_ledger_repository_dart",
-      "package_beaza_data_repositories_drift_settings_repository_dart",
-      "package_beaza_data_services_database_opener_dart",
-      "package_beaza_data_services_key_store_dart",
-      "package_beaza_data_services_key_work_dart",
-      "package_beaza_data_services_storage_dart",
-      "package_beaza_ui_features_account_legal_text_dart"
-    ],
-    "23": [
       "dartpad_classifier_dartpad",
       "dartpad_classifier_dartpad_amount",
       "dartpad_classifier_dartpad_balance",
@@ -1027,7 +946,7 @@
       "dartpad_classifier_dartpad_transactioncue",
       "dartpad_classifier_dartpad_tx"
     ],
-    "24": [
+    "22": [
       "app_lib_data_repositories_account_repository",
       "app_lib_data_repositories_account_repository_accountproblem",
       "app_lib_data_repositories_account_repository_accountrepository",
@@ -1059,7 +978,38 @@
       "app_test_sync_test_fixedaccount",
       "savedaccount_get"
     ],
-    "25": [
+    "23": [
+      "github_workflows_ci",
+      "github_workflows_ci_name",
+      "github_workflows_ci_on",
+      "github_workflows_ci_on_pull_request",
+      "github_workflows_ci_on_push",
+      "github_workflows_ci_on_workflow_dispatch",
+      "library",
+      "packages_beaza_crypto_lib_beaza_crypto",
+      "packages_beaza_crypto_lib_beaza_crypto_beaza_crypto",
+      "packages_beaza_extraction_lib_beaza_extraction",
+      "packages_beaza_extraction_lib_beaza_extraction_beaza_extraction",
+      "readme_beaza",
+      "readme_repository_layout",
+      "readme_status_table",
+      "readme_without_a_laptop",
+      "src_account_keys_dart",
+      "src_bytes_dart",
+      "src_classifier_dart",
+      "src_detector_dart",
+      "src_envelope_dart",
+      "src_extractor_dart",
+      "src_guardrail_dart",
+      "src_normalizer_dart",
+      "src_password_keys_dart",
+      "src_reconciler_dart",
+      "src_record_cipher_dart",
+      "src_recovery_key_dart",
+      "src_tier1_dart",
+      "src_validator_dart"
+    ],
+    "24": [
       "ref_node_http",
       "server_scripts_serve_local",
       "server_scripts_serve_local_env",
@@ -1090,7 +1040,7 @@
       "server_test_harness_testd1_dump",
       "server_test_harness_testd1_prepare"
     ],
-    "26": [
+    "25": [
       "app_lib_data_repositories_drift_ledger_repository",
       "app_lib_data_repositories_drift_ledger_repository_accounts",
       "app_lib_data_repositories_drift_ledger_repository_addextracted",
@@ -1120,7 +1070,7 @@
       "app_lib_data_repositories_drift_ledger_repository_synccollection",
       "app_lib_data_repositories_drift_ledger_repository_toresult"
     ],
-    "27": [
+    "26": [
       "github_workflows_test_account",
       "github_workflows_test_account_email_description",
       "github_workflows_test_account_email_required",
@@ -1150,7 +1100,7 @@
       "github_workflows_test_account_with_sdk",
       "github_workflows_test_account_workflow_dispatch_inputs"
     ],
-    "28": [
+    "27": [
       "app_lib_data_services_sync_api_consent",
       "app_test_account_view_test",
       "app_test_account_view_test_account",
@@ -1178,34 +1128,7 @@
       "buttonstylebutton",
       "checkbox"
     ],
-    "29": [
-      "app_lib_data_repositories_ledger_repository_inmemoryledgerrepository",
-      "app_lib_data_repositories_ledger_repository_ledgerrepository",
-      "app_lib_domain_use_cases_guardrail_alerts",
-      "app_lib_domain_use_cases_guardrail_alerts_alertpresenter",
-      "app_lib_domain_use_cases_guardrail_alerts_evaluate",
-      "app_lib_domain_use_cases_guardrail_alerts_guardrailalerts",
-      "app_lib_domain_use_cases_guardrail_alerts_ledger",
-      "app_lib_domain_use_cases_guardrail_alerts_logs",
-      "app_lib_domain_use_cases_guardrail_alerts_present",
-      "app_lib_domain_use_cases_guardrail_alerts_queue",
-      "app_lib_domain_use_cases_guardrail_alerts_settings",
-      "app_test_guardrail_alerts_test",
-      "app_test_guardrail_alerts_test_alerts",
-      "app_test_guardrail_alerts_test_bh",
-      "app_test_guardrail_alerts_test_ledger",
-      "app_test_guardrail_alerts_test_logs",
-      "app_test_guardrail_alerts_test_main",
-      "app_test_guardrail_alerts_test_settings",
-      "app_test_guardrail_alerts_test_shown",
-      "future",
-      "package_beaza_data_repositories_alert_log_store_dart",
-      "package_beaza_data_repositories_ledger_repository_dart",
-      "package_beaza_domain_use_cases_guardrail_alerts_dart",
-      "package_beaza_ui_core_alert_text_dart",
-      "package_flutter_widgets_dart"
-    ],
-    "30": [
+    "28": [
       "app_lib_domain_use_cases_message_intake",
       "app_lib_domain_use_cases_message_intake_added",
       "app_lib_domain_use_cases_message_intake_arrivals",
@@ -1232,7 +1155,7 @@
       "app_lib_domain_use_cases_message_intake_unreadmessage",
       "app_lib_domain_use_cases_message_intake_window"
     ],
-    "31": [
+    "29": [
       "app_lib_ui_features_account_views_sign_up_view",
       "app_lib_ui_features_account_views_sign_up_view_adult",
       "app_lib_ui_features_account_views_sign_up_view_build",
@@ -1259,7 +1182,33 @@
       "valuechanged",
       "voidcallback"
     ],
-    "32": [
+    "30": [
+      "app_lib_data_repositories_ledger_repository_inmemoryledgerrepository",
+      "app_lib_data_repositories_ledger_repository_ledgerrepository",
+      "app_lib_domain_use_cases_guardrail_alerts",
+      "app_lib_domain_use_cases_guardrail_alerts_alertpresenter",
+      "app_lib_domain_use_cases_guardrail_alerts_evaluate",
+      "app_lib_domain_use_cases_guardrail_alerts_guardrailalerts",
+      "app_lib_domain_use_cases_guardrail_alerts_ledger",
+      "app_lib_domain_use_cases_guardrail_alerts_logs",
+      "app_lib_domain_use_cases_guardrail_alerts_present",
+      "app_lib_domain_use_cases_guardrail_alerts_queue",
+      "app_lib_domain_use_cases_guardrail_alerts_settings",
+      "app_test_guardrail_alerts_test",
+      "app_test_guardrail_alerts_test_alerts",
+      "app_test_guardrail_alerts_test_bh",
+      "app_test_guardrail_alerts_test_ledger",
+      "app_test_guardrail_alerts_test_logs",
+      "app_test_guardrail_alerts_test_main",
+      "app_test_guardrail_alerts_test_settings",
+      "app_test_guardrail_alerts_test_shown",
+      "future",
+      "package_beaza_data_repositories_alert_log_store_dart",
+      "package_beaza_data_repositories_ledger_repository_dart",
+      "package_beaza_domain_use_cases_guardrail_alerts_dart",
+      "package_beaza_ui_core_alert_text_dart"
+    ],
+    "31": [
       "app_test_account_repository_test",
       "app_test_account_repository_test_bodies",
       "app_test_account_repository_test_calls",
@@ -1285,7 +1234,7 @@
       "package_http_http_dart",
       "package_http_testing_dart"
     ],
-    "33": [
+    "32": [
       "extractionresult",
       "packages_beaza_extraction_lib_src_reconciler",
       "packages_beaza_extraction_lib_src_reconciler_compatible",
@@ -1311,7 +1260,7 @@
       "packages_beaza_extraction_lib_src_reconciler_suggestions",
       "packages_beaza_extraction_lib_src_reconciler_window"
     ],
-    "34": [
+    "33": [
       "package_crypto_crypto_dart",
       "packages_beaza_crypto_lib_src_recovery_key",
       "packages_beaza_crypto_lib_src_recovery_key_alphabet",
@@ -1337,7 +1286,7 @@
       "packages_beaza_crypto_lib_src_recovery_key_wrappingkey",
       "static_const_map"
     ],
-    "35": [
+    "34": [
       "ref_node_assert",
       "ref_node_sqlite",
       "ref_node_test",
@@ -1363,7 +1312,7 @@
       "server_test_records_test",
       "server_test_records_test_rec"
     ],
-    "36": [
+    "35": [
       "app_lib_ui_features_account_views_account_view",
       "app_lib_ui_features_account_views_account_view_askmerge",
       "app_lib_ui_features_account_views_account_view_build",
@@ -1388,7 +1337,7 @@
       "package_beaza_ui_features_account_views_sign_up_view_dart",
       "package_intl_intl_dart"
     ],
-    "37": [
+    "36": [
       "app_lib_ui_features_home_views_home_view",
       "app_lib_ui_features_home_views_home_view_account",
       "app_lib_ui_features_home_views_home_view_addexpense",
@@ -1413,7 +1362,7 @@
       "packages_beaza_extraction_lib_src_guardrail_daysummary",
       "packages_beaza_extraction_lib_src_guardrail_microstats"
     ],
-    "38": [
+    "37": [
       "classifier_dart",
       "detector_dart",
       "messageclassifier",
@@ -1438,7 +1387,7 @@
       "validator",
       "validator_dart"
     ],
-    "39": [
+    "38": [
       "app_lib_data_repositories_syncable",
       "app_lib_data_repositories_syncable_applyremote",
       "app_lib_data_repositories_syncable_boolfield",
@@ -1462,31 +1411,7 @@
       "app_lib_data_repositories_syncable_updatedatms",
       "app_lib_data_repositories_syncable_v"
     ],
-    "40": [
-      "int_get",
-      "packages_beaza_crypto_lib_src_password_keys",
-      "packages_beaza_crypto_lib_src_password_keys_authkey",
-      "packages_beaza_crypto_lib_src_password_keys_derive",
-      "packages_beaza_crypto_lib_src_password_keys_fromjson",
-      "packages_beaza_crypto_lib_src_password_keys_hashcode",
-      "packages_beaza_crypto_lib_src_password_keys_isatleast",
-      "packages_beaza_crypto_lib_src_password_keys_iterations",
-      "packages_beaza_crypto_lib_src_password_keys_memorykib",
-      "packages_beaza_crypto_lib_src_password_keys_minimum",
-      "packages_beaza_crypto_lib_src_password_keys_operator",
-      "packages_beaza_crypto_lib_src_password_keys_parallelism",
-      "packages_beaza_crypto_lib_src_password_keys_params",
-      "packages_beaza_crypto_lib_src_password_keys_passwordkeys",
-      "packages_beaza_crypto_lib_src_password_keys_recommended",
-      "packages_beaza_crypto_lib_src_password_keys_salt",
-      "packages_beaza_crypto_lib_src_password_keys_saltlength",
-      "packages_beaza_crypto_lib_src_password_keys_tojson",
-      "packages_beaza_crypto_lib_src_password_keys_tostring",
-      "packages_beaza_crypto_lib_src_password_keys_wrapkey",
-      "secretkey",
-      "static_const_kdfparams"
-    ],
-    "41": [
+    "39": [
       "messagekind",
       "packages_beaza_extraction_lib_src_classifier",
       "packages_beaza_extraction_lib_src_classifier_amount",
@@ -1510,7 +1435,7 @@
       "packages_beaza_extraction_lib_src_classifier_statement",
       "packages_beaza_extraction_lib_src_classifier_transactioncue"
     ],
-    "42": [
+    "40": [
       "account_keys_dart",
       "envelope_dart",
       "packages_beaza_crypto_lib_src_record_cipher",
@@ -1533,7 +1458,30 @@
       "packages_beaza_crypto_lib_src_record_cipher_unpad",
       "uint8list"
     ],
-    "43": [
+    "41": [
+      "app_lib_ui_features_account_views_account_widgets",
+      "app_lib_ui_features_account_views_account_widgets_accountproblemtext",
+      "app_lib_ui_features_account_views_account_widgets_autofillhint",
+      "app_lib_ui_features_account_views_account_widgets_build",
+      "app_lib_ui_features_account_views_account_widgets_busytext",
+      "app_lib_ui_features_account_views_account_widgets_controller",
+      "app_lib_ui_features_account_views_account_widgets_createstate",
+      "app_lib_ui_features_account_views_account_widgets_document",
+      "app_lib_ui_features_account_views_account_widgets_emailpattern",
+      "app_lib_ui_features_account_views_account_widgets_helper",
+      "app_lib_ui_features_account_views_account_widgets_hidden",
+      "app_lib_ui_features_account_views_account_widgets_label",
+      "app_lib_ui_features_account_views_account_widgets_minpasswordlength",
+      "app_lib_ui_features_account_views_account_widgets_openlegal",
+      "app_lib_ui_features_account_views_account_widgets_validateemail",
+      "app_lib_ui_features_account_views_account_widgets_validatepassword",
+      "app_lib_ui_features_account_views_account_widgets_validator",
+      "app_lib_ui_features_account_views_account_widgets_viewmodel",
+      "formfieldvalidator",
+      "legaldocument",
+      "package_beaza_ui_features_account_legal_text_dart"
+    ],
+    "42": [
       "app_test_message_intake_test",
       "app_test_message_intake_test_arrivals",
       "app_test_message_intake_test_arrivalscontroller",
@@ -1555,6 +1503,29 @@
       "app_test_message_intake_test_sms",
       "app_test_message_intake_test_unknownformat",
       "package_beaza_data_services_sms_source_dart"
+    ],
+    "43": [
+      "int_get",
+      "packages_beaza_crypto_lib_src_password_keys",
+      "packages_beaza_crypto_lib_src_password_keys_authkey",
+      "packages_beaza_crypto_lib_src_password_keys_derive",
+      "packages_beaza_crypto_lib_src_password_keys_fromjson",
+      "packages_beaza_crypto_lib_src_password_keys_hashcode",
+      "packages_beaza_crypto_lib_src_password_keys_isatleast",
+      "packages_beaza_crypto_lib_src_password_keys_iterations",
+      "packages_beaza_crypto_lib_src_password_keys_memorykib",
+      "packages_beaza_crypto_lib_src_password_keys_minimum",
+      "packages_beaza_crypto_lib_src_password_keys_operator",
+      "packages_beaza_crypto_lib_src_password_keys_parallelism",
+      "packages_beaza_crypto_lib_src_password_keys_params",
+      "packages_beaza_crypto_lib_src_password_keys_recommended",
+      "packages_beaza_crypto_lib_src_password_keys_salt",
+      "packages_beaza_crypto_lib_src_password_keys_saltlength",
+      "packages_beaza_crypto_lib_src_password_keys_tojson",
+      "packages_beaza_crypto_lib_src_password_keys_tostring",
+      "packages_beaza_crypto_lib_src_password_keys_wrapkey",
+      "secretkey",
+      "static_const_kdfparams"
     ],
     "44": [
       "accountfailure_get",
@@ -1589,9 +1560,9 @@
       "app_lib_ui_features_account_views_log_in_view_form",
       "app_lib_ui_features_account_views_log_in_view_initstate",
       "app_lib_ui_features_account_views_log_in_view_key",
+      "app_lib_ui_features_account_views_log_in_view_loginview",
+      "app_lib_ui_features_account_views_log_in_view_loginviewstate",
       "app_lib_ui_features_account_views_log_in_view_password",
-      "app_lib_ui_features_account_views_log_in_view_recoverview",
-      "app_lib_ui_features_account_views_log_in_view_recoverviewstate",
       "app_lib_ui_features_account_views_log_in_view_repeat",
       "app_lib_ui_features_account_views_log_in_view_submit",
       "app_lib_ui_features_account_views_log_in_view_viewmodel",
@@ -1601,50 +1572,6 @@
       "package_beaza_ui_features_account_views_account_widgets_dart"
     ],
     "46": [
-      "annotation_pragma",
-      "app_lib_main",
-      "app_lib_main_account",
-      "app_lib_main_applifecycle",
-      "app_lib_main_backgroundmain",
-      "app_lib_main_buildalerts",
-      "app_lib_main_buildintake",
-      "app_lib_main_done",
-      "app_lib_main_load",
-      "app_lib_main_main",
-      "app_lib_main_notificationlocalizations",
-      "app_lib_main_openappstorage",
-      "app_lib_main_pushinbackground",
-      "app_lib_main_storage",
-      "app_lib_main_sync",
-      "applifecyclelistener",
-      "await",
-      "package_beaza_data_services_account_store_dart",
-      "package_beaza_data_services_alert_notifier_dart",
-      "package_path_provider_path_provider_dart"
-    ],
-    "47": [
-      "app_lib_ui_core_alert_text",
-      "app_lib_ui_core_alert_text_alertid",
-      "app_lib_ui_core_alert_text_alerttext",
-      "app_lib_ui_core_alert_text_bhd",
-      "app_lib_ui_core_alert_text_micro",
-      "app_lib_ui_core_alert_text_s",
-      "app_lib_ui_core_alert_text_showmicro",
-      "app_lib_ui_core_alert_text_status",
-      "app_lib_ui_features_review_views_review_view",
-      "app_lib_ui_features_review_views_review_view_build",
-      "app_lib_ui_features_review_views_review_view_createstate",
-      "app_lib_ui_features_review_views_review_view_dispose",
-      "app_lib_ui_features_review_views_review_view_viewmodel",
-      "app_test_formatting_test",
-      "app_test_formatting_test_main",
-      "package_beaza_l10n_app_localizations_dart",
-      "package_beaza_ui_core_formatting_dart",
-      "package_beaza_ui_features_home_views_home_view_dart",
-      "package_beaza_ui_features_review_view_models_review_view_model_dart",
-      "package_flutter_test_flutter_test_dart"
-    ],
-    "48": [
       "dartpad_normalizer_dartpad",
       "dartpad_normalizer_dartpad_bhd",
       "dartpad_normalizer_dartpad_bhdarabicafternumber",
@@ -1666,7 +1593,7 @@
       "dartpad_normalizer_dartpad_passed",
       "dartpad_normalizer_dartpad_whitespace"
     ],
-    "49": [
+    "47": [
       "github_workflows_smoke",
       "github_workflows_smoke_defaults_run",
       "github_workflows_smoke_inputs_url",
@@ -1688,7 +1615,7 @@
       "github_workflows_smoke_with_node_version",
       "github_workflows_smoke_workflow_dispatch_inputs"
     ],
-    "50": [
+    "48": [
       "packages_beaza_extraction_test_validator_test",
       "packages_beaza_extraction_test_validator_test_acct",
       "packages_beaza_extraction_test_validator_test_card",
@@ -1710,28 +1637,28 @@
       "packages_beaza_extraction_test_validator_test_usd",
       "packages_beaza_extraction_test_validator_test_v"
     ],
-    "51": [
-      "library",
-      "packages_beaza_crypto_lib_beaza_crypto",
-      "packages_beaza_crypto_lib_beaza_crypto_beaza_crypto",
-      "packages_beaza_extraction_lib_beaza_extraction",
-      "packages_beaza_extraction_lib_beaza_extraction_beaza_extraction",
-      "src_account_keys_dart",
-      "src_bytes_dart",
-      "src_classifier_dart",
-      "src_detector_dart",
-      "src_envelope_dart",
-      "src_extractor_dart",
-      "src_guardrail_dart",
-      "src_normalizer_dart",
-      "src_password_keys_dart",
-      "src_reconciler_dart",
-      "src_record_cipher_dart",
-      "src_recovery_key_dart",
-      "src_tier1_dart",
-      "src_validator_dart"
+    "49": [
+      "annotation_pragma",
+      "app_lib_main",
+      "app_lib_main_account",
+      "app_lib_main_applifecycle",
+      "app_lib_main_backgroundmain",
+      "app_lib_main_buildalerts",
+      "app_lib_main_buildintake",
+      "app_lib_main_done",
+      "app_lib_main_load",
+      "app_lib_main_main",
+      "app_lib_main_notificationlocalizations",
+      "app_lib_main_openappstorage",
+      "app_lib_main_pushinbackground",
+      "app_lib_main_storage",
+      "app_lib_main_sync",
+      "applifecyclelistener",
+      "await",
+      "package_beaza_data_services_alert_notifier_dart",
+      "package_path_provider_path_provider_dart"
     ],
-    "52": [
+    "50": [
       "app_lib_app",
       "app_lib_app_account",
       "app_lib_app_app",
@@ -1751,7 +1678,7 @@
       "package_beaza_ui_core_language_controller_dart",
       "package_beaza_ui_core_theme_dart"
     ],
-    "53": [
+    "51": [
       "app_lib_data_services_storage",
       "app_lib_data_services_storage_alertlogs",
       "app_lib_data_services_storage_background",
@@ -1771,27 +1698,47 @@
       "package_path_path_dart",
       "required_keystore_keys_bool"
     ],
-    "54": [
-      "app_lib_ui_core_amount_dialog",
-      "app_lib_ui_core_amount_dialog_amount",
-      "app_lib_ui_core_amount_dialog_amountdialog",
-      "app_lib_ui_core_amount_dialog_amountdialogstate",
-      "app_lib_ui_core_amount_dialog_amountinput",
-      "app_lib_ui_core_amount_dialog_build",
-      "app_lib_ui_core_amount_dialog_createstate",
-      "app_lib_ui_core_amount_dialog_dispose",
-      "app_lib_ui_core_amount_dialog_fils",
-      "app_lib_ui_core_amount_dialog_initialfils",
-      "app_lib_ui_core_amount_dialog_invalid",
-      "app_lib_ui_core_amount_dialog_merchant",
-      "app_lib_ui_core_amount_dialog_showamountdialog",
-      "app_lib_ui_core_amount_dialog_submit",
-      "app_lib_ui_core_amount_dialog_title",
-      "app_lib_ui_core_amount_dialog_withmerchant",
-      "int",
-      "texteditingcontroller"
+    "52": [
+      "app_lib_ui_core_alert_text",
+      "app_lib_ui_core_alert_text_alertid",
+      "app_lib_ui_core_alert_text_alerttext",
+      "app_lib_ui_core_alert_text_bhd",
+      "app_lib_ui_core_alert_text_micro",
+      "app_lib_ui_core_alert_text_s",
+      "app_lib_ui_core_alert_text_showmicro",
+      "app_lib_ui_core_alert_text_status",
+      "app_lib_ui_features_review_views_review_view",
+      "app_lib_ui_features_review_views_review_view_build",
+      "app_lib_ui_features_review_views_review_view_createstate",
+      "app_lib_ui_features_review_views_review_view_dispose",
+      "app_lib_ui_features_review_views_review_view_reviewview",
+      "app_lib_ui_features_review_views_review_view_reviewviewstate",
+      "app_lib_ui_features_review_views_review_view_viewmodel",
+      "package_beaza_l10n_app_localizations_dart",
+      "package_beaza_ui_features_home_views_home_view_dart",
+      "package_beaza_ui_features_review_view_models_review_view_model_dart"
     ],
-    "55": [
+    "53": [
+      "docs_privacy_compliance_separate_consent",
+      "server_migrations_0002_consent",
+      "server_src_app_checkconsent",
+      "server_src_util_fromb64",
+      "server_src_validate",
+      "server_src_validate_bad",
+      "server_src_validate_bundle",
+      "server_src_validate_checkb64",
+      "server_src_validate_checkbundle",
+      "server_src_validate_checkint",
+      "server_src_validate_checkrecords",
+      "server_src_validate_incomingrecord",
+      "server_src_validate_isobject",
+      "server_src_validate_max_batch",
+      "server_src_validate_max_blob_chars",
+      "server_src_validate_max_body",
+      "server_src_validate_min_blob_bytes",
+      "server_src_validate_sealed_key_bytes"
+    ],
+    "54": [
       "github_workflows_bootstrap_android",
       "github_workflows_bootstrap_android_bootstrap_defaults",
       "github_workflows_bootstrap_android_bootstrap_runs_on",
@@ -1811,7 +1758,7 @@
       "github_workflows_bootstrap_android_steps_with",
       "github_workflows_bootstrap_android_with_channel"
     ],
-    "56": [
+    "55": [
       "app_lib_data_repositories_drift_settings_repository",
       "app_lib_data_repositories_drift_settings_repository_applyremote",
       "app_lib_data_repositories_drift_settings_repository_collection",
@@ -1830,7 +1777,7 @@
       "app_lib_data_repositories_drift_settings_repository_write",
       "package_beaza_data_repositories_syncable_dart"
     ],
-    "57": [
+    "56": [
       "app_lib_data_repositories_ledger_repository",
       "app_lib_data_repositories_ledger_repository_accounts",
       "app_lib_data_repositories_ledger_repository_addextracted",
@@ -1849,7 +1796,7 @@
       "packages_beaza_extraction_lib_src_reconciler_reconciler",
       "set"
     ],
-    "58": [
+    "57": [
       "app_lib_data_services_sms_source",
       "app_lib_data_services_sms_source_arrivals",
       "app_lib_data_services_sms_source_events",
@@ -1868,7 +1815,7 @@
       "datetime",
       "stream"
     ],
-    "59": [
+    "58": [
       "packages_beaza_extraction_lib_src_normalizer",
       "packages_beaza_extraction_lib_src_normalizer_bhd",
       "packages_beaza_extraction_lib_src_normalizer_bhdarabicafternumber",
@@ -1886,6 +1833,24 @@
       "packages_beaza_extraction_lib_src_normalizer_whitespace",
       "static_const_string",
       "static_final_regexp"
+    ],
+    "59": [
+      "app_lib_ui_core_amount_dialog",
+      "app_lib_ui_core_amount_dialog_amount",
+      "app_lib_ui_core_amount_dialog_amountinput",
+      "app_lib_ui_core_amount_dialog_build",
+      "app_lib_ui_core_amount_dialog_createstate",
+      "app_lib_ui_core_amount_dialog_dispose",
+      "app_lib_ui_core_amount_dialog_fils",
+      "app_lib_ui_core_amount_dialog_initialfils",
+      "app_lib_ui_core_amount_dialog_invalid",
+      "app_lib_ui_core_amount_dialog_merchant",
+      "app_lib_ui_core_amount_dialog_showamountdialog",
+      "app_lib_ui_core_amount_dialog_submit",
+      "app_lib_ui_core_amount_dialog_title",
+      "app_lib_ui_core_amount_dialog_withmerchant",
+      "int",
+      "texteditingcontroller"
     ],
     "60": [
       "app_lib_ui_core_formatting",
@@ -1924,6 +1889,24 @@
       "package_beaza_data_repositories_seen_message_store_dart"
     ],
     "62": [
+      "docs_privacy_compliance_bahrain_pdpl",
+      "docs_privacy_compliance_before_release",
+      "docs_privacy_compliance_eu_residency",
+      "docs_privacy_compliance_gdpr",
+      "docs_privacy_compliance_open_gaps",
+      "docs_privacy_compliance_right_to_erasure",
+      "docs_privacy_compliance_same_legal_text",
+      "ref_node_fs",
+      "ref_node_url",
+      "server_scripts_legal_dart",
+      "server_scripts_legal_dart_dart_file",
+      "server_scripts_legal_dart_dartsource",
+      "server_scripts_legal_dart_sections",
+      "server_scripts_legal_dart_str",
+      "server_src_legal_documents",
+      "server_test_legal_sync_test"
+    ],
+    "63": [
       "packages_beaza_crypto_tool_check_responses",
       "packages_beaza_crypto_tool_check_responses_bundle",
       "packages_beaza_crypto_tool_check_responses_check",
@@ -1941,24 +1924,56 @@
       "packages_beaza_crypto_tool_check_responses_sample",
       "packages_beaza_crypto_tool_check_responses_secrets"
     ],
-    "63": [
-      "server_src_util_fromb64",
-      "server_src_validate",
-      "server_src_validate_bad",
-      "server_src_validate_bundle",
-      "server_src_validate_checkb64",
-      "server_src_validate_checkbundle",
-      "server_src_validate_checkint",
-      "server_src_validate_checkrecords",
-      "server_src_validate_incomingrecord",
-      "server_src_validate_isobject",
-      "server_src_validate_max_batch",
-      "server_src_validate_max_blob_chars",
-      "server_src_validate_max_body",
-      "server_src_validate_min_blob_bytes",
-      "server_src_validate_sealed_key_bytes"
-    ],
     "64": [
+      "bytes_dart",
+      "package_cryptography_cryptography_dart",
+      "packages_beaza_crypto_lib_src_envelope",
+      "packages_beaza_crypto_lib_src_envelope_aead",
+      "packages_beaza_crypto_lib_src_envelope_envelope",
+      "packages_beaza_crypto_lib_src_envelope_noncelength",
+      "packages_beaza_crypto_lib_src_envelope_open",
+      "packages_beaza_crypto_lib_src_envelope_overhead",
+      "packages_beaza_crypto_lib_src_envelope_seal",
+      "packages_beaza_crypto_lib_src_envelope_taglength",
+      "packages_beaza_crypto_lib_src_envelope_tostring",
+      "packages_beaza_crypto_lib_src_envelope_version",
+      "packages_beaza_crypto_readme_xchacha20_poly1305",
+      "static_const_int",
+      "static_final_cipher"
+    ],
+    "65": [
+      "app_lib_app_beazaapp",
+      "app_lib_app_startuperrorapp",
+      "app_lib_ui_features_account_views_account_view_syncsection",
+      "app_lib_ui_features_account_views_account_widgets_accountstatus",
+      "app_lib_ui_features_account_views_account_widgets_emailfield",
+      "app_lib_ui_features_account_views_account_widgets_legallinks",
+      "app_lib_ui_features_account_views_account_widgets_legalview",
+      "app_lib_ui_features_account_views_sign_up_view_agreement",
+      "app_lib_ui_features_home_views_home_view_entrytile",
+      "app_lib_ui_features_home_views_home_view_homeview",
+      "app_lib_ui_features_home_views_home_view_limitcard",
+      "app_lib_ui_features_home_views_home_view_microcard",
+      "app_lib_ui_features_home_views_home_view_smscard",
+      "statelesswidget"
+    ],
+    "66": [
+      "app_lib_ui_core_amount_dialog_amountdialog",
+      "app_lib_ui_core_amount_dialog_amountdialogstate",
+      "app_lib_ui_features_account_views_account_view_accountview",
+      "app_lib_ui_features_account_views_account_view_accountviewstate",
+      "app_lib_ui_features_account_views_account_view_deletedialog",
+      "app_lib_ui_features_account_views_account_view_deletedialogstate",
+      "app_lib_ui_features_account_views_account_view_otherphonescard",
+      "app_lib_ui_features_account_views_account_view_otherphonescardstate",
+      "app_lib_ui_features_account_views_account_widgets_passwordfield",
+      "app_lib_ui_features_account_views_account_widgets_passwordfieldstate",
+      "app_lib_ui_features_account_views_log_in_view_recoverview",
+      "app_lib_ui_features_account_views_log_in_view_recoverviewstate",
+      "state",
+      "statefulwidget"
+    ],
+    "67": [
       "app_lib_ui_features_account_legal_text",
       "app_lib_ui_features_account_legal_text_ar",
       "app_lib_ui_features_account_legal_text_en",
@@ -1974,39 +1989,23 @@
       "app_lib_ui_features_account_legal_text_version",
       "list"
     ],
-    "65": [
-      "app_lib_ui_features_account_views_account_view_accountview",
-      "app_lib_ui_features_account_views_account_view_accountviewstate",
-      "app_lib_ui_features_account_views_account_view_deletedialog",
-      "app_lib_ui_features_account_views_account_view_deletedialogstate",
-      "app_lib_ui_features_account_views_account_view_otherphonescard",
-      "app_lib_ui_features_account_views_account_view_otherphonescardstate",
-      "app_lib_ui_features_account_views_account_widgets_passwordfield",
-      "app_lib_ui_features_account_views_account_widgets_passwordfieldstate",
-      "app_lib_ui_features_account_views_log_in_view_loginview",
-      "app_lib_ui_features_account_views_log_in_view_loginviewstate",
-      "app_lib_ui_features_review_views_review_view_reviewview",
-      "app_lib_ui_features_review_views_review_view_reviewviewstate",
-      "state",
-      "statefulwidget"
+    "68": [
+      "packages_beaza_crypto_lib_src_envelope_decryptionfailed",
+      "packages_beaza_crypto_test_account_keys_test",
+      "packages_beaza_crypto_test_account_keys_test_emailaccount",
+      "packages_beaza_crypto_test_account_keys_test_keys",
+      "packages_beaza_crypto_test_account_keys_test_login",
+      "packages_beaza_crypto_test_account_keys_test_main",
+      "packages_beaza_crypto_test_account_keys_test_openwithpassword",
+      "packages_beaza_crypto_test_account_keys_test_viaserver",
+      "packages_beaza_crypto_test_record_cipher_test",
+      "packages_beaza_crypto_test_record_cipher_test_cipher",
+      "packages_beaza_crypto_test_record_cipher_test_expense",
+      "packages_beaza_crypto_test_record_cipher_test_id",
+      "packages_beaza_crypto_test_record_cipher_test_main",
+      "password_keys_test_dart"
     ],
-    "66": [
-      "bytes_dart",
-      "package_cryptography_cryptography_dart",
-      "packages_beaza_crypto_lib_src_envelope",
-      "packages_beaza_crypto_lib_src_envelope_aead",
-      "packages_beaza_crypto_lib_src_envelope_envelope",
-      "packages_beaza_crypto_lib_src_envelope_noncelength",
-      "packages_beaza_crypto_lib_src_envelope_open",
-      "packages_beaza_crypto_lib_src_envelope_overhead",
-      "packages_beaza_crypto_lib_src_envelope_seal",
-      "packages_beaza_crypto_lib_src_envelope_taglength",
-      "packages_beaza_crypto_lib_src_envelope_tostring",
-      "packages_beaza_crypto_lib_src_envelope_version",
-      "static_const_int",
-      "static_final_cipher"
-    ],
-    "67": [
+    "69": [
       "packages_beaza_extraction_test_tier1_test",
       "packages_beaza_extraction_test_tier1_test_bisbcard",
       "packages_beaza_extraction_test_tier1_test_bisbin",
@@ -2022,7 +2021,7 @@
       "packages_beaza_extraction_test_tier1_test_sum",
       "packages_beaza_extraction_test_tier1_test_text"
     ],
-    "68": [
+    "70": [
       "app_lib_data_services_key_work",
       "app_lib_data_services_key_work_createaccount",
       "app_lib_data_services_key_work_derive",
@@ -2037,7 +2036,7 @@
       "packages_beaza_crypto_lib_src_password_keys_kdfparams",
       "t"
     ],
-    "69": [
+    "71": [
       "dart_math",
       "dart_typed_data",
       "packages_beaza_crypto_lib_src_bytes",
@@ -2052,7 +2051,22 @@
       "random",
       "return"
     ],
-    "70": [
+    "72": [
+      "packages_beaza_crypto_lib_src_account_keys_datakey",
+      "packages_beaza_crypto_lib_src_password_keys_passwordkeys",
+      "packages_beaza_crypto_lib_src_record_cipher_recordcipher",
+      "packages_beaza_crypto_lib_src_recovery_key_recoverykey",
+      "packages_beaza_crypto_readme_context_binding",
+      "packages_beaza_crypto_readme_data_key",
+      "packages_beaza_crypto_readme_key_bundle",
+      "packages_beaza_crypto_readme_padding_64",
+      "packages_beaza_crypto_readme_password_keys",
+      "packages_beaza_crypto_readme_record_key",
+      "packages_beaza_crypto_readme_recovery_key",
+      "packages_beaza_crypto_readme_server_cannot_read",
+      "packages_beaza_crypto_readme_why_not_whatsapp"
+    ],
+    "73": [
       "packages_beaza_crypto_pubspec",
       "packages_beaza_crypto_pubspec_dependencies",
       "packages_beaza_crypto_pubspec_dependencies_crypto",
@@ -2067,7 +2081,7 @@
       "packages_beaza_crypto_pubspec_publish_to",
       "packages_beaza_crypto_pubspec_version"
     ],
-    "71": [
+    "74": [
       "ref_wrangler",
       "server_package",
       "server_package_description",
@@ -2082,7 +2096,7 @@
       "server_package_scripts_test",
       "server_package_type"
     ],
-    "72": [
+    "75": [
       "app_lib_ui_core_language_controller",
       "app_lib_ui_core_language_controller_choose",
       "app_lib_ui_core_language_controller_code",
@@ -2093,10 +2107,10 @@
       "app_lib_ui_core_language_controller_prefs",
       "locale_get",
       "package_beaza_data_repositories_preferences_store_dart",
-      "string",
+      "package_flutter_widgets_dart",
       "string_get"
     ],
-    "73": [
+    "76": [
       "package_beaza_extraction_beaza_extraction_dart",
       "package_test_test_dart",
       "packages_beaza_extraction_test_detector_test",
@@ -2110,7 +2124,7 @@
       "packages_beaza_extraction_test_normalizer_test_main",
       "packages_beaza_extraction_test_normalizer_test_n"
     ],
-    "74": [
+    "77": [
       "server_tsconfig",
       "server_tsconfig_compileroptions",
       "server_tsconfig_compileroptions_allowimportingtsextensions",
@@ -2124,20 +2138,7 @@
       "server_tsconfig_compileroptions_target",
       "server_tsconfig_include"
     ],
-    "75": [
-      "app_lib_ui_features_account_views_recovery_key_view",
-      "app_lib_ui_features_account_views_recovery_key_view_build",
-      "app_lib_ui_features_account_views_recovery_key_view_confirm",
-      "app_lib_ui_features_account_views_recovery_key_view_createstate",
-      "app_lib_ui_features_account_views_recovery_key_view_dispose",
-      "app_lib_ui_features_account_views_recovery_key_view_lastgroup",
-      "app_lib_ui_features_account_views_recovery_key_view_recoverykey",
-      "app_lib_ui_features_account_views_recovery_key_view_recoverykeyview",
-      "app_lib_ui_features_account_views_recovery_key_view_recoverykeyviewstate",
-      "app_lib_ui_features_account_views_recovery_key_view_text",
-      "packages_beaza_crypto_lib_src_recovery_key_recoverykey"
-    ],
-    "76": [
+    "78": [
       "app_lib_domain_use_cases_message_intake_messageintake",
       "app_lib_ui_features_review_view_models_review_view_model",
       "app_lib_ui_features_review_view_models_review_view_model_dispose",
@@ -2149,7 +2150,19 @@
       "bool_get",
       "package_beaza_domain_use_cases_message_intake_dart"
     ],
-    "77": [
+    "79": [
+      "app_lib_ui_features_account_views_recovery_key_view",
+      "app_lib_ui_features_account_views_recovery_key_view_build",
+      "app_lib_ui_features_account_views_recovery_key_view_confirm",
+      "app_lib_ui_features_account_views_recovery_key_view_createstate",
+      "app_lib_ui_features_account_views_recovery_key_view_dispose",
+      "app_lib_ui_features_account_views_recovery_key_view_lastgroup",
+      "app_lib_ui_features_account_views_recovery_key_view_recoverykey",
+      "app_lib_ui_features_account_views_recovery_key_view_recoverykeyview",
+      "app_lib_ui_features_account_views_recovery_key_view_recoverykeyviewstate",
+      "app_lib_ui_features_account_views_recovery_key_view_text"
+    ],
+    "80": [
       "app_test_home_view_model_test",
       "app_test_home_view_model_test_bh",
       "app_test_home_view_model_test_ledger",
@@ -2161,7 +2174,7 @@
       "package_beaza_data_repositories_settings_repository_dart",
       "package_beaza_ui_features_home_view_models_home_view_model_dart"
     ],
-    "78": [
+    "81": [
       "packages_beaza_extraction_pubspec",
       "packages_beaza_extraction_pubspec_description",
       "packages_beaza_extraction_pubspec_dev_dependencies",
@@ -2173,7 +2186,7 @@
       "packages_beaza_extraction_pubspec_publish_to",
       "packages_beaza_extraction_pubspec_version"
     ],
-    "79": [
+    "82": [
       "app_lib_data_services_database_opener",
       "app_lib_data_services_database_opener_background",
       "app_lib_data_services_database_opener_hexkey",
@@ -2184,7 +2197,7 @@
       "package_sqlite3_sqlite3_dart",
       "regexp"
     ],
-    "80": [
+    "83": [
       "packages_beaza_extraction_test_classifier_test",
       "packages_beaza_extraction_test_classifier_test_c",
       "packages_beaza_extraction_test_classifier_test_fawri",
@@ -2195,7 +2208,7 @@
       "packages_beaza_extraction_test_classifier_test_single",
       "packages_beaza_extraction_test_classifier_test_tx"
     ],
-    "81": [
+    "84": [
       "packages_beaza_extraction_test_guardrail_test",
       "packages_beaza_extraction_test_guardrail_test_bh",
       "packages_beaza_extraction_test_guardrail_test_g",
@@ -2206,7 +2219,28 @@
       "packages_beaza_extraction_test_guardrail_test_spend",
       "packages_beaza_extraction_test_guardrail_test_today"
     ],
-    "82": [
+    "85": [
+      "server_migrations_0001_init",
+      "server_migrations_0001_init_attempts",
+      "server_migrations_0001_init_meta",
+      "server_migrations_0001_init_records",
+      "server_migrations_0001_init_records_seq",
+      "server_migrations_0001_init_sessions",
+      "server_migrations_0001_init_sessions_user",
+      "server_migrations_0001_init_users",
+      "server_readme_what_server_stores"
+    ],
+    "86": [
+      "app_android_app_src_main_res_mipmap_hdpi_ic_launcher_icon",
+      "app_android_app_src_main_res_mipmap_mdpi_ic_launcher_icon",
+      "app_android_app_src_main_res_mipmap_xhdpi_ic_launcher_icon",
+      "app_android_app_src_main_res_mipmap_xxhdpi_ic_launcher_icon",
+      "app_android_app_src_main_res_mipmap_xxxhdpi_ic_launcher_icon",
+      "docs_icon_beaza_icon_512_app_icon",
+      "docs_icon_beaza_icon_icon",
+      "docs_icon_beaza_icon_mono_icon"
+    ],
+    "87": [
       "app_lib_data_repositories_settings_repository",
       "app_lib_data_repositories_settings_repository_inmemorysettingsrepository",
       "app_lib_data_repositories_settings_repository_load",
@@ -2216,7 +2250,7 @@
       "package_flutter_foundation_dart",
       "packages_beaza_extraction_lib_src_guardrail_guardrailsettings"
     ],
-    "83": [
+    "88": [
       "app_lib_data_services_alert_notifier",
       "app_lib_data_services_alert_notifier_alertnotifier",
       "app_lib_data_services_alert_notifier_channel",
@@ -2226,7 +2260,7 @@
       "package_flutter_services_dart",
       "static_const"
     ],
-    "84": [
+    "89": [
       "annotation_dataclassname",
       "app_lib_data_services_database_alertdayrows",
       "app_lib_data_services_database_ledgerrows",
@@ -2235,7 +2269,7 @@
       "app_lib_data_services_database_settingsrows",
       "table"
     ],
-    "85": [
+    "90": [
       "dart_convert",
       "packages_beaza_crypto_tool_sample_account",
       "packages_beaza_crypto_tool_sample_account_account",
@@ -2244,7 +2278,16 @@
       "packages_beaza_crypto_tool_sample_account_password",
       "packages_beaza_crypto_tool_sample_account_record"
     ],
-    "86": [
+    "91": [
+      "packages_beaza_crypto_lib_src_password_keys_weakkdfparams",
+      "packages_beaza_crypto_readme_weak_kdf_refused",
+      "packages_beaza_crypto_test_password_keys_test",
+      "packages_beaza_crypto_test_password_keys_test_derive",
+      "packages_beaza_crypto_test_password_keys_test_fast",
+      "packages_beaza_crypto_test_password_keys_test_main",
+      "packages_beaza_crypto_test_password_keys_test_salt"
+    ],
+    "92": [
       "packages_beaza_extraction_test_reconciler_test",
       "packages_beaza_extraction_test_reconciler_test_main",
       "packages_beaza_extraction_test_reconciler_test_rec",
@@ -2253,7 +2296,7 @@
       "packages_beaza_extraction_test_reconciler_test_transfer",
       "packages_beaza_extraction_test_reconciler_test_tx"
     ],
-    "87": [
+    "93": [
       "dart_io",
       "packages_beaza_crypto_tool_new_account",
       "packages_beaza_crypto_tool_new_account_account",
@@ -2261,33 +2304,61 @@
       "packages_beaza_crypto_tool_new_account_main",
       "packages_beaza_crypto_tool_new_account_password"
     ],
-    "88": [
+    "94": [
+      "app_lib_data_repositories_account_repository_accountfailure",
+      "app_lib_data_services_sync_api_apiexception",
+      "app_lib_data_services_sync_api_networkexception",
+      "exception",
+      "packages_beaza_crypto_lib_src_recovery_key_recoverykeyexception"
+    ],
+    "95": [
       "app_lib_ui_core_theme",
       "app_lib_ui_core_theme_buildtheme",
       "app_lib_ui_core_theme_seed",
       "color",
       "package_flutter_material_dart"
     ],
-    "89": [
+    "96": [
+      "package_beaza_crypto_beaza_crypto_dart",
+      "packages_beaza_crypto_test_recovery_key_test",
+      "packages_beaza_crypto_test_recovery_key_test_fixed",
+      "packages_beaza_crypto_test_recovery_key_test_main",
+      "packages_beaza_crypto_test_recovery_key_test_problemof"
+    ],
+    "97": [
+      "server_readme_change_numbers_in_transaction",
+      "server_readme_known_limits",
+      "server_readme_same_answer",
+      "server_readme_sync_server",
+      "server_readme_wrong_guess_limits"
+    ],
+    "98": [
       "app_analysis_options",
       "app_analysis_options_analyzer",
       "app_analysis_options_analyzer_exclude",
       "app_analysis_options_include"
     ],
-    "90": [
+    "99": [
+      "packages_beaza_extraction_readme_merchant_normalizer",
+      "packages_beaza_extraction_readme_pipeline_stages",
+      "packages_beaza_extraction_readme_pure_dart_core",
+      "packages_beaza_extraction_readme_tier2_model"
+    ],
+    "100": [
+      "app_android_app_build_gradle",
+      "app_android_keystore_readme_test_signing_key"
+    ],
+    "101": [
       "comparable",
       "packages_beaza_extraction_lib_src_guardrail_day"
     ],
-    "91": [
-      "app_android_app_build_gradle"
-    ],
-    "92": [
+    "102": [
       "app_android_build_gradle"
     ],
-    "93": [
+    "103": [
       "app_android_settings_gradle"
     ],
-    "94": [
+    "104": [
       "none_uri"
     ]
   },
@@ -2297,96 +2368,106 @@
     "2": 0.05427547363031234,
     "3": 0.038461538461538464,
     "4": 0.041666666666666664,
-    "5": 0.060129509713228495,
-    "6": 0.043478260869565216,
-    "7": 0.047619047619047616,
-    "8": 0.06829268292682927,
-    "9": 0.05128205128205128,
-    "10": 0.05263157894736842,
+    "5": 0.043478260869565216,
+    "6": 0.047619047619047616,
+    "7": 0.07195121951219512,
+    "8": 0.05128205128205128,
+    "9": 0.05263157894736842,
+    "10": 0.05405405405405406,
     "11": 0.05405405405405406,
-    "12": 0.05405405405405406,
+    "12": 0.06722689075630252,
     "13": 0.05714285714285714,
     "14": 0.058823529411764705,
-    "15": 0.06417112299465241,
-    "16": 0.19429590017825313,
-    "17": 0.07007575757575757,
-    "18": 0.06060606060606061,
-    "19": 0.0625,
+    "15": 0.07007575757575757,
+    "16": 0.06060606060606061,
+    "17": 0.20075757575757575,
+    "18": 0.0625,
+    "19": 0.08064516129032258,
     "20": 0.08817204301075268,
-    "21": 0.07311827956989247,
-    "22": 0.07526881720430108,
-    "23": 0.06451612903225806,
-    "24": 0.06896551724137931,
-    "25": 0.08374384236453201,
+    "21": 0.06451612903225806,
+    "22": 0.06896551724137931,
+    "23": 0.06896551724137931,
+    "24": 0.08374384236453201,
+    "25": 0.07142857142857142,
     "26": 0.07142857142857142,
-    "27": 0.07142857142857142,
-    "28": 0.07692307692307693,
-    "29": 0.09,
-    "30": 0.08,
+    "27": 0.07692307692307693,
+    "28": 0.08,
+    "29": 0.08333333333333333,
+    "30": 0.09420289855072464,
     "31": 0.08333333333333333,
     "32": 0.08333333333333333,
     "33": 0.08333333333333333,
-    "34": 0.08333333333333333,
-    "35": 0.21014492753623187,
+    "34": 0.21014492753623187,
+    "35": 0.08695652173913043,
     "36": 0.08695652173913043,
     "37": 0.08695652173913043,
-    "38": 0.08695652173913043,
+    "38": 0.09090909090909091,
     "39": 0.09090909090909091,
-    "40": 0.09090909090909091,
-    "41": 0.09090909090909091,
+    "40": 0.09523809523809523,
+    "41": 0.09523809523809523,
     "42": 0.09523809523809523,
     "43": 0.09523809523809523,
     "44": 0.1,
     "45": 0.10526315789473684,
     "46": 0.1,
-    "47": 0.10526315789473684,
+    "47": 0.1,
     "48": 0.1,
-    "49": 0.1,
-    "50": 0.1,
-    "51": 0.10526315789473684,
-    "52": 0.12418300653594772,
-    "53": 0.1111111111111111,
-    "54": 0.11764705882352941,
-    "55": 0.1111111111111111,
+    "49": 0.10526315789473684,
+    "50": 0.12418300653594772,
+    "51": 0.1111111111111111,
+    "52": 0.11764705882352941,
+    "53": 0.17647058823529413,
+    "54": 0.1111111111111111,
+    "55": 0.11764705882352941,
     "56": 0.11764705882352941,
-    "57": 0.11764705882352941,
-    "58": 0.125,
-    "59": 0.11764705882352941,
+    "57": 0.125,
+    "58": 0.11764705882352941,
+    "59": 0.125,
     "60": 0.125,
     "61": 0.125,
-    "62": 0.125,
-    "63": 0.22857142857142856,
-    "64": 0.14285714285714285,
-    "65": 0.1978021978021978,
-    "66": 0.14285714285714285,
+    "62": 0.2,
+    "63": 0.125,
+    "64": 0.13333333333333333,
+    "65": 0.14285714285714285,
+    "66": 0.1978021978021978,
     "67": 0.14285714285714285,
     "68": 0.15384615384615385,
-    "69": 0.15384615384615385,
+    "69": 0.14285714285714285,
     "70": 0.15384615384615385,
-    "71": 0.16666666666666666,
-    "72": 0.16666666666666666,
-    "73": 0.19696969696969696,
+    "71": 0.15384615384615385,
+    "72": 0.23076923076923078,
+    "73": 0.15384615384615385,
     "74": 0.16666666666666666,
-    "75": 0.2,
-    "76": 0.2,
-    "77": 0.2,
+    "75": 0.16666666666666666,
+    "76": 0.19696969696969696,
+    "77": 0.16666666666666666,
     "78": 0.2,
     "79": 0.2222222222222222,
-    "80": 0.2222222222222222,
-    "81": 0.2222222222222222,
-    "82": 0.2857142857142857,
-    "83": 0.2857142857142857,
-    "84": 0.47619047619047616,
-    "85": 0.2857142857142857,
-    "86": 0.2857142857142857,
-    "87": 0.3333333333333333,
-    "88": 0.4,
-    "89": 0.5,
-    "90": 1.0,
-    "91": 1.0,
-    "92": 1.0,
-    "93": 1.0,
-    "94": 1.0
+    "80": 0.2,
+    "81": 0.2,
+    "82": 0.2222222222222222,
+    "83": 0.2222222222222222,
+    "84": 0.2222222222222222,
+    "85": 0.3333333333333333,
+    "86": 0.25,
+    "87": 0.2857142857142857,
+    "88": 0.2857142857142857,
+    "89": 0.47619047619047616,
+    "90": 0.2857142857142857,
+    "91": 0.2857142857142857,
+    "92": 0.2857142857142857,
+    "93": 0.3333333333333333,
+    "94": 0.4,
+    "95": 0.4,
+    "96": 0.4,
+    "97": 0.4,
+    "98": 0.5,
+    "99": 0.5,
+    "100": 1.0,
+    "101": 1.0,
+    "102": 1.0,
+    "103": 1.0,
+    "104": 1.0
   },
   "gods": [
     {
@@ -2405,8 +2486,18 @@
       "degree": 14
     },
     {
+      "id": "server_src_app_handle",
+      "label": "handle()",
+      "degree": 14
+    },
+    {
       "id": "app_android_app_src_main_kotlin_bh_beaza_beaza_mainactivity_mainactivity",
       "label": "MainActivity",
+      "degree": 13
+    },
+    {
+      "id": "app_lib_data_services_database_appdatabase",
+      "label": "AppDatabase",
       "degree": 13
     },
     {
@@ -2415,98 +2506,94 @@
       "degree": 13
     },
     {
-      "id": "server_src_app_handle",
-      "label": "handle()",
-      "degree": 13
-    },
-    {
       "id": "server_src_app_dispatch",
       "label": "dispatch()",
       "degree": 13
     },
     {
-      "id": "app_lib_data_services_database_appdatabase",
-      "label": "AppDatabase",
-      "degree": 12
+      "id": "server_src_app_login",
+      "label": "login()",
+      "degree": 13
     },
     {
       "id": "server_src_app_authenticate",
       "label": "authenticate()",
       "degree": 12
-    },
-    {
-      "id": "server_src_app_login",
-      "label": "login()",
-      "degree": 12
     }
   ],
   "surprises": [
     {
-      "source": "fetch()",
-      "target": "handle()",
+      "source": "Status table",
+      "target": "AppDatabase",
       "source_files": [
-        "server/src/index.ts",
-        "server/src/app.ts"
+        "README.md",
+        "app/lib/data/services/database.dart"
       ],
-      "confidence": "EXTRACTED",
-      "relation": "calls",
-      "why": "bridges separate communities; peripheral node `fetch()` unexpectedly reaches hub `handle()`"
+      "confidence": "AMBIGUOUS",
+      "relation": "references",
+      "why": "ambiguous connection - not explicitly stated in source; crosses file types (code ↔ doc); connects across different repos/directories; bridges separate communities; peripheral node `Status table` unexpectedly reaches hub `AppDatabase`"
     },
     {
-      "source": "FakeAccounts",
-      "target": "AccountRepository",
+      "source": "App icon (mipmap-hdpi/ic_launcher.png)",
+      "target": "Beaza app icon: gold coin with the letter ب inside a spending gauge",
       "source_files": [
-        "app/test/account_view_test.dart",
-        "app/lib/data/repositories/account_repository.dart"
+        "app/android/app/src/main/res/mipmap-hdpi/ic_launcher.png",
+        "docs/icon/beaza-icon-512.png"
       ],
-      "confidence": "EXTRACTED",
-      "relation": "inherits",
-      "why": "peripheral node `FakeAccounts` unexpectedly reaches hub `AccountRepository`"
+      "confidence": "INFERRED",
+      "relation": "semantically_similar_to",
+      "why": "inferred connection - not explicitly stated in source; connects across different repos/directories; semantically similar concepts with no structural link; peripheral node `App icon (mipmap-hdpi/ic_launcher.png)` unexpectedly reaches hub `Beaza app icon: gold coin with the letter ب inside a spending gauge`"
     },
     {
-      "source": "FixedAccount",
-      "target": "AccountRepository",
+      "source": "App icon (mipmap-mdpi/ic_launcher.png)",
+      "target": "Beaza app icon: gold coin with the letter ب inside a spending gauge",
       "source_files": [
-        "app/test/sync_test.dart",
-        "app/lib/data/repositories/account_repository.dart"
+        "app/android/app/src/main/res/mipmap-mdpi/ic_launcher.png",
+        "docs/icon/beaza-icon-512.png"
       ],
-      "confidence": "EXTRACTED",
-      "relation": "inherits",
-      "why": "peripheral node `FixedAccount` unexpectedly reaches hub `AccountRepository`"
+      "confidence": "INFERRED",
+      "relation": "semantically_similar_to",
+      "why": "inferred connection - not explicitly stated in source; connects across different repos/directories; semantically similar concepts with no structural link; peripheral node `App icon (mipmap-mdpi/ic_launcher.png)` unexpectedly reaches hub `Beaza app icon: gold coin with the letter ب inside a spending gauge`"
     },
     {
-      "source": "DriftLedgerRepository",
-      "target": "LedgerRepository",
+      "source": "App icon (mipmap-xhdpi/ic_launcher.png)",
+      "target": "Beaza app icon: gold coin with the letter ب inside a spending gauge",
       "source_files": [
-        "app/lib/data/repositories/drift_ledger_repository.dart",
-        "app/lib/data/repositories/ledger_repository.dart"
+        "app/android/app/src/main/res/mipmap-xhdpi/ic_launcher.png",
+        "docs/icon/beaza-icon-512.png"
       ],
-      "confidence": "EXTRACTED",
-      "relation": "inherits",
-      "why": "bridges separate communities"
+      "confidence": "INFERRED",
+      "relation": "semantically_similar_to",
+      "why": "inferred connection - not explicitly stated in source; connects across different repos/directories; semantically similar concepts with no structural link; peripheral node `App icon (mipmap-xhdpi/ic_launcher.png)` unexpectedly reaches hub `Beaza app icon: gold coin with the letter ب inside a spending gauge`"
     },
     {
-      "source": "DriftSettingsRepository",
-      "target": "SettingsRepository",
+      "source": "App icon (mipmap-xxhdpi/ic_launcher.png)",
+      "target": "Beaza app icon: gold coin with the letter ب inside a spending gauge",
       "source_files": [
-        "app/lib/data/repositories/drift_settings_repository.dart",
-        "app/lib/data/repositories/settings_repository.dart"
+        "app/android/app/src/main/res/mipmap-xxhdpi/ic_launcher.png",
+        "docs/icon/beaza-icon-512.png"
       ],
-      "confidence": "EXTRACTED",
-      "relation": "inherits",
-      "why": "bridges separate communities"
+      "confidence": "INFERRED",
+      "relation": "semantically_similar_to",
+      "why": "inferred connection - not explicitly stated in source; connects across different repos/directories; semantically similar concepts with no structural link; peripheral node `App icon (mipmap-xxhdpi/ic_launcher.png)` unexpectedly reaches hub `Beaza app icon: gold coin with the letter ب inside a spending gauge`"
     }
   ],
   "questions": [
     {
+      "type": "ambiguous_edge",
+      "question": "What is the exact relationship between `AppDatabase` and `Status table`?",
+      "why": "Edge tagged AMBIGUOUS (relation: references) - confidence is low.",
+      "low_confidence": true
+    },
+    {
       "type": "bridge_node",
-      "question": "Why does `AppDatabase` connect `Community 20` to `Community 4`, `Community 9`, `Community 53`, `Community 22`, `Community 56`, `Community 26`?",
-      "why": "High betweenness centrality (0.022) - this node is a cross-community bridge."
+      "question": "Why does `Three separate, unticked consent boxes` connect `Community 53` to `Community 29`, `Community 62`?",
+      "why": "High betweenness centrality (0.071) - this node is a cross-community bridge."
     },
     {
       "type": "isolated_nodes",
       "question": "What connects `homeViewModel`, `account`, `sync` to the rest of the system?",
-      "why": "1314 weakly-connected nodes found - possible missing edges."
+      "why": "1322 weakly-connected nodes found - possible documentation gaps or missing edges."
     },
     {
       "type": "low_cohesion",
@@ -2515,8 +2602,8 @@
     },
     {
       "type": "bridge_node",
-      "question": "Why does `SyncRepository` connect `Community 52` to `Community 36`, `Community 37`, `Community 6`, `Community 9`, `Community 22`?",
-      "why": "High betweenness centrality (0.007) - this node is a cross-community bridge."
+      "question": "Why does `checkConsent()` connect `Community 53` to `Community 17`?",
+      "why": "High betweenness centrality (0.060) - this node is a cross-community bridge."
     },
     {
       "type": "low_cohesion",
@@ -2525,13 +2612,8 @@
     },
     {
       "type": "bridge_node",
-      "question": "Why does `AccountFailure` connect `Community 21` to `Community 24`, `Community 44`, `Community 6`, `Community 22`?",
-      "why": "High betweenness centrality (0.007) - this node is a cross-community bridge."
-    },
-    {
-      "type": "low_cohesion",
-      "question": "Should `Community 2` be split into smaller, more focused modules?",
-      "why": "Cohesion score 0.05427547363031234 - nodes in this community are weakly interconnected."
+      "question": "Why does `AppDatabase` connect `Community 20` to `Community 4`, `Community 8`, `Community 12`, `Community 51`, `Community 23`, `Community 55`, `Community 25`?",
+      "why": "High betweenness centrality (0.042) - this node is a cross-community bridge."
     }
   ]
 }

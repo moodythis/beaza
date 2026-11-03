@@ -2380,6 +2380,15 @@ packages_beaza_extraction_test_validator_test_t1	t1	packages/beaza_extraction/te
 packages_beaza_extraction_test_validator_test_run	run	packages/beaza_extraction/test/validator_test.dart
 package_beaza_extraction_beaza_extraction_dart	package:beaza_extraction/beaza_extraction.dart	None
 package_test_test_dart	package:test/test.dart	None
+server_migrations_0001_init	0001_init.sql	server/migrations/0001_init.sql
+server_migrations_0001_init_users	users	server/migrations/0001_init.sql
+server_migrations_0001_init_sessions	sessions	server/migrations/0001_init.sql
+server_migrations_0001_init_sessions_user	sessions_user	server/migrations/0001_init.sql
+server_migrations_0001_init_records	records	server/migrations/0001_init.sql
+server_migrations_0001_init_records_seq	records_seq	server/migrations/0001_init.sql
+server_migrations_0001_init_attempts	attempts	server/migrations/0001_init.sql
+server_migrations_0001_init_meta	meta	server/migrations/0001_init.sql
+server_migrations_0002_consent	0002_consent.sql	server/migrations/0002_consent.sql
 server_package	package.json	server/package.json
 server_package_name	name	server/package.json
 server_package_private	private	server/package.json
