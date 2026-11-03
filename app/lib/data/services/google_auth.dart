@@ -4,7 +4,8 @@ import 'package:google_sign_in/google_sign_in.dart';
 /// application"). Not a secret: it only names the app the ID token is for,
 /// and the sync server checks tokens against it. Empty hides the Google
 /// button.
-const String googleWebClientId = '';
+const String googleWebClientId =
+    '16049310186-eb57dja4q527kmotnt4krj40anri2331.apps.googleusercontent.com';
 
 /// Sign in with Google on this phone.
 abstract class GoogleAuth {
