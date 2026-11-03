@@ -25,6 +25,11 @@ void main() {
         '4500|عشانا|food');
   });
 
+  test('a dinar and eight rupees', () {
+    expect(show(parser.parse('غدانا طلع دينار وثمان ربيات', now)),
+        '1800|غدانا|food');
+  });
+
   test('no unit: the draft is marked for checking', () {
     expect(show(parser.parse('كرك 200', now)), '200|كرك|food|?');
   });
