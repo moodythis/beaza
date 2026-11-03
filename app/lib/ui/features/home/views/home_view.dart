@@ -3,6 +3,7 @@ import 'package:beaza/data/repositories/sync_repository.dart';
 import 'package:beaza/domain/use_cases/savings_tips.dart';
 import 'package:beaza/domain/use_cases/spending_by_category.dart';
 import 'package:beaza/l10n/app_localizations.dart';
+import 'package:beaza/ui/core/alert_text.dart';
 import 'package:beaza/ui/core/amount_dialog.dart';
 import 'package:beaza/ui/core/category_picker.dart';
 import 'package:beaza/ui/core/category_style.dart';
@@ -135,9 +136,10 @@ class HomeView extends StatelessWidget {
               MicroCard(today: state.summary.micro, week: state.weekMicro),
               const SizedBox(height: 12),
               CategoryCard(totals: state.weekByCategory),
-              if (state.tips.isNotEmpty) ...[
+              if (state.tips.isNotEmpty ||
+                  adviceText(l10n, state.summary.level) != null) ...[
                 const SizedBox(height: 12),
-                TipsCard(tips: state.tips),
+                TipsCard(tips: state.tips, level: state.summary.level),
               ],
               if (viewModel.duplicates > 0)
                 Card(
@@ -452,9 +454,16 @@ class MicroCard extends StatelessWidget {
 
 /// Saving tips worked out by rules on this phone.
 class TipsCard extends StatelessWidget {
-  const TipsCard({super.key, required this.tips});
+  const TipsCard({
+    super.key,
+    required this.tips,
+    this.level = AlertLevel.normal,
+  });
 
   final List<SavingsTip> tips;
+
+  /// Today's guardrail level: from 50% a short tip comes first.
+  final AlertLevel level;
 
   static String text(AppLocalizations l10n, SavingsTip t) {
     String money(int fils) => l10n.bhd(formatFils(fils));
@@ -463,6 +472,7 @@ class TipsCard extends StatelessWidget {
       TipKind.categorySpike =>
         l10n.tipSpike(category, money(t.fils), money(t.otherFils)),
       TipKind.overLimitDays => l10n.tipOverLimit(t.count),
+      TipKind.smallPurchases => l10n.tipSmall(t.count, money(t.fils)),
       TipKind.topCategory => l10n.tipTop(category, t.count, money(t.fils)),
       TipKind.trimTarget => l10n.tipTrim(category, money(t.fils)),
     };
@@ -488,6 +498,18 @@ class TipsCard extends StatelessWidget {
             ),
             const SizedBox(height: 2),
             Text(l10n.tipsSubtitle, style: theme.textTheme.bodySmall),
+            if (adviceText(l10n, level) case final advice?) ...[
+              const SizedBox(height: 12),
+              Row(
+                key: const Key('tip_level'),
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  const Icon(Icons.speed_outlined, size: 20),
+                  const SizedBox(width: 12),
+                  Expanded(child: Text(advice)),
+                ],
+              ),
+            ],
             for (var i = 0; i < tips.length; i++) ...[
               const SizedBox(height: 12),
               Row(
@@ -495,7 +517,9 @@ class TipsCard extends StatelessWidget {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Icon(
-                    tips[i].bucket == null
+                    tips[i].kind == TipKind.smallPurchases
+                        ? Icons.coffee_outlined
+                        : tips[i].bucket == null
                         ? Icons.warning_amber_outlined
                         : categoryIcon(tips[i].bucket!),
                     size: 20,

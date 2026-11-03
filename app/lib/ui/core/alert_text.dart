@@ -19,15 +19,25 @@ import 'package:beaza_extraction/beaza_extraction.dart';
           : l10n.alertSpentLeft(bhd(s.spentFils), bhd(s.remainingFils));
 
   if (alert.level == AlertLevel.normal) {
-    return (title: micro, body: status);
+    return (title: micro, body: '$status\n${l10n.adviceMicro}');
   }
   final showMicro = alert.includesMicroTotal ||
       (alert.level == AlertLevel.level2 && s.micro.count > 0);
+  final advice = adviceText(l10n, alert.level);
   return (
     title: levelText(l10n, alert.level),
-    body: showMicro ? '$status\n$micro' : status,
+    body: [status, if (showMicro) micro, if (advice != null) advice].join('\n'),
   );
 }
+
+/// One short tip for a guardrail level, written by rules (no model).
+/// Null under 50%.
+String? adviceText(AppLocalizations l10n, AlertLevel level) => switch (level) {
+      AlertLevel.normal => null,
+      AlertLevel.level1 => l10n.adviceLevel1,
+      AlertLevel.level2 => l10n.adviceLevel2,
+      AlertLevel.level3 => l10n.adviceLevel3,
+    };
 
 /// A separate notification for each level of each day. Reusing one id made
 /// Android update the old notification in place, so the 100% alert could

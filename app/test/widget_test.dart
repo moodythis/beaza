@@ -88,6 +88,20 @@ void main() {
     expect(find.text('نصائح للتوفير'), findsOneWidget);
   });
 
+  testWidgets('from 50% of the limit a short tip shows on its own', (tester) async {
+    await pumpHome(tester, results: [
+      purchase(6000, bh(10), merchant: 'SHOP', category: 'bills'),
+    ]);
+    await tester.scrollUntilVisible(
+      find.byKey(const Key('tipsCard')),
+      300,
+      scrollable: find.byType(Scrollable).first,
+    );
+    expect(find.byKey(const Key('tip_level')), findsOneWidget);
+    expect(find.text("Tip: think twice before anything you don't need today."),
+        findsOneWidget);
+  });
+
   testWidgets('no tips card when almost nothing was spent', (tester) async {
     await pumpHome(tester, results: [
       purchase(1500, bh(10), merchant: 'BAKERY', category: 'food'),

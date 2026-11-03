@@ -405,6 +405,17 @@
       "amount": { "type": "String" }
     }
   },
+  "tipSmall": "{count} small purchases in the last 7 days add up to {amount}",
+  "@tipSmall": {
+    "placeholders": {
+      "count": { "type": "int" },
+      "amount": { "type": "String" }
+    }
+  },
+  "adviceLevel1": "Tip: think twice before anything you don't need today.",
+  "adviceLevel2": "Tip: keep what is left for what you really need.",
+  "adviceLevel3": "Tip: spend a little less tomorrow to even it out.",
+  "adviceMicro": "Tip: small buys add up, try skipping one or two this week.",
   "tipTrim": "Spending 20% less on {category} would keep about {amount} a week",
   "@tipTrim": {
     "placeholders": {

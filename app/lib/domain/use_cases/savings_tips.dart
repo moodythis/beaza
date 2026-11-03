@@ -10,6 +10,9 @@ enum TipKind {
   /// The person went over the daily limit on several of the last 7 days.
   overLimitDays,
 
+  /// Many small purchases in the last 7 days.
+  smallPurchases,
+
   /// One category is a large share of the week.
   topCategory,
 
@@ -37,7 +40,8 @@ class SavingsTip {
   /// The week before, for [TipKind.categorySpike].
   final int otherFils;
 
-  /// Days over the limit, or the share in percent for [TipKind.topCategory].
+  /// Days over the limit, small purchases, or the share in percent for
+  /// [TipKind.topCategory].
   final int count;
 }
 
@@ -46,6 +50,9 @@ const int kTipsMinWeekFils = 5000;
 
 /// A category must be at least this much to be called out.
 const int kTipsMinCategoryFils = 5000;
+
+/// This many small purchases in 7 days are worth a word.
+const int kTipsMinSmallCount = 5;
 
 /// Categories where a person can usually choose to spend less.
 const Set<String> kDiscretionary = {'food', 'shopping', 'entertainment'};
@@ -60,6 +67,7 @@ List<SavingsTip> savingsTips(
   Iterable<LedgerEntry> entries,
   Day today, {
   int dailyLimitFils = 0,
+  int microThresholdFils = 5000,
   int limit = 3,
 }) {
   final list = entries.toList();
@@ -105,7 +113,27 @@ List<SavingsTip> savingsTips(
     if (over >= 2) tips.add(SavingsTip(TipKind.overLimitDays, count: over));
   }
 
-  // 3. One category taking a big share of the week.
+  // 3. Small purchases that add up (at most the micro threshold each).
+  final weekStart = today.addDays(-6).startUtc;
+  final weekEnd = today.endUtc;
+  var smallCount = 0;
+  var smallFils = 0;
+  for (final e in list) {
+    final t = e.result.timestamp?.toUtc();
+    final a = e.result.amountFils;
+    if (!e.countsTowardSpending || t == null || a == null) continue;
+    if (t.isBefore(weekStart) || !t.isBefore(weekEnd)) continue;
+    if (a > 0 && a <= microThresholdFils) {
+      smallCount++;
+      smallFils += a;
+    }
+  }
+  if (smallCount >= kTipsMinSmallCount) {
+    tips.add(SavingsTip(TipKind.smallPurchases,
+        fils: smallFils, count: smallCount));
+  }
+
+  // 4. One category taking a big share of the week.
   if (weekTotal >= 2 * kTipsMinWeekFils) {
     for (final t in now) {
       if (!_tippable(t.bucket) || used.contains(t.bucket)) continue;
@@ -123,7 +151,7 @@ List<SavingsTip> savingsTips(
     }
   }
 
-  // 4. What 20% less on the biggest discretionary category would keep.
+  // 5. What 20% less on the biggest discretionary category would keep.
   for (final t in now) {
     if (!kDiscretionary.contains(t.bucket) ||
         t.bucket == spike?.bucket ||

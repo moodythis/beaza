@@ -123,7 +123,9 @@ class HomeViewModel extends ChangeNotifier {
         today: guardrail.spendingOn(entries, day).reversed.toList(),
         weekMicro: guardrail.weeklyMicro(entries, day),
         weekByCategory: spendingByCategory(entries, day.addDays(-6), day),
-        tips: savingsTips(entries, day, dailyLimitFils: settings.dailyLimitFils),
+        tips: savingsTips(entries, day,
+            dailyLimitFils: settings.dailyLimitFils,
+            microThresholdFils: settings.microThresholdFils),
       );
       _error = null;
     } on Exception catch (e) {

@@ -119,18 +119,24 @@ void main() {
     test('50% in English, amount first', () {
       final t = alertText(en, alertFor([2000], AlertLevel.level1));
       expect(t.title, "Half of today's limit used");
-      expect(t.body, 'Spent BHD 2.000 · BHD 2.000 left today');
+      expect(t.body,
+          "Spent BHD 2.000 · BHD 2.000 left today\nTip: think twice before anything you don't need today.");
     });
 
     test('100% in Arabic shows the overrun', () {
       final t = alertText(ar, alertFor([5000], AlertLevel.level3));
       expect(t.title, 'وصلت إلى حد اليوم');
-      expect(t.body, 'صرفت 5.000 د.ب · تجاوزت حد اليوم بـ 1.000 د.ب');
+      expect(t.body,
+          'صرفت 5.000 د.ب · تجاوزت حد اليوم بـ 1.000 د.ب\nنصيحة: حاول تصرف أقل شوي باكر علشان تعوّض.');
     });
 
-    test('80% lists the small expenses', () {
+    test('80% lists the small expenses, then the tip', () {
       final t = alertText(en, alertFor([1600, 1700], AlertLevel.level2));
-      expect(t.body.split('\n').last, '2 small expenses today · BHD 3.300');
+      expect(t.body.split('\n'), [
+        'Spent BHD 3.300 · BHD 0.700 left today',
+        '2 small expenses today · BHD 3.300',
+        'Tip: keep what is left for what you really need.',
+      ]);
     });
 
     test('no limit set: the micro total does not claim an overrun', () {
@@ -158,7 +164,8 @@ void main() {
         ),
       );
       expect(t.title, '4 small expenses today · BHD 4.000');
-      expect(t.body, 'Spent today: BHD 4.000');
+      expect(t.body,
+          'Spent today: BHD 4.000\nTip: small buys add up, try skipping one or two this week.');
     });
 
     test('each level gets its own notification', () {

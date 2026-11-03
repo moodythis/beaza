@@ -192,6 +192,17 @@
       "amount": { "type": "String" }
     }
   },
+  "tipSmall": "{count} مصروفات صغيرة في آخر 7 أيام مجموعها {amount}",
+  "@tipSmall": {
+    "placeholders": {
+      "count": { "type": "int" },
+      "amount": { "type": "String" }
+    }
+  },
+  "adviceLevel1": "نصيحة: فكّر مرتين قبل أي مصروف مو ضروري اليوم.",
+  "adviceLevel2": "نصيحة: خلّ الباقي للأشياء الضرورية بس.",
+  "adviceLevel3": "نصيحة: حاول تصرف أقل شوي باكر علشان تعوّض.",
+  "adviceMicro": "نصيحة: المصاريف الصغيرة تتجمع، جرّب تخفف منها هالأسبوع.",
   "tipTrim": "لو صرفت 20٪ أقل على {category} توفّر نحو {amount} في الأسبوع",
   "@tipTrim": {
     "placeholders": {

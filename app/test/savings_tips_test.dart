@@ -121,6 +121,18 @@ void main() {
     expect(t.where((x) => x.bucket == 'unsorted'), isEmpty);
   });
 
+  test('five or more small purchases in 7 days are pointed out', () {
+    final rs = [for (var d = 8; d <= 12; d++) tx(1000, bh(d), category: 'food')];
+    final t = savingsTips(ledger(rs), today);
+    final small = t.firstWhere((x) => x.kind == TipKind.smallPurchases);
+    expect([small.count, small.fils], [5, 5000]);
+    final four = savingsTips(ledger(rs.sublist(0, 4)..add(tx(2000, bh(13)))), today);
+    expect(four.map((x) => x.kind), isNot(contains(TipKind.smallPurchases)));
+    // Over the threshold is not small.
+    final big = savingsTips(ledger(rs), today, microThresholdFils: 900);
+    expect(big.map((x) => x.kind), isNot(contains(TipKind.smallPurchases)));
+  });
+
   test('at most three tips', () {
     final t = savingsTips(
       ledger([
