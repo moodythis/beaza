@@ -13,11 +13,6 @@
       "database_name": "beaza-sync-eu",
       "database_id": "9b1a471b-46ee-4758-b808-fbdda4036dd0",
       "migrations_dir": "migrations"
-    },
-    {
-      "binding": "OLD_DB",
-      "database_name": "beaza-sync",
-      "database_id": "06e49cd5-1d5e-40b0-8339-4bd91fee16e2"
     }
   ]
 }
