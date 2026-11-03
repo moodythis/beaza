@@ -212,6 +212,15 @@ void main() {
       expect(r.reference, 'NBB103KAE000EEEE');
     });
 
+    test('Al Salam VISA prepaid card purchase is read', () {
+      final r = run(
+          'AlSalamBank',
+          'Thank you for using your VISA PREPAID card XXXX1234 for BHD 3.500 at SAMPLE SHOP on 29-Apr ? 19:43 .Bal: AED 99.99',
+          DateTime.utc(2026, 4, 29, 16, 50));
+      expect(sum(r),
+          'transaction|purchase|card|3500|BHD|1234|SAMPLE SHOP|2026-04-29T16:43:00.000Z');
+    });
+
     test('Al Salam maintenance notice is not a transaction', () {
       final r = run(
           'AlSalamBank',

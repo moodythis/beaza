@@ -56,6 +56,15 @@ void main() {
   check('Al Salam Fawri in with the name, the name is never kept',
       ex.extract("Fawri BHD 12.500 Ref. NBB103KAE000EEEE from 'TEST PERSON ONE' credited to Acc. XXXX010100000. Bal: BHD 99.999 on 26/10/26 at 09:19. Tel 17005500", family: SenderFamily.alSalam).toString(),
       isNot(contains('TEST PERSON')));
+  check('Al Salam VISA prepaid card purchase (month name, no year)',
+      sum(ex.extract('Thank you for using your VISA PREPAID card XXXX1234 for BHD 3.500 at SAMPLE SHOP on 29-Apr ? 19:43 .Bal: AED 99.99', family: SenderFamily.alSalam, receivedAt: DateTime.utc(2026, 4, 29, 16, 50))),
+      '3500|outgoing|card|1234|null|null|SAMPLE SHOP|2026-04-29T16:43:00.000Z');
+  check('Al Salam prepaid card without the stray symbol',
+      sum(ex.extract('Thank you for using your VISA PREPAID card 1234 for BHD 0.200 at SAMPLE KIOSK on 3-Nov 09:05 .Bal: AED 99.99', family: SenderFamily.alSalam, receivedAt: DateTime.utc(2026, 11, 3, 6, 10))),
+      '200|outgoing|card|1234|null|null|SAMPLE KIOSK|2026-11-03T06:05:00.000Z');
+  check('a month name that is not a month is not read',
+      ex.extract('Thank you for using your VISA PREPAID card 1234 for BHD 0.200 at SAMPLE KIOSK on 3-Xyz 09:05 .Bal: AED 99.99', family: SenderFamily.alSalam, receivedAt: DateTime.utc(2026, 11, 3, 6, 10))?.occurredAt,
+      isNull);
   check('BenefitPay received', sum(ex.extract(bpReceived, family: SenderFamily.benefitPay)),
       '100|incoming|fawri|6633|0777|BP1000000001TEST|null|2026-11-02T18:02:00.000Z');
   check('BenefitPay credited (direction unknown)', sum(ex.extract(bpCredited, family: SenderFamily.benefitPay)),

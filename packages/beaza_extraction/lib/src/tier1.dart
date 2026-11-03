@@ -216,6 +216,23 @@ class Tier1Extractor {
         caseSensitive: false,
       ),
     ),
+    // Card purchase as Al Salam prints it for its VISA prepaid card: the
+    // date has a month name and no year ("29-Apr"), and the text between the
+    // date and the time is a stray symbol. The balance (it may be in another
+    // currency) is not read.
+    _Template(
+      'alsalam.card',
+      {SenderFamily.alSalam},
+      TxChannel.card,
+      TxDirection.outgoing,
+      RegExp(
+        r'thank you for using your (?:[a-z]+ ){0,3}card (?<acct>\S+) for (?<cur>[A-Z]{3})\s?' +
+            _amt +
+            r' at (?<m>.+?) on (?<d>\d{1,2})-(?<mon>[A-Za-z]{3})\s+\S{0,3}\s*(?<h>\d{1,2}):(?<mi>\d{2})',
+        caseSensitive: false,
+      ),
+      hasMerchant: true,
+    ),
     // ---- BenefitPay notifications ----
     _Template(
       'benefitpay.fawri.received',
@@ -336,9 +353,21 @@ class Tier1Extractor {
     return c.isEmpty ? null : c;
   }
 
+  static const List<String> _months = [
+    'jan', 'feb', 'mar', 'apr', 'may', 'jun',
+    'jul', 'aug', 'sep', 'oct', 'nov', 'dec',
+  ];
+
+  /// "Apr" -> 4, null for anything that is not an English month.
+  static int? _monthNumber(String? name) {
+    if (name == null) return null;
+    final i = _months.indexOf(name.toLowerCase());
+    return i < 0 ? null : i + 1;
+  }
+
   static DateTime? _parseDate(RegExpMatch m, DateTime? receivedAt) {
     final d = int.tryParse(_g(m, 'd') ?? '');
-    final mo = int.tryParse(_g(m, 'mo') ?? '');
+    final mo = int.tryParse(_g(m, 'mo') ?? '') ?? _monthNumber(_g(m, 'mon'));
     final h = int.tryParse(_g(m, 'h') ?? '');
     final mi = int.tryParse(_g(m, 'mi') ?? '');
     if (d == null || mo == null || h == null || mi == null) return null;

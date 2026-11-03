@@ -84,7 +84,7 @@ class MessageClassifier {
   // Includes common BenefitPay wording (عملية مقبولة, نجحت العملية,
   // تم استلام). These phrases still need confirmation on real notifications.
   static final RegExp _transactionCue = RegExp(
-    r'\bpurchase\b|\bdebited\b|\bcredited\b|\btransfer\b|\bpayment\b|\bwithdraw(?:al|n)?\b|\brefund(?:ed)?\b|\breversal\b|\bdeposit(?:ed)?\b|\bpaid\b|\breceived\b|using\s+your\s+(?:debit|credit)\s+card|transaction\s+approved|payment\s+successful|عملية\s+مقبولة|نجحت\s+العملية|تم\s+استلام|خصم|إيداع|ايداع|شراء|تحويل|حوالة|سحب|دفع|استرداد|استرجاع',
+    r'\bpurchase\b|\bdebited\b|\bcredited\b|\btransfer\b|\bpayment\b|\bwithdraw(?:al|n)?\b|\brefund(?:ed)?\b|\breversal\b|\bdeposit(?:ed)?\b|\bpaid\b|\breceived\b|using\s+your\s+(?:[a-z]+\s+){0,3}card|transaction\s+approved|payment\s+successful|عملية\s+مقبولة|نجحت\s+العملية|تم\s+استلام|خصم|إيداع|ايداع|شراء|تحويل|حوالة|سحب|دفع|استرداد|استرجاع',
     caseSensitive: false,
   );
 
