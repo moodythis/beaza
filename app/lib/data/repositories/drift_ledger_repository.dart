@@ -1,8 +1,11 @@
+import 'dart:convert';
+
 import 'package:beaza/data/repositories/ledger_repository.dart';
 import 'package:beaza/data/repositories/syncable.dart';
 import 'package:beaza/data/services/database.dart';
 import 'package:beaza/data/services/key_store.dart';
 import 'package:beaza_extraction/beaza_extraction.dart';
+import 'package:crypto/crypto.dart' as hash;
 import 'package:drift/drift.dart';
 
 /// The ledger kept in the encrypted database. Deleted rows stay as
@@ -66,9 +69,78 @@ class DriftLedgerRepository extends LedgerRepository implements Syncable {
   }
 
   @override
-  Future<void> addExtracted(ExtractionResult result) {
+  Future<void> addExtracted(ExtractionResult result, {String? messageKey}) {
     checkCompleteTransaction(result);
-    return _insert(result, source: sourceMessage);
+    return _insert(
+      result,
+      source: sourceMessage,
+      id: messageKey == null ? null : messageId(messageKey, result),
+    );
+  }
+
+  /// The same message always gives the same id, so reading it again (for
+  /// example after the data was cleared and restored from an account) finds
+  /// the row that is already there instead of adding a copy.
+  static String messageId(String messageKey, ExtractionResult r) {
+    final text = [
+      'beaza/message/v1',
+      messageKey,
+      r.amountFils,
+      r.timestamp!.toUtc().millisecondsSinceEpoch,
+      r.direction.name,
+      r.last4 ?? '',
+      r.reference ?? '',
+    ].join('|');
+    return hash.sha256.convert(utf8.encode(text)).toString().substring(0, 32);
+  }
+
+  @override
+  Future<int> countDuplicates() async => (await _duplicateIds()).length;
+
+  @override
+  Future<int> removeDuplicates() async {
+    final ids = await _duplicateIds();
+    if (ids.isEmpty) return 0;
+    final now = _clock().toUtc().millisecondsSinceEpoch;
+    await (_db.update(_db.ledgerRows)..where((r) => r.id.isIn(ids))).write(
+      LedgerRowsCompanion(
+        deletedAtMs: Value(now),
+        updatedAtMs: Value(now),
+        deviceId: Value(_deviceId),
+        pendingSync: const Value(true),
+      ),
+    );
+    notifyListeners();
+    return ids.length;
+  }
+
+  /// Ids of rows from messages that repeat an earlier row with the same
+  /// fields, stored at least [duplicateGap] after it. The earliest stays.
+  Future<List<String>> _duplicateIds() async {
+    final rows = await (_db.select(_db.ledgerRows)
+          ..where((r) =>
+              r.source.equals(sourceMessage) & r.deletedAtMs.isNull())
+          ..orderBy([
+            (r) => OrderingTerm.asc(r.updatedAtMs),
+            (r) => OrderingTerm.asc(r.id),
+          ]))
+        .get();
+    final first = <String, int>{};
+    final copies = <String>[];
+    for (final r in rows) {
+      final key = [
+        r.amountFils, r.currency, r.type, r.direction, r.merchantRaw,
+        r.last4, r.counterpartyLast4, r.reference, r.timestampMs,
+        r.templateVersion,
+      ].join('|');
+      final kept = first[key];
+      if (kept == null) {
+        first[key] = r.updatedAtMs;
+      } else if (r.updatedAtMs - kept >= duplicateGap.inMilliseconds) {
+        copies.add(r.id);
+      }
+    }
+    return copies;
   }
 
   /// Marks a transaction as deleted. The row stays as a tombstone.
@@ -85,11 +157,16 @@ class DriftLedgerRepository extends LedgerRepository implements Syncable {
     notifyListeners();
   }
 
-  Future<void> _insert(ExtractionResult r, {required String source}) async {
+  Future<void> _insert(
+    ExtractionResult r, {
+    required String source,
+    String? id,
+  }) async {
     final now = _clock().toUtc().millisecondsSinceEpoch;
     await _db.into(_db.ledgerRows).insert(
+          mode: InsertMode.insertOrIgnore,
           LedgerRowsCompanion.insert(
-            id: newId(),
+            id: id ?? newId(),
             amountFils: r.amountFils!,
             currency: r.currency!,
             type: Value(r.type?.name),

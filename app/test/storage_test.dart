@@ -299,6 +299,91 @@ void main() {
     });
   });
 
+  group('the same message read twice', () {
+    ExtractionResult card(int fils, {String? merchant}) => ExtractionResult(
+          status: ExtractionStatus.transaction,
+          amountFils: fils,
+          currency: 'BHD',
+          type: TxnType.purchase,
+          direction: TxDirection.outgoing,
+          channel: Channel.card,
+          merchantRaw: merchant,
+          last4: '7744',
+          timestamp: bh(2, 10),
+          templateVersion: 'x@1',
+        );
+
+    test('the same message key adds the row once', () async {
+      await ledger.addExtracted(card(1310, merchant: 'PETRO'), messageKey: 'sms:7');
+      await ledger.addExtracted(card(1310, merchant: 'PETRO'), messageKey: 'sms:7');
+      expect(await db.select(db.ledgerRows).get(), hasLength(1));
+    });
+
+    test('two real purchases with the same fields keep both '
+        '(different messages)', () async {
+      await ledger.addExtracted(card(200), messageKey: 'sms:7');
+      await ledger.addExtracted(card(200), messageKey: 'sms:8');
+      expect(await db.select(db.ledgerRows).get(), hasLength(2));
+    });
+
+    test('a transaction the person deleted does not come back', () async {
+      await ledger.addExtracted(card(200), messageKey: 'sms:7');
+      final id = (await db.select(db.ledgerRows).getSingle()).id;
+      await ledger.delete(id);
+      await ledger.addExtracted(card(200), messageKey: 'sms:7');
+      expect(await ledger.entries(), isEmpty);
+    });
+
+    test('a row from sync is found by the same message', () async {
+      // The id a phone gave it earlier is the same one made now.
+      await ledger.addExtracted(card(200), messageKey: 'sms:7');
+      final id = (await db.select(db.ledgerRows).getSingle()).id;
+      expect(id, DriftLedgerRepository.messageId('sms:7', card(200)));
+    });
+
+    group('copies that were already made', () {
+      var t = bh(2, 12);
+      late DriftLedgerRepository later;
+
+      setUp(() {
+        t = bh(2, 12);
+        later = DriftLedgerRepository(db, deviceId: 'device1', clock: () => t);
+      });
+
+      test('a later copy is counted and removed, the first stays', () async {
+        await later.addExtracted(card(1310, merchant: 'PETRO'));
+        t = bh(2, 17); // read again hours later
+        await later.addExtracted(card(1310, merchant: 'PETRO'));
+        expect(await later.countDuplicates(), 1);
+        expect((await later.entries()).length, 2);
+
+        expect(await later.removeDuplicates(), 1);
+        expect(await later.entries(), hasLength(1));
+        final rows = await db.select(db.ledgerRows).get();
+        expect(rows.where((r) => r.deletedAtMs != null), hasLength(1));
+        expect(rows.where((r) => r.deletedAtMs != null).single.pendingSync, isTrue);
+        expect(await later.countDuplicates(), 0);
+      });
+
+      test('two identical purchases stored seconds apart are both real',
+          () async {
+        await later.addExtracted(card(200), messageKey: 'sms:1');
+        t = t.add(const Duration(seconds: 20));
+        await later.addExtracted(card(200), messageKey: 'sms:2');
+        expect(await later.countDuplicates(), 0);
+        expect(await later.removeDuplicates(), 0);
+        expect(await later.entries(), hasLength(2));
+      });
+
+      test('manual expenses are never treated as copies', () async {
+        await later.addManual(amountFils: 200, at: bh(2, 9));
+        t = bh(2, 18);
+        await later.addManual(amountFils: 200, at: bh(2, 9));
+        expect(await later.countDuplicates(), 0);
+      });
+    });
+  });
+
   group('sync columns', () {
     test('a version 5 database marks existing rows to be synced', () async {
       final dir = Directory.systemTemp.createTempSync('beaza_mig5_');

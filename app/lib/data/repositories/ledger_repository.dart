@@ -19,8 +19,27 @@ abstract class LedgerRepository extends ChangeNotifier {
 
   /// A transaction found in a bank message. Only extracted fields are kept,
   /// never the message text. Throws for anything not a complete transaction.
-  Future<void> addExtracted(ExtractionResult result);
+  ///
+  /// [messageKey] names the message it came from (for example `sms:123`).
+  /// Adding the same message again (after the phone's data was cleared and
+  /// restored from an account, say) changes nothing, and a transaction the
+  /// person deleted does not come back.
+  Future<void> addExtracted(ExtractionResult result, {String? messageKey});
+
+  /// How many transactions read from messages are copies of an earlier one
+  /// (same fields, made at least [duplicateGap] later). Copies like this
+  /// came from reading the same bank message twice.
+  Future<int> countDuplicates() async => 0;
+
+  /// Removes those copies (they stay as deleted entries so other phones get
+  /// the removal). Returns how many.
+  Future<int> removeDuplicates() async => 0;
 }
+
+/// Two identical transactions made by reading messages are treated as one
+/// message read twice only if they were stored this far apart. Two real
+/// identical purchases in the same minute arrive seconds apart.
+const Duration duplicateGap = Duration(minutes: 5);
 
 /// Shared check for [LedgerRepository.addExtracted].
 void checkCompleteTransaction(ExtractionResult r) {
@@ -46,6 +65,7 @@ class InMemoryLedgerRepository extends LedgerRepository {
   final List<ExtractionResult> _results;
   final OwnAccounts _accounts;
   final Reconciler _reconciler;
+  final Set<String> _messageKeys = {};
 
   /// Marks results the user typed in, instead of a message template.
   static const String manualTemplate = 'manual';
@@ -78,8 +98,10 @@ class InMemoryLedgerRepository extends LedgerRepository {
   }
 
   @override
-  Future<void> addExtracted(ExtractionResult result) async {
+  Future<void> addExtracted(ExtractionResult result,
+      {String? messageKey}) async {
     checkCompleteTransaction(result);
+    if (messageKey != null && !_messageKeys.add(messageKey)) return;
     _results.add(result);
     notifyListeners();
   }

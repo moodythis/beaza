@@ -294,5 +294,14 @@
         "type": "int"
       }
     }
-  }
+  },
+  "duplicatesFound": "{count, plural, =1{1 transaction looks like a bank message that was read twice.} other{{count} transactions look like bank messages that were read twice.}} They were added again after the messages were read a second time, and they count twice towards your limit.",
+  "@duplicatesFound": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "removeDuplicates": "Remove the copies"
 }

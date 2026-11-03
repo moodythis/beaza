@@ -63,6 +63,11 @@ class HomeViewModel extends ChangeNotifier {
   int _notUnderstood = 0;
   int get notUnderstood => _notUnderstood;
 
+  int _duplicates = 0;
+
+  /// Transactions that repeat an earlier one read from the same message.
+  int get duplicates => _duplicates;
+
   HomeState? _state;
   HomeState? get state => _state;
 
@@ -81,6 +86,7 @@ class HomeViewModel extends ChangeNotifier {
     _notify();
     try {
       final entries = await _ledger.entries();
+      _duplicates = await _ledger.countDuplicates();
       final settings = await _settings.load();
       final guardrail = Guardrail(settings);
       final day = Day.of(_clock());
@@ -126,6 +132,9 @@ class HomeViewModel extends ChangeNotifier {
     _notify();
     if (_smsAllowed == true) await checkMessages();
   }
+
+  /// Removes the repeats; the ledger notifies, so the screen recomputes.
+  Future<int> removeDuplicates() => _ledger.removeDuplicates();
 
   Future<void> addExpense({required int amountFils, String? merchant}) =>
       _ledger.addManual(amountFils: amountFils, merchant: merchant, at: _clock());

@@ -109,6 +109,21 @@ void main() {
     expect(await ledger.entries(), hasLength(2));
   });
 
+  test('reading the same messages again after the seen list is lost adds '
+      'nothing (data cleared and restored from an account)', () async {
+    await intake.scan();
+    // The seen list is local and is lost with the data; the ledger is not
+    // (it came back from the account), and the inbox still has the SMS.
+    final restored = MessageIntake(
+      sms: sms,
+      ledger: ledger,
+      seen: MemorySeenMessageStore(),
+      clock: () => bh(2, 20),
+    );
+    await restored.scan();
+    expect(await ledger.entries(), hasLength(2));
+  });
+
   test('overlapping scans share one run', () async {
     final a = intake.scan();
     final b = intake.scan();

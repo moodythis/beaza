@@ -105,6 +105,26 @@ class HomeView extends StatelessWidget {
               ],
               const SizedBox(height: 12),
               MicroCard(today: state.summary.micro, week: state.weekMicro),
+              if (viewModel.duplicates > 0)
+                Card(
+                  key: const Key('duplicatesCard'),
+                  margin: const EdgeInsets.only(top: 12),
+                  child: Padding(
+                    padding: const EdgeInsets.all(16),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.stretch,
+                      children: [
+                        Text(l10n.duplicatesFound(viewModel.duplicates)),
+                        const SizedBox(height: 8),
+                        FilledButton(
+                          key: const Key('removeDuplicates'),
+                          onPressed: viewModel.removeDuplicates,
+                          child: Text(l10n.removeDuplicates),
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
               if (viewModel.notUnderstood > 0 && viewModel.intake != null)
                 ListTile(
                   key: const Key('notUnderstood'),

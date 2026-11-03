@@ -160,7 +160,7 @@ class MessageIntake {
         );
         switch (result.status) {
           case ExtractionStatus.transaction:
-            await _ledger.addExtracted(result);
+            await _ledger.addExtracted(result, messageKey: keyFor(m));
             await _seen.add(keyFor(m), now);
             added++;
           case ExtractionStatus.nonTransaction:
