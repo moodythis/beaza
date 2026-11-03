@@ -55,7 +55,7 @@ void main() {
   check('valid: timestamp kept', ok.timestamp, stdAt);
   check('valid: no issues or flags', '${names(ok.issues)}|${names(ok.flags)}', '|');
   check('valid: needsReview is false', ok.needsReview, false);
-  check('valid: template version recorded', ok.templateVersion, 'bisb.fawri.out@2026-11-02');
+  check('valid: template version recorded', ok.templateVersion, 'bisb.fawri.out@$kTemplateSetVersion');
   check('valid: confidence passes through', (ok.confidence * 1000).round(), 1000);
 
   // Type and channel mapping

@@ -113,7 +113,7 @@ void main() {
   });
 
   test('Unknown bank message from a supported sender goes to review', () {
-    final r = run('BisB', 'Hello from your bank', DateTime.utc(2026, 11, 2, 11, 14));
+    final r = run('BisB', 'Your card purchase was successful', DateTime.utc(2026, 11, 2, 11, 14));
     expect(r.status, ExtractionStatus.unparsed);
     expect(r.issues, [ValidationIssue.unclassified]);
   });

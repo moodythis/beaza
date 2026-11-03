@@ -51,8 +51,10 @@ void main() {
   test('Arabic balance', () => expect(kindOf('رصيدك المتاح هو 5.000 BHD'), MessageKind.balanceInquiry));
   test('Arabic declined', () => expect(kindOf('تم رفض العملية بسبب عدم كفاية الرصيد'), MessageKind.declined));
   test('Cue without amount is unknown', () => expect(kindOf('Your card purchase was successful'), MessageKind.unknown));
-  test('Greeting is unknown', () => expect(kindOf('Hello from your bank'), MessageKind.unknown));
-  test('Empty is unknown', () => expect(kindOf(''), MessageKind.unknown));
+  test('Greeting is information', () => expect(kindOf('Hello from your bank'), MessageKind.information));
+  test('Empty is information', () => expect(kindOf(''), MessageKind.information));
+  test('Maintenance notice is information', () => expect(kindOf('System maintenance on 16 October 2026 from 2:00 to 6:00 AM.'), MessageKind.information));
+  test('Loan campaign is a promotion', () => expect(kindOf('Apply for a loan, up to BHD20,000. Campaign period ends soon.'), MessageKind.promotion));
   // ClassificationResult
   final fawri = c.classify('Fawri+ payment BHD2.900, ref: BIB103KAA000AAAA was credited to IBAN ending 4411 on 2026/10/30 00:59. Balance BHD9.999. Tel: 17515151');
   test('isTransaction true', () => expect(fawri.isTransaction, true));
@@ -63,7 +65,7 @@ void main() {
   final otp = c.classify('Your OTP is 123456');
   test('isTransaction false for OTP', () => expect(otp.isTransaction, false));
   test('OTP confidence', () => expect(otp.confidence, 0.95));
-  final none = c.classify('Hello from your bank');
+  final none = c.classify('Your card purchase was successful');
   test('Unknown confidence is 0', () => expect(none.confidence, 0.0));
   test('Unknown isTransaction false', () => expect(none.isTransaction, false));
 }

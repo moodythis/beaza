@@ -125,12 +125,23 @@ class Tier1Extractor {
       TxChannel.card,
       TxDirection.outgoing,
       RegExp(
-        r'thank you for using your (?:debit|credit) card (?<acct>\d{4}) for BHD\s?' +
+        r'thank you for using your (?:debit|credit) card (?<acct>\d{4}) for (?<cur>[A-Z]{3})\s?' +
             _amt +
             r' at (?<m>.+?) on (?<d>\d{2})/(?<mo>\d{2}) @(?<h>\d{2}):(?<mi>\d{2})',
         caseSensitive: false,
       ),
       hasMerchant: true,
+    ),
+    // No date in the message: the receive time is used and flagged.
+    _Template(
+      'bisb.account.credit',
+      {SenderFamily.bisb},
+      TxChannel.account,
+      TxDirection.incoming,
+      RegExp(
+        r'Your account (?<acct>\S+) has been credited with BHD\s?' + _amt,
+        caseSensitive: false,
+      ),
     ),
     // ---- ila ----
     _Template(
@@ -276,6 +287,7 @@ class Tier1Extractor {
       accountLast4: _last4(_g(m, 'acct')),
       counterpartyLast4: _last4(_g(m, 'cp')),
       reference: canonicalRef(_g(m, 'ref')),
+      currency: (_g(m, 'cur') ?? 'BHD').toUpperCase(),
     );
   }
 

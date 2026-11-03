@@ -9,6 +9,9 @@ enum MessageKind {
   promotion,
   statement,
   balanceInquiry,
+
+  /// Service news with no amount at all (maintenance, new rates...).
+  information,
   unknown,
 }
 
@@ -37,7 +40,7 @@ class ClassificationResult {
 /// Input is normalized text (digits Western, currency token BHD).
 /// Check order: declined, OTP, statement, strong security, weak security
 /// (only when the message is not a transaction), promotion, transaction,
-/// balance, unknown.
+/// balance, information (no amount at all), unknown.
 class MessageClassifier {
   const MessageClassifier();
 
@@ -74,7 +77,7 @@ class MessageClassifier {
 
   // Plain "خصم" is NOT here: in bank messages it means "debited".
   static final RegExp _promotion = RegExp(
-    r'\boffers?\b|\bpromo(?:tion)?s?\b|cash\s?back|\bdiscounts?\b|\bwin\b|\bprizes?\b|\d+\s?%\s?off|عرض|عروض|اربح|جوائز|تخفيض|خصومات',
+    r'\boffers?\b|\bpromo(?:tion)?s?\b|cash\s?back|\bdiscounts?\b|\bwin\b|\bprizes?\b|\d+\s?%\s?off|apply\s+(?:for|now)|\bcampaign\b|chance\s+to|earn\s+more|high\s+yield|\bp\.a\.|rates?\s+(?:have\s+|has\s+)?increased|عرض|عروض|اربح|جوائز|تخفيض|خصومات|قدّم\s+الآن|حملة',
     caseSensitive: false,
   );
 
@@ -86,6 +89,10 @@ class MessageClassifier {
   );
 
   static final RegExp _amount = RegExp(r'BHD\s?\d|\d\s?BHD');
+
+  // Any amount in any currency code, for the "no amount at all" rule.
+  static final RegExp _anyAmount =
+      RegExp(r'\b[A-Z]{3}\s?\d|\d\s?[A-Z]{3}\b');
 
   static final RegExp _balance = RegExp(
     r'\bbalance\b|\bbal\b|رصيد',
@@ -127,6 +134,12 @@ class MessageClassifier {
     }
     if (_balance.hasMatch(t)) {
       return _r(MessageKind.balanceInquiry, 0.70, 'balance');
+    }
+    // A money movement always states an amount; with no amount and no
+    // transaction word it is news. (A transaction word without an amount
+    // stays unknown and goes to review.)
+    if (cues == 0 && !_anyAmount.hasMatch(t)) {
+      return _r(MessageKind.information, 0.60, 'information.noAmount');
     }
     return _r(MessageKind.unknown, 0.0, 'none');
   }
