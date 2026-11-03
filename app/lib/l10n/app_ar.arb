@@ -35,5 +35,6 @@
   "reviewTitle": "رسائل لم تُفهم",
   "reviewNote": "تظهر على هذا الهاتف فقط ولا تُحفظ. أخفِ الأسماء وأرقام الحسابات قبل مشاركة لقطة الشاشة.",
   "reviewEmpty": "فُهمت كل رسائل البنك.",
-  "reviewReasons": "السبب: {reasons}"
+  "reviewReasons": "السبب: {reasons}",
+  "otherLanguage": "English"
 }

@@ -1,6 +1,7 @@
 import 'package:beaza/l10n/app_localizations.dart';
 import 'package:beaza/ui/core/amount_dialog.dart';
 import 'package:beaza/ui/core/formatting.dart';
+import 'package:beaza/ui/core/language_controller.dart';
 import 'package:beaza/ui/features/home/view_models/home_view_model.dart';
 import 'package:beaza/ui/features/review/view_models/review_view_model.dart';
 import 'package:beaza/ui/features/review/views/review_view.dart';
@@ -9,15 +10,34 @@ import 'package:flutter/material.dart';
 
 /// Home: spent versus limit, what is left, micro-expenses and today's list.
 class HomeView extends StatelessWidget {
-  const HomeView({super.key, required this.viewModel});
+  const HomeView({super.key, required this.viewModel, this.language});
 
   final HomeViewModel viewModel;
+
+  /// Null hides the language button.
+  final LanguageController? language;
 
   @override
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context);
     return Scaffold(
-      appBar: AppBar(title: Text(l10n.appTitle)),
+      appBar: AppBar(
+        title: Text(l10n.appTitle),
+        actions: [
+          if (language != null)
+            TextButton.icon(
+              key: const Key('languageButton'),
+              icon: const Icon(Icons.translate),
+              // Shows the other language, written in that language.
+              label: Text(l10n.otherLanguage),
+              onPressed: () => language!.choose(
+                Localizations.localeOf(context).languageCode == 'ar'
+                    ? 'en'
+                    : 'ar',
+              ),
+            ),
+        ],
+      ),
       floatingActionButton: FloatingActionButton.extended(
         key: const Key('addExpense'),
         onPressed: () => _addExpense(context),

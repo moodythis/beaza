@@ -107,13 +107,31 @@ class AlertDayRows extends Table {
   Set<Column> get primaryKey => {dayKey};
 }
 
-@DriftDatabase(
-    tables: [LedgerRows, SettingsRows, SeenMessageRows, AlertDayRows])
+/// Small app preferences such as the chosen language. Added in version 5.
+@DataClassName('PreferenceRow')
+class PreferenceRows extends Table {
+  @override
+  String get tableName => 'preferences';
+
+  TextColumn get name => text()();
+  TextColumn get value => text()();
+
+  @override
+  Set<Column> get primaryKey => {name};
+}
+
+@DriftDatabase(tables: [
+  LedgerRows,
+  SettingsRows,
+  SeenMessageRows,
+  AlertDayRows,
+  PreferenceRows,
+])
 class AppDatabase extends _$AppDatabase {
   AppDatabase(super.e);
 
   @override
-  int get schemaVersion => 4;
+  int get schemaVersion => 5;
 
   @override
   MigrationStrategy get migration => MigrationStrategy(
@@ -124,6 +142,7 @@ class AppDatabase extends _$AppDatabase {
           if (from == 3) {
             await m.addColumn(alertDayRows, alertDayRows.limitFils);
           }
+          if (from < 5) await m.createTable(preferenceRows);
         },
         beforeOpen: (details) async {
           await customStatement('PRAGMA foreign_keys = ON');

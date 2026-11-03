@@ -3,6 +3,7 @@ import 'dart:io';
 import 'package:beaza/data/repositories/alert_log_store.dart';
 import 'package:beaza/data/repositories/drift_ledger_repository.dart';
 import 'package:beaza/data/repositories/drift_settings_repository.dart';
+import 'package:beaza/data/repositories/preferences_store.dart';
 import 'package:beaza/data/repositories/seen_message_store.dart';
 import 'package:beaza/data/services/database.dart';
 import 'package:beaza/data/services/database_opener.dart';
@@ -254,6 +255,7 @@ void main() {
           .save(const AlertLog(day: Day(2026, 11, 3), sent: 2));
       // Back to the version 3 shape the phone has now.
       await v4.customStatement('ALTER TABLE alert_days DROP COLUMN limit_fils');
+      await v4.customStatement('DROP TABLE preferences');
       await v4.customStatement('PRAGMA user_version = 3');
       await v4.close();
 
@@ -277,6 +279,7 @@ void main() {
       // Turn it back into what version 1 looked like on the phone.
       await v2.customStatement('DROP TABLE seen_messages');
       await v2.customStatement('DROP TABLE alert_days');
+      await v2.customStatement('DROP TABLE preferences');
       await v2.customStatement('PRAGMA user_version = 1');
       await v2.close();
 
@@ -306,6 +309,18 @@ void main() {
       await store.save(const AlertLog(day: day, limitFils: 4000));
       expect((await store.load(day))!.limitFils, 4000);
       expect(await store.load(const Day(2026, 11, 4)), isNull);
+    });
+  });
+
+  group('preferences', () {
+    test('write, read back, remove', () async {
+      final prefs = DriftPreferencesStore(db);
+      expect(await prefs.read('language'), isNull);
+      await prefs.write('language', 'ar');
+      await prefs.write('language', 'en');
+      expect(await prefs.read('language'), 'en');
+      await prefs.write('language', null);
+      expect(await prefs.read('language'), isNull);
     });
   });
 

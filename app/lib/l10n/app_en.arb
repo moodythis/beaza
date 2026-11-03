@@ -133,5 +133,9 @@
         "example": "noTemplate"
       }
     }
+  },
+  "otherLanguage": "عربي",
+  "@otherLanguage": {
+    "description": "Language button: the other language, in that language"
   }
 }

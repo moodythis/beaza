@@ -1,29 +1,45 @@
 import 'package:beaza/l10n/app_localizations.dart';
+import 'package:beaza/ui/core/language_controller.dart';
 import 'package:beaza/ui/core/theme.dart';
 import 'package:beaza/ui/features/home/view_models/home_view_model.dart';
 import 'package:beaza/ui/features/home/views/home_view.dart';
 import 'package:flutter/material.dart';
 
 class BeazaApp extends StatelessWidget {
-  const BeazaApp({super.key, required this.homeViewModel, this.locale});
+  const BeazaApp({
+    super.key,
+    required this.homeViewModel,
+    this.language,
+    this.locale,
+  });
 
   final HomeViewModel homeViewModel;
 
-  /// Null follows the phone's language (Arabic or English).
+  /// The language button's state; null hides the button (tests).
+  final LanguageController? language;
+
+  /// Fixed locale for tests. Otherwise the button's choice, then the phone.
   final Locale? locale;
 
   @override
   Widget build(BuildContext context) {
-    return MaterialApp(
-      onGenerateTitle: (context) => AppLocalizations.of(context).appTitle,
-      locale: locale,
-      localizationsDelegates: AppLocalizations.localizationsDelegates,
-      supportedLocales: AppLocalizations.supportedLocales,
-      theme: buildTheme(Brightness.light),
-      darkTheme: buildTheme(Brightness.dark),
-      home: HomeView(viewModel: homeViewModel),
+    final controller = language;
+    if (controller == null) return _app(locale);
+    return ListenableBuilder(
+      listenable: controller,
+      builder: (context, _) => _app(locale ?? controller.locale),
     );
   }
+
+  Widget _app(Locale? chosen) => MaterialApp(
+        onGenerateTitle: (context) => AppLocalizations.of(context).appTitle,
+        locale: chosen,
+        localizationsDelegates: AppLocalizations.localizationsDelegates,
+        supportedLocales: AppLocalizations.supportedLocales,
+        theme: buildTheme(Brightness.light),
+        darkTheme: buildTheme(Brightness.dark),
+        home: HomeView(viewModel: homeViewModel, language: language),
+      );
 }
 
 /// Shown when the database cannot be opened. Nothing is deleted or reset.

@@ -1,8 +1,10 @@
 import 'package:beaza/app.dart';
 import 'package:beaza/data/repositories/ledger_repository.dart';
+import 'package:beaza/data/repositories/preferences_store.dart';
 import 'package:beaza/data/repositories/seen_message_store.dart';
 import 'package:beaza/data/repositories/settings_repository.dart';
 import 'package:beaza/domain/use_cases/message_intake.dart';
+import 'package:beaza/ui/core/language_controller.dart';
 import 'package:beaza/ui/features/home/view_models/home_view_model.dart';
 import 'package:beaza_extraction/beaza_extraction.dart';
 import 'package:flutter/material.dart';
@@ -198,5 +200,41 @@ void main() {
 
     expect(find.text('Messages not understood'), findsOneWidget);
     expect(find.text(fixtures.unknownFormat), findsOneWidget);
+  });
+
+  testWidgets('the language button switches and remembers the choice',
+      (tester) async {
+    final prefs = MemoryPreferencesStore();
+    final language = LanguageController(prefs);
+    await language.load();
+    final vm = HomeViewModel(
+      ledger: InMemoryLedgerRepository(),
+      settings: InMemorySettingsRepository(
+          const GuardrailSettings(dailyLimitFils: 10000)),
+      clock: () => bh(12),
+    );
+    await vm.load();
+    // The test device is English.
+    await tester.pumpWidget(BeazaApp(homeViewModel: vm, language: language));
+    await tester.pumpAndSettle();
+    expect(find.text('Left to spend today'), findsOneWidget);
+    expect(find.text('عربي'), findsOneWidget);
+
+    await tester.tap(find.byKey(const Key('languageButton')));
+    await tester.pumpAndSettle();
+    expect(find.text('المتبقي للصرف اليوم'), findsOneWidget);
+    expect(find.text('English'), findsOneWidget);
+    expect(prefs.values['language'], 'ar');
+
+    // A new start reads the saved choice.
+    final again = LanguageController(prefs);
+    await again.load();
+    expect(again.code, 'ar');
+  });
+
+  test('effective language: choice, then English phone, otherwise Arabic', () {
+    expect(effectiveLanguage('ar', const Locale('en')), 'ar');
+    expect(effectiveLanguage(null, const Locale('en', 'US')), 'en');
+    expect(effectiveLanguage(null, const Locale('fr')), 'ar');
   });
 }
