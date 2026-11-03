@@ -17,7 +17,7 @@ jobs:
       - uses: actions/setup-python@v5
         with:
           python-version: '3.12'
-      - run: pip install graphifyy
+      - run: pip install "graphifyy[sql]"
       - run: pip show graphifyy | head -2
       - run: python .graphify-ci/run.py
       - name: Save outputs on this branch
