@@ -2,6 +2,8 @@ import 'dart:async';
 
 import 'package:beaza/data/repositories/ledger_repository.dart';
 import 'package:beaza/data/repositories/settings_repository.dart';
+import 'package:beaza/data/services/device_service.dart';
+import 'package:beaza/domain/use_cases/data_export.dart';
 import 'package:beaza/domain/use_cases/message_intake.dart';
 import 'package:beaza_extraction/beaza_extraction.dart';
 import 'package:flutter/foundation.dart';
@@ -27,11 +29,14 @@ class HomeViewModel extends ChangeNotifier {
     required LedgerRepository ledger,
     required SettingsRepository settings,
     MessageIntake? intake,
+    DeviceService? device,
+    this.export,
     DateTime Function()? clock,
     this.arrivalDelay = const Duration(seconds: 3),
   })  : _ledger = ledger,
         _settings = settings,
         _intake = intake,
+        _device = device,
         _clock = clock ?? DateTime.now {
     _ledger.addListener(load);
     _settings.addListener(load);
@@ -45,7 +50,11 @@ class HomeViewModel extends ChangeNotifier {
   final LedgerRepository _ledger;
   final SettingsRepository _settings;
   final MessageIntake? _intake;
+  final DeviceService? _device;
   final DateTime Function() _clock;
+
+  /// Saves a copy of the person's data (account screen); null hides it.
+  final DataExport? export;
   final Duration arrivalDelay;
   StreamSubscription<void>? _arrivals;
 
@@ -62,6 +71,12 @@ class HomeViewModel extends ChangeNotifier {
 
   int _notUnderstood = 0;
   int get notUnderstood => _notUnderstood;
+
+  bool _batteryRestricted = false;
+
+  /// True when battery saving may stop Beaza while it is closed, so bank
+  /// messages are read and alerts shown late. Checked with the messages.
+  bool get batteryRestricted => _batteryRestricted;
 
   int _duplicates = 0;
 
@@ -105,10 +120,16 @@ class HomeViewModel extends ChangeNotifier {
   }
 
   /// Reads new bank messages if allowed. Called at start, on resume and
-  /// when an SMS arrives.
+  /// when an SMS arrives. Also checks battery saving, which decides whether
+  /// messages are read while the app is closed.
   Future<void> checkMessages() async {
+    if (_disposed) return;
+    await _checkBattery();
     final intake = _intake;
-    if (intake == null || _disposed) return;
+    if (intake == null) {
+      _notify();
+      return;
+    }
     try {
       _smsAllowed = await intake.hasPermission();
       if (_smsAllowed == true) {
@@ -131,6 +152,26 @@ class HomeViewModel extends ChangeNotifier {
     _smsDenied = _smsAllowed != true;
     _notify();
     if (_smsAllowed == true) await checkMessages();
+  }
+
+  Future<void> _checkBattery() async {
+    final device = _device;
+    if (device == null) return;
+    try {
+      _batteryRestricted = await device.batteryRestricted() ?? false;
+    } on Exception {
+      _batteryRestricted = false;
+    }
+  }
+
+  /// Opens Beaza's page in the phone's settings. The card goes away when the
+  /// person comes back (the app re-checks on resume).
+  Future<void> openBatterySettings() async {
+    try {
+      await _device?.openAppSettings();
+    } on Exception {
+      // Nothing to do: the card stays and the person can try again.
+    }
   }
 
   /// Removes the repeats; the ledger notifies, so the screen recomputes.

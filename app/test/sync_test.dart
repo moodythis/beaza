@@ -69,6 +69,7 @@ class FakeRecordServer {
           'records': page,
           'nextSince': page.isEmpty ? since : page.last['seq'],
           'more': after.length > limit,
+          'latest': seq[user],
         });
     }
     return _json(404, {'error': 'not_found'});
@@ -242,6 +243,26 @@ void main() {
     expect(await a.amounts(), isEmpty);
     final row = await a.db.select(a.db.ledgerRows).getSingle();
     expect(row.deletedAtMs, isNotNull, reason: 'kept as a tombstone');
+  });
+
+  test('a server that lost changes gets everything again from the phone',
+      () async {
+    await a.ledger.addManual(amountFils: 2500, merchant: 'Bakery', at: now);
+    await a.settings.save(const GuardrailSettings(dailyLimitFils: 7000));
+    expect(await a.sync.syncNow(), isTrue);
+    expect(server.stored('user1'), hasLength(2));
+
+    // Restored from an empty copy: no records, change counter back to 0.
+    server.records['user1']!.clear();
+    server.seq['user1'] = 0;
+
+    expect(await a.sync.syncNow(), isTrue);
+    expect(server.stored('user1'), hasLength(2));
+    expect(await a.pending(), 0);
+
+    expect(await b.sync.syncNow(), isTrue);
+    expect(await b.amounts(), [2500]);
+    expect((await b.settings.load()).dailyLimitFils, 7000);
   });
 
   test('both phones end with the later change, even if the older one '

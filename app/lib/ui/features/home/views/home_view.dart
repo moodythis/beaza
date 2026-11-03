@@ -64,8 +64,11 @@ class HomeView extends StatelessWidget {
                         : Icons.cloud_done_outlined),
                 onPressed: () => Navigator.of(context).push(
                   MaterialPageRoute<void>(
-                    builder: (_) =>
-                        AccountView(repository: account!, sync: sync),
+                    builder: (_) => AccountView(
+                      repository: account!,
+                      sync: sync,
+                      export: viewModel.export,
+                    ),
                   ),
                 ),
               ),
@@ -102,6 +105,11 @@ class HomeView extends StatelessWidget {
                   denied: viewModel.smsDenied,
                   onAllow: viewModel.enableMessages,
                 ),
+              ],
+              if (viewModel.batteryRestricted &&
+                  viewModel.smsAllowed == true) ...[
+                const SizedBox(height: 12),
+                BatteryCard(onOpen: viewModel.openBatterySettings),
               ],
               const SizedBox(height: 12),
               MicroCard(today: state.summary.micro, week: state.weekMicro),
@@ -325,6 +333,52 @@ class SmsCard extends StatelessWidget {
                 key: const Key('smsAllow'),
                 onPressed: onAllow,
                 child: Text(l10n.smsAllow),
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+/// Battery saving stops Beaza while it is closed, so alerts arrive late.
+/// Shown only when SMS reading is on, since that is what it affects.
+class BatteryCard extends StatelessWidget {
+  const BatteryCard({super.key, required this.onOpen});
+
+  final VoidCallback onOpen;
+
+  @override
+  Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context);
+    final theme = Theme.of(context);
+    return Card(
+      key: const Key('batteryCard'),
+      child: Padding(
+        padding: const EdgeInsets.all(16),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Row(
+              children: [
+                const Icon(Icons.battery_alert_outlined),
+                const SizedBox(width: 12),
+                Expanded(
+                  child: Text(l10n.batteryTitle,
+                      style: theme.textTheme.titleSmall),
+                ),
+              ],
+            ),
+            const SizedBox(height: 8),
+            Text(l10n.batteryBody),
+            const SizedBox(height: 8),
+            Align(
+              alignment: AlignmentDirectional.centerEnd,
+              child: FilledButton.tonal(
+                key: const Key('batteryOpen'),
+                onPressed: onOpen,
+                child: Text(l10n.batteryOpen),
               ),
             ),
           ],

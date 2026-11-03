@@ -503,9 +503,17 @@ async function pullRecords(ctx: Ctx, url: URL) {
     .bind(userId, since, take + 1)
     .all<{ collection: string; id: string; blob: string; seq: number }>();
   const records = results.slice(0, take);
+  // Read after the records, so it is never below a seq just returned. A
+  // phone whose own "since" is above it knows the server lost changes (a
+  // restore from an older copy, say) and sends everything again.
+  const user = await ctx.db
+    .prepare('SELECT seq FROM users WHERE id = ?')
+    .bind(userId)
+    .first<{ seq: number }>();
   return {
     records,
     nextSince: records.length > 0 ? records[records.length - 1].seq : since,
     more: results.length > take,
+    latest: user?.seq ?? 0,
   };
 }

@@ -43,6 +43,21 @@ describe('push and pull', () => {
     assert.equal(none.body.nextSince, 4);
   });
 
+  it('a pull reports the latest change number, so a phone can tell the server lost changes', async () => {
+    const s = new Server();
+    const { token } = await signUp(s);
+    const empty = await s.call('GET', '/v1/records?since=0', undefined, token);
+    assert.equal(empty.body.latest, 0);
+    await s.call('POST', '/v1/records', { records: [rec('a1'), rec('a2')] }, token);
+    const first = await s.call('GET', '/v1/records?since=0&limit=1', undefined, token);
+    assert.equal(first.body.nextSince, 1);
+    assert.equal(first.body.latest, 2);
+    // A phone that already pulled up to 9 sees the server is behind it.
+    const ahead = await s.call('GET', '/v1/records?since=9', undefined, token);
+    assert.equal(ahead.body.latest, 2);
+    assert.ok(ahead.body.latest < 9);
+  });
+
   it('changing a record gives it a new seq, so other phones see the change', async () => {
     const s = new Server();
     const { token } = await signUp(s);

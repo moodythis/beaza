@@ -303,5 +303,13 @@
       }
     }
   },
-  "removeDuplicates": "Remove the copies"
+  "removeDuplicates": "Remove the copies",
+  "batteryTitle": "Alerts may arrive late",
+  "batteryBody": "Battery saving can stop Beaza from reading bank messages while it is closed, so alerts wait until you open the app. In Beaza's settings, open Battery and choose Unrestricted.",
+  "batteryOpen": "Open settings",
+  "exportTitle": "Your data",
+  "exportBody": "Save a copy of all your transactions and settings as a file (JSON). It stays on your phone unless you share it.",
+  "exportButton": "Export my data",
+  "exportSaved": "Your data was saved",
+  "exportFailed": "Could not save the file"
 }

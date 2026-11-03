@@ -1,17 +1,23 @@
 package bh.beaza.beaza
 
 import android.Manifest
+import android.app.ActivityManager
 import android.content.Context
 import android.content.pm.PackageManager
+import android.os.Build
 import android.os.Handler
 import android.os.Looper
+import android.os.PowerManager
 import io.flutter.plugin.common.BinaryMessenger
 import io.flutter.plugin.common.MethodChannel
 
-/** Asking for a permission needs a screen, so only the activity can do it. */
+/** Things that need a screen (permission dialogs, the file picker,
+ * opening settings), so only the activity can do them. */
 interface PermissionRequester {
     fun requestSms(result: MethodChannel.Result)
     fun requestNotifications(result: MethodChannel.Result)
+    fun saveText(name: String, text: String, result: MethodChannel.Result)
+    fun openAppSettings(result: MethodChannel.Result)
 }
 
 /**
@@ -28,6 +34,21 @@ object Channels {
     fun hasSms(context: Context): Boolean =
         context.checkSelfPermission(Manifest.permission.READ_SMS) == PackageManager.PERMISSION_GRANTED &&
             context.checkSelfPermission(Manifest.permission.RECEIVE_SMS) == PackageManager.PERMISSION_GRANTED
+
+    /**
+     * True when Android may stop Beaza in the background: battery
+     * optimization is on (not "Unrestricted"), or background use is
+     * restricted for the app.
+     */
+    fun batteryRestricted(context: Context): Boolean {
+        val power = context.getSystemService(Context.POWER_SERVICE) as PowerManager
+        val optimized = Build.VERSION.SDK_INT >= Build.VERSION_CODES.M &&
+            !power.isIgnoringBatteryOptimizations(context.packageName)
+        val activity = context.getSystemService(Context.ACTIVITY_SERVICE) as ActivityManager
+        val restricted = Build.VERSION.SDK_INT >= Build.VERSION_CODES.P &&
+            activity.isBackgroundRestricted
+        return optimized || restricted
+    }
 
     fun attach(context: Context, messenger: BinaryMessenger, permissions: PermissionRequester?) {
         val resolver = context.contentResolver
@@ -61,6 +82,21 @@ object Channels {
                         call.argument<String>("body") ?: "",
                     )
                     result.success(null)
+                }
+                else -> result.notImplemented()
+            }
+        }
+
+        MethodChannel(messenger, "beaza/device").setMethodCallHandler { call, result ->
+            when (call.method) {
+                "batteryRestricted" -> result.success(batteryRestricted(context))
+                "openAppSettings" ->
+                    permissions?.openAppSettings(result) ?: result.success(null)
+                "saveText" -> {
+                    val name = call.argument<String>("name") ?: "beaza-export.json"
+                    val text = call.argument<String>("text") ?: ""
+                    permissions?.saveText(name, text, result)
+                        ?: result.error("no_screen", "Saving a file needs the app screen", null)
                 }
                 else -> result.notImplemented()
             }

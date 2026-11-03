@@ -44,7 +44,7 @@ in the code each part lives, and what is still missing.
 | Storage limitation | GDPR Art. 5(1)(e) | Kept until account deletion; sessions 60 days; attempt counters reset within an hour | `app.ts` |
 | Right of access | GDPR Art. 15; PDPL | Account screen shows what the server holds | `GET /v1/account` |
 | Right to erasure | GDPR Art. 17; PDPL | Delete account removes the user, sessions and records in one transaction | `deleteAccount` |
-| Portability | GDPR Art. 20 | The data stays on the phone. **Gap:** no export file yet | — |
+| Portability | GDPR Art. 20 | "Export my data" on the Account screen saves every transaction and the settings as a JSON file where the person chooses; works without an account | `data_export.dart`, `account_view.dart` `ExportCard` |
 | Rectification | GDPR Art. 16 | **Gap:** email cannot be changed in the app yet | — |
 | Privacy by design and default | GDPR Art. 25 | Works fully without an account; sync is off until the user signs up; end-to-end encryption | `beaza_crypto` |
 | Security of processing | GDPR Art. 32; PDPL | XChaCha20-Poly1305, Argon2id with a floor the phone enforces, hashed tokens, rate limits, encrypted phone database, no cloud backup | `beaza_crypto/README.md`, `server/README.md` |
@@ -57,14 +57,16 @@ in the code each part lives, and what is still missing.
 
 1. Notify Bahrain's Personal Data Protection Authority before processing
    (PDPL notification duty).
-2. Add a privacy contact to the notice (Worker variable `PRIVACY_CONTACT`).
+2. Replace the placeholder privacy contact (`privacy@beaza.example`, a
+   reserved domain that reaches no one) with a real address: Worker variable
+   `PRIVACY_CONTACT` in `server/wrangler.jsonc`.
 3. Keep a record of processing (GDPR Art. 30) and a short data protection
    impact assessment (financial data, SMS access).
 4. Write a breach response procedure (who checks, who notifies, within 72
    hours).
 5. Fill in Google Play's Data safety form to match this document, and link
    `/privacy`.
-6. Add data export and email change (closes the two gaps above).
+6. Add email change (closes the rectification gap above).
 7. Have a lawyer review the notice and the terms.
 
 ## Sources

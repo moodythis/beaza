@@ -1,12 +1,16 @@
 package bh.beaza.beaza
 
 import android.Manifest
+import android.content.ActivityNotFoundException
 import android.content.BroadcastReceiver
 import android.content.Context
 import android.content.Intent
 import android.content.IntentFilter
 import android.content.pm.PackageManager
+import android.net.Uri
 import android.os.Build
+import android.provider.Settings
+import java.io.IOException
 import io.flutter.embedding.android.FlutterActivity
 import io.flutter.embedding.engine.FlutterEngine
 import io.flutter.plugin.common.EventChannel
@@ -16,6 +20,7 @@ import io.flutter.plugin.common.MethodChannel
 class MainActivity : FlutterActivity(), PermissionRequester {
     private var pendingSms: MethodChannel.Result? = null
     private var pendingNotify: MethodChannel.Result? = null
+    private var pendingSave: Pair<String, MethodChannel.Result>? = null
     private var smsReceiver: BroadcastReceiver? = null
 
     override fun configureFlutterEngine(flutterEngine: FlutterEngine) {
@@ -93,6 +98,64 @@ class MainActivity : FlutterActivity(), PermissionRequester {
         }
     }
 
+    /** Lets the person choose where to save the file (no storage permission
+     * needed), then writes [text] there. Answers true, or false if cancelled. */
+    override fun saveText(name: String, text: String, result: MethodChannel.Result) {
+        if (pendingSave != null) {
+            result.error("busy", "A save is already open", null)
+            return
+        }
+        val intent = Intent(Intent.ACTION_CREATE_DOCUMENT).apply {
+            addCategory(Intent.CATEGORY_OPENABLE)
+            type = "application/json"
+            putExtra(Intent.EXTRA_TITLE, name)
+        }
+        pendingSave = text to result
+        try {
+            startActivityForResult(intent, SAVE_FILE_REQUEST)
+        } catch (e: ActivityNotFoundException) {
+            pendingSave = null
+            result.error("no_picker", e.message, null)
+        }
+    }
+
+    /** Beaza's App info page, where Battery can be set to Unrestricted. */
+    override fun openAppSettings(result: MethodChannel.Result) {
+        try {
+            startActivity(
+                Intent(
+                    Settings.ACTION_APPLICATION_DETAILS_SETTINGS,
+                    Uri.fromParts("package", packageName, null),
+                ),
+            )
+            result.success(null)
+        } catch (e: ActivityNotFoundException) {
+            result.error("no_settings", e.message, null)
+        }
+    }
+
+    override fun onActivityResult(requestCode: Int, resultCode: Int, data: Intent?) {
+        super.onActivityResult(requestCode, resultCode, data)
+        if (requestCode != SAVE_FILE_REQUEST) return
+        val (text, result) = pendingSave ?: return
+        pendingSave = null
+        val uri = data?.data
+        if (resultCode != RESULT_OK || uri == null) {
+            result.success(false)
+            return
+        }
+        Thread {
+            try {
+                val stream = contentResolver.openOutputStream(uri, "wt")
+                    ?: throw IOException("Cannot open the file")
+                stream.use { it.write(text.toByteArray(Charsets.UTF_8)) }
+                runOnUiThread { result.success(true) }
+            } catch (e: Exception) {
+                runOnUiThread { result.error("write", e.message, null) }
+            }
+        }.start()
+    }
+
     /** While the screen exists it handles new SMS itself (no background run). */
     private fun startListening(events: EventChannel.EventSink) {
         stopListening()
@@ -124,6 +187,7 @@ class MainActivity : FlutterActivity(), PermissionRequester {
     companion object {
         private const val SMS_PERMISSION_REQUEST = 4101
         private const val NOTIFY_PERMISSION_REQUEST = 4102
+        private const val SAVE_FILE_REQUEST = 4103
 
         /** True while the app screen's engine is running. */
         @Volatile

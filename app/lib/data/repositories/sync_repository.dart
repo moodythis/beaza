@@ -257,6 +257,18 @@ class SyncRepository extends ChangeNotifier {
   Future<int> _pull(String token, RecordCipher cipher, int since) async {
     while (true) {
       final page = await guardApi(() => _api.pullRecords(token, since));
+      final latest = page.latest;
+      if (latest != null && latest < since) {
+        // The server has fewer changes than this phone already pulled: it
+        // lost some (restored from an older copy, say). Start again from
+        // zero and send everything, so nothing on this phone is lost.
+        for (final c in _collections) {
+          await c.markAllPending();
+        }
+        since = 0;
+        await _prefs.write(sincePref, '0');
+        continue;
+      }
       final byList = <String, List<RemoteItem>>{};
       for (final record in page.records) {
         final Map<String, Object?> fields;

@@ -1,5 +1,6 @@
 import 'package:beaza/data/repositories/account_repository.dart';
 import 'package:beaza/data/repositories/sync_repository.dart';
+import 'package:beaza/domain/use_cases/data_export.dart';
 import 'package:beaza/l10n/app_localizations.dart';
 import 'package:beaza/ui/features/account/view_models/account_view_model.dart';
 import 'package:beaza/ui/features/account/views/account_widgets.dart';
@@ -12,12 +13,20 @@ import 'package:intl/intl.dart';
 /// Signed in: sync status, what the server holds (right of access), log
 /// out, and delete the account (right to erasure, withdrawal of consent).
 class AccountView extends StatefulWidget {
-  const AccountView({super.key, required this.repository, this.sync});
+  const AccountView({
+    super.key,
+    required this.repository,
+    this.sync,
+    this.export,
+  });
 
   final AccountRepository repository;
 
   /// Null hides the sync section (tests of the account alone).
   final SyncRepository? sync;
+
+  /// Saves a copy of all data to a file; null hides the card.
+  final DataExport? export;
 
   @override
   State<AccountView> createState() => _AccountViewState();
@@ -102,6 +111,10 @@ class _AccountViewState extends State<AccountView> {
           const SizedBox(height: 16),
           const LegalLinks(),
           if (widget.sync case final sync?) OtherPhonesCard(sync: sync),
+          if (widget.export case final export?) ...[
+            const SizedBox(height: 8),
+            ExportCard(export: export),
+          ],
         ],
       );
 
@@ -148,6 +161,10 @@ class _AccountViewState extends State<AccountView> {
             onSynced: vm.loadInfo,
             onLogOut: vm.busy ? null : vm.logOut,
           ),
+        ],
+        if (widget.export case final export?) ...[
+          const SizedBox(height: 8),
+          ExportCard(export: export),
         ],
         const SizedBox(height: 8),
         const LegalLinks(),
@@ -425,5 +442,66 @@ class _OtherPhonesCardState extends State<OtherPhonesCard> {
       ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(content: Text(l10n.removedOtherPhones(removed))));
     }
+  }
+}
+
+/// Right to a copy of one's data: saves every transaction and the settings
+/// as a JSON file the person chooses where to keep. Works signed in or out.
+class ExportCard extends StatefulWidget {
+  const ExportCard({super.key, required this.export});
+
+  final DataExport export;
+
+  @override
+  State<ExportCard> createState() => _ExportCardState();
+}
+
+class _ExportCardState extends State<ExportCard> {
+  bool _busy = false;
+
+  Future<void> _save() async {
+    final l10n = AppLocalizations.of(context);
+    final messenger = ScaffoldMessenger.of(context);
+    setState(() => _busy = true);
+    bool? saved;
+    try {
+      saved = await widget.export.save();
+    } on Exception {
+      saved = null;
+    }
+    if (!mounted) return;
+    setState(() => _busy = false);
+    // Cancelling the save dialog is not a failure: say nothing.
+    if (saved == false) return;
+    messenger.showSnackBar(SnackBar(
+      content: Text(saved == true ? l10n.exportSaved : l10n.exportFailed),
+    ));
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context);
+    return Card(
+      key: const Key('exportCard'),
+      child: Padding(
+        padding: const EdgeInsets.all(16),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            Text(l10n.exportTitle,
+                style: Theme.of(context).textTheme.titleMedium),
+            const SizedBox(height: 8),
+            Text(l10n.exportBody),
+            const SizedBox(height: 8),
+            OutlinedButton.icon(
+              key: const Key('exportButton'),
+              onPressed: _busy ? null : _save,
+              icon: const Icon(Icons.download_outlined),
+              label: Text(l10n.exportButton),
+            ),
+          ],
+        ),
+      ),
+    );
   }
 }

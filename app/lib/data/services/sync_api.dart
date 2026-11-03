@@ -94,6 +94,7 @@ class RecordPage {
     required this.records,
     required this.nextSince,
     required this.more,
+    this.latest,
   });
 
   final List<EncryptedRecord> records;
@@ -103,6 +104,11 @@ class RecordPage {
 
   /// More records are waiting after this page.
   final bool more;
+
+  /// The account's latest change number on the server (null from an older
+  /// server). Below what this phone already pulled means the server lost
+  /// changes.
+  final int? latest;
 }
 
 /// Talks to the sync server (server/README.md lists the calls). Everything
@@ -216,6 +222,7 @@ class SyncApi {
       ],
       nextSince: body['nextSince'] as int,
       more: body['more'] as bool,
+      latest: body['latest'] as int?,
     );
   }
 

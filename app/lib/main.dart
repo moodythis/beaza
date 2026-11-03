@@ -5,10 +5,12 @@ import 'package:beaza/data/repositories/account_repository.dart';
 import 'package:beaza/data/repositories/sync_repository.dart';
 import 'package:beaza/data/services/account_store.dart';
 import 'package:beaza/data/services/alert_notifier.dart';
+import 'package:beaza/data/services/device_service.dart';
 import 'package:beaza/data/services/key_store.dart';
 import 'package:beaza/data/services/sms_source.dart';
 import 'package:beaza/data/services/storage.dart';
 import 'package:beaza/data/services/sync_api.dart';
+import 'package:beaza/domain/use_cases/data_export.dart';
 import 'package:beaza/domain/use_cases/guardrail_alerts.dart';
 import 'package:beaza/domain/use_cases/message_intake.dart';
 import 'package:beaza/l10n/app_localizations.dart';
@@ -73,10 +75,17 @@ Future<void> main() async {
     storage.settings.addListener(alerts.evaluate);
 
     // Dependencies are wired by hand: few objects, no service locator needed.
+    final device = PlatformDeviceService();
     final homeViewModel = HomeViewModel(
       ledger: storage.ledger,
       settings: storage.settings,
       intake: buildIntake(storage),
+      device: device,
+      export: DataExport(
+        ledger: storage.ledger,
+        settings: storage.settings,
+        device: device,
+      ),
     )..load();
     // The sync account. Nothing is sent anywhere until the user creates an
     // account or logs in.

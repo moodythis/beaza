@@ -35,7 +35,7 @@ All bodies are JSON. Keys are 32 bytes in base64url.
 | `POST /v1/password` | New password: `{authKey, bundle}`; other phones are logged out |
 | `POST /v1/recovery-key` | New recovery key: `{recoveryAuthKey, bundle}` |
 | `POST /v1/records` | Push up to 100 records `{collection, id, blob}` → `{seq}` |
-| `GET /v1/records?since=N&limit=M` | Records changed after number N → `{records, nextSince, more}` |
+| `GET /v1/records?since=N&limit=M` | Records changed after number N → `{records, nextSince, more, latest}`. `latest` is the account's newest change number; a phone that already pulled past it knows the server lost changes and sends everything again |
 | `POST /v1/logout` | End this session |
 | `POST /v1/account/delete` | `{authKey}` → deletes the account and every record |
 
@@ -86,4 +86,5 @@ npx wrangler deploy      # done automatically by Workers Builds
 ```
 
 The D1 schema is in `migrations/`. Apply new files with
-`npx wrangler d1 migrations apply beaza-sync --remote`.
+`npx wrangler d1 migrations apply beaza-sync-eu --remote`. The database
+was created with the EU jurisdiction, which can only be set at creation.
