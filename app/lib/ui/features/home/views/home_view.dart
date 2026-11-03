@@ -1,4 +1,5 @@
 import 'package:beaza/data/repositories/account_repository.dart';
+import 'package:beaza/data/repositories/sync_repository.dart';
 import 'package:beaza/l10n/app_localizations.dart';
 import 'package:beaza/ui/core/amount_dialog.dart';
 import 'package:beaza/ui/core/formatting.dart';
@@ -17,6 +18,7 @@ class HomeView extends StatelessWidget {
     required this.viewModel,
     this.language,
     this.account,
+    this.sync,
   });
 
   final HomeViewModel viewModel;
@@ -26,6 +28,9 @@ class HomeView extends StatelessWidget {
 
   /// Null hides the account button.
   final AccountRepository? account;
+
+  /// Sync status and the "Sync now" button on the account screen.
+  final SyncRepository? sync;
 
   @override
   Widget build(BuildContext context) {
@@ -57,7 +62,8 @@ class HomeView extends StatelessWidget {
                     : Icons.account_circle_outlined),
                 onPressed: () => Navigator.of(context).push(
                   MaterialPageRoute<void>(
-                    builder: (_) => AccountView(repository: account!),
+                    builder: (_) =>
+                        AccountView(repository: account!, sync: sync),
                   ),
                 ),
               ),

@@ -1,4 +1,5 @@
 import 'package:beaza/data/repositories/account_repository.dart';
+import 'package:beaza/data/repositories/sync_repository.dart';
 import 'package:beaza/l10n/app_localizations.dart';
 import 'package:beaza/ui/core/language_controller.dart';
 import 'package:beaza/ui/core/theme.dart';
@@ -13,12 +14,16 @@ class BeazaApp extends StatelessWidget {
     this.language,
     this.locale,
     this.account,
+    this.sync,
   });
 
   final HomeViewModel homeViewModel;
 
   /// The sync account; null hides the account button (tests).
   final AccountRepository? account;
+
+  /// Sync between phones; null in tests that do not need it.
+  final SyncRepository? sync;
 
   /// The language button's state; null hides the button (tests).
   final LanguageController? language;
@@ -47,6 +52,7 @@ class BeazaApp extends StatelessWidget {
           viewModel: homeViewModel,
           language: language,
           account: account,
+          sync: sync,
         ),
       );
 }

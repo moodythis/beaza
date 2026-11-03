@@ -1,5 +1,8 @@
+import 'dart:async';
+
 import 'package:beaza/app.dart';
 import 'package:beaza/data/repositories/account_repository.dart';
+import 'package:beaza/data/repositories/sync_repository.dart';
 import 'package:beaza/data/services/account_store.dart';
 import 'package:beaza/data/services/alert_notifier.dart';
 import 'package:beaza/data/services/key_store.dart';
@@ -75,20 +78,35 @@ Future<void> main() async {
       settings: storage.settings,
       intake: buildIntake(storage),
     )..load();
+    // The sync account. Nothing is sent anywhere until the user creates an
+    // account or logs in.
+    final api = SyncApi();
+    final account =
+        RemoteAccountRepository(api: api, store: SecureAccountStore());
+    await account.load().catchError((Object _) {});
+    final sync = SyncRepository(
+      api: api,
+      account: account,
+      collections: storage.syncables,
+      preferences: storage.preferences,
+    );
+    await sync.load().catchError((Object _) {});
+    account.addListener(sync.accountChanged);
+    storage.ledger.addListener(sync.localChanged);
+    storage.settings.addListener(sync.localChanged);
+
     appLifecycle = AppLifecycleListener(onResume: () {
       homeViewModel.checkMessages();
       alerts.evaluate();
+      if (account.signedIn) sync.syncNow();
     });
-    // The sync account. Nothing is sent anywhere until the user creates an
-    // account or logs in.
-    final account =
-        RemoteAccountRepository(api: SyncApi(), store: SecureAccountStore());
-    await account.load().catchError((Object _) {});
     runApp(BeazaApp(
       homeViewModel: homeViewModel,
       language: language,
       account: account,
+      sync: sync,
     ));
+    if (account.signedIn) unawaited(sync.syncNow());
 
     await notifier.requestPermission().catchError((Object _) => false);
     await homeViewModel.checkMessages();
@@ -116,10 +134,33 @@ Future<void> backgroundMain() async {
     final chosen = await storage.preferences.read(LanguageController.prefName);
     await buildAlerts(storage, PlatformAlertNotifier(), () => chosen)
         .evaluate();
+    await _pushInBackground(storage);
   } on Object {
     // Nothing to show without a screen; the app rescans when opened.
   } finally {
     await storage?.database.close();
     await done.invokeMethod<void>('done').catchError((Object _) {});
   }
+}
+
+/// Sends the new transaction to the account's other phones right away, if
+/// there is an account. Push only, with a short limit: Android gives a
+/// background run only a few seconds, and anything not sent now goes on the
+/// next sync from the app.
+Future<void> _pushInBackground(Storage storage) async {
+  final account = RemoteAccountRepository(
+    api: SyncApi(timeout: const Duration(seconds: 4)),
+    store: SecureAccountStore(),
+  );
+  await account.load();
+  if (!account.signedIn) return;
+  final sync = SyncRepository(
+    api: SyncApi(timeout: const Duration(seconds: 4)),
+    account: account,
+    collections: storage.syncables,
+    preferences: storage.preferences,
+  );
+  await sync
+      .syncNow(pushOnly: true)
+      .timeout(const Duration(seconds: 5), onTimeout: () => false);
 }

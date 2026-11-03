@@ -77,6 +77,27 @@ abstract class AccountRepository extends ChangeNotifier {
 
 String normalizeEmail(String email) => email.trim().toLowerCase();
 
+/// Runs a server call and turns its errors into [AccountFailure]s.
+Future<T> guardApi<T>(Future<T> Function() call) async {
+  try {
+    return await call();
+  } on ApiException catch (e) {
+    throw AccountFailure(problemForCode(e.code),
+        retryAfterSeconds: e.retryAfterSeconds, code: e.code);
+  } on NetworkException {
+    throw const AccountFailure(AccountProblem.network);
+  }
+}
+
+AccountProblem problemForCode(String code) => switch (code) {
+      'invalid_credentials' => AccountProblem.wrongCredentials,
+      'email_taken' => AccountProblem.emailTaken,
+      'rate_limited' => AccountProblem.rateLimited,
+      'documents_outdated' => AccountProblem.documentsOutdated,
+      'unauthorized' => AccountProblem.sessionExpired,
+      _ => AccountProblem.server,
+    };
+
 class RemoteAccountRepository extends AccountRepository {
   RemoteAccountRepository({
     required SyncApi api,
@@ -233,23 +254,5 @@ class RemoteAccountRepository extends AccountRepository {
     notifyListeners();
   }
 
-  static Future<T> _guard<T>(Future<T> Function() call) async {
-    try {
-      return await call();
-    } on ApiException catch (e) {
-      throw AccountFailure(_problemFor(e.code),
-          retryAfterSeconds: e.retryAfterSeconds, code: e.code);
-    } on NetworkException {
-      throw const AccountFailure(AccountProblem.network);
-    }
-  }
-
-  static AccountProblem _problemFor(String code) => switch (code) {
-        'invalid_credentials' => AccountProblem.wrongCredentials,
-        'email_taken' => AccountProblem.emailTaken,
-        'rate_limited' => AccountProblem.rateLimited,
-        'documents_outdated' => AccountProblem.documentsOutdated,
-        'unauthorized' => AccountProblem.sessionExpired,
-        _ => AccountProblem.server,
-      };
+  static Future<T> _guard<T>(Future<T> Function() call) => guardApi(call);
 }

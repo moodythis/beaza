@@ -88,6 +88,23 @@ class AccountInfo {
   final int activeSessions;
 }
 
+/// One page of records from [SyncApi.pullRecords].
+class RecordPage {
+  const RecordPage({
+    required this.records,
+    required this.nextSince,
+    required this.more,
+  });
+
+  final List<EncryptedRecord> records;
+
+  /// Ask for records after this number next time.
+  final int nextSince;
+
+  /// More records are waiting after this page.
+  final bool more;
+}
+
 /// Talks to the sync server (server/README.md lists the calls). Everything
 /// sent is either a key proof, a locked key bundle or an encrypted record.
 class SyncApi {
@@ -173,6 +190,34 @@ class SyncApi {
         {'authKey': toBase64(authKey)},
         token: token,
       );
+
+  /// Stores or replaces encrypted records (at most 100 per call). Returns
+  /// the account's change number after them.
+  Future<int> pushRecords(String token, List<EncryptedRecord> records) async {
+    final body = await _send(
+      'POST',
+      '/v1/records',
+      {'records': [for (final r in records) r.toJson()]},
+      token: token,
+    );
+    return body['seq'] as int;
+  }
+
+  /// Records changed after change number [since], oldest first.
+  Future<RecordPage> pullRecords(String token, int since,
+      {int limit = 500}) async {
+    final body = await _send(
+        'GET', '/v1/records?since=$since&limit=$limit', null,
+        token: token);
+    return RecordPage(
+      records: [
+        for (final r in body['records'] as List<Object?>)
+          EncryptedRecord.fromJson(r as Map<String, Object?>),
+      ],
+      nextSince: body['nextSince'] as int,
+      more: body['more'] as bool,
+    );
+  }
 
   ({String token, KeyBundle bundle}) _session(Map<String, Object?> body) => (
         token: body['token'] as String,

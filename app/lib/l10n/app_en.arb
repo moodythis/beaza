@@ -217,7 +217,6 @@
       }
     }
   },
-  "syncNext": "Sync between phones arrives in the next update.",
   "deleteAccount": "Delete account",
   "deleteAccountBody": "This deletes your account and all synced data from the server, and withdraws your consent. The data on this phone stays. Enter your password to confirm.",
   "accountDeleted": "Account deleted",
@@ -238,5 +237,25 @@
   "errorWrongKey": "This recovery key does not belong to this account.",
   "errorOutdated": "The privacy notice or terms have changed. Update the app to continue.",
   "errorSessionExpired": "Your session has ended. Log in again.",
-  "errorServer": "Something went wrong. Try again."
+  "errorServer": "Something went wrong. Try again.",
+  "syncExplain": "Your transactions and daily limit stay the same on every phone signed in to this account. Bank messages are read only on the phone that receives them; the others get the result.",
+  "syncNow": "Sync now",
+  "syncing": "Syncing…",
+  "notSyncedYet": "Not synced yet",
+  "lastSynced": "Last synced: {time}",
+  "@lastSynced": {
+    "placeholders": {
+      "time": {
+        "type": "String"
+      }
+    }
+  },
+  "syncFailed": "Last sync did not finish: {reason}",
+  "@syncFailed": {
+    "placeholders": {
+      "reason": {
+        "type": "String"
+      }
+    }
+  }
 }

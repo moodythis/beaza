@@ -7,6 +7,7 @@ import 'package:beaza/data/repositories/ledger_repository.dart';
 import 'package:beaza/data/repositories/preferences_store.dart';
 import 'package:beaza/data/repositories/seen_message_store.dart';
 import 'package:beaza/data/repositories/settings_repository.dart';
+import 'package:beaza/data/repositories/syncable.dart';
 import 'package:beaza/data/services/database.dart';
 import 'package:beaza/data/services/database_opener.dart';
 import 'package:beaza/data/services/key_store.dart';
@@ -21,6 +22,7 @@ class Storage {
     required this.seenMessages,
     required this.alertLogs,
     required this.preferences,
+    this.syncables = const [],
   });
 
   final AppDatabase database;
@@ -29,6 +31,9 @@ class Storage {
   final SeenMessageStore seenMessages;
   final AlertLogStore alertLogs;
   final PreferencesStore preferences;
+
+  /// The lists that sync between phones (transactions and settings).
+  final List<Syncable> syncables;
 }
 
 /// Opens the encrypted database in [directory], creating the key on first
@@ -53,10 +58,13 @@ Future<Storage> openStorage({
 
   final db = openEncryptedDatabase(file, key, background: background);
   final deviceId = await keys.deviceId();
+  final ledger = DriftLedgerRepository(db, deviceId: deviceId);
+  final settings = DriftSettingsRepository(db);
   return Storage(
     database: db,
-    ledger: DriftLedgerRepository(db, deviceId: deviceId),
-    settings: DriftSettingsRepository(db),
+    ledger: ledger,
+    settings: settings,
+    syncables: [ledger, settings],
     seenMessages: DriftSeenMessageStore(db),
     alertLogs: DriftAlertLogStore(db),
     preferences: DriftPreferencesStore(db),

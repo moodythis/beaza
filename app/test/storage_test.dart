@@ -256,6 +256,9 @@ void main() {
       // Back to the version 3 shape the phone has now.
       await v4.customStatement('ALTER TABLE alert_days DROP COLUMN limit_fils');
       await v4.customStatement('DROP TABLE preferences');
+      await v4.customStatement(
+          'ALTER TABLE transactions DROP COLUMN pending_sync');
+      await v4.customStatement('ALTER TABLE settings DROP COLUMN pending_sync');
       await v4.customStatement('PRAGMA user_version = 3');
       await v4.close();
 
@@ -280,6 +283,9 @@ void main() {
       await v2.customStatement('DROP TABLE seen_messages');
       await v2.customStatement('DROP TABLE alert_days');
       await v2.customStatement('DROP TABLE preferences');
+      await v2.customStatement(
+          'ALTER TABLE transactions DROP COLUMN pending_sync');
+      await v2.customStatement('ALTER TABLE settings DROP COLUMN pending_sync');
       await v2.customStatement('PRAGMA user_version = 1');
       await v2.close();
 
@@ -290,6 +296,48 @@ void main() {
       expect(await upgraded.select(upgraded.alertDayRows).get(), isEmpty);
       expect(await upgraded.select(upgraded.ledgerRows).get(), hasLength(1));
       await upgraded.close();
+    });
+  });
+
+  group('sync columns', () {
+    test('a version 5 database marks existing rows to be synced', () async {
+      final dir = Directory.systemTemp.createTempSync('beaza_mig5_');
+      addTearDown(() => dir.deleteSync(recursive: true));
+      final file = File('${dir.path}/m.db');
+
+      final v6 = openEncryptedDatabase(file, goodKey, background: false);
+      await DriftLedgerRepository(v6, deviceId: 'd')
+          .addManual(amountFils: 700, at: bh(2, 9));
+      await DriftSettingsRepository(v6)
+          .save(const GuardrailSettings(dailyLimitFils: 5000));
+      await v6.customStatement(
+          'ALTER TABLE transactions DROP COLUMN pending_sync');
+      await v6.customStatement('ALTER TABLE settings DROP COLUMN pending_sync');
+      await v6.customStatement('PRAGMA user_version = 5');
+      await v6.close();
+
+      final upgraded = openEncryptedDatabase(file, goodKey, background: false);
+      final ledger = DriftLedgerRepository(upgraded, deviceId: 'd');
+      final settings = DriftSettingsRepository(upgraded);
+      expect(await ledger.pendingChanges(), hasLength(1));
+      expect(await settings.pendingChanges(), hasLength(1));
+      await upgraded.close();
+    });
+
+    test('a synced row is pending again after a local change', () async {
+      await ledger.addManual(amountFils: 100, at: bh(2, 9));
+      final item = (await ledger.pendingChanges()).single;
+      await ledger.markSynced(item.id, item.updatedAtMs);
+      expect(await ledger.pendingChanges(), isEmpty);
+      await ledger.delete(item.id);
+      expect(await ledger.pendingChanges(), hasLength(1));
+    });
+
+    test('marking synced does nothing if the row changed meanwhile', () async {
+      await settings.save(const GuardrailSettings(dailyLimitFils: 1000));
+      final item = (await settings.pendingChanges()).single;
+      await settings.markSynced(item.id, item.updatedAtMs - 1);
+      expect(await settings.pendingChanges(), hasLength(1));
     });
   });
 

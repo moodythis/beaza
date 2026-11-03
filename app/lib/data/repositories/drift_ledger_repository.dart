@@ -1,12 +1,13 @@
 import 'package:beaza/data/repositories/ledger_repository.dart';
+import 'package:beaza/data/repositories/syncable.dart';
 import 'package:beaza/data/services/database.dart';
 import 'package:beaza/data/services/key_store.dart';
 import 'package:beaza_extraction/beaza_extraction.dart';
 import 'package:drift/drift.dart';
 
 /// The ledger kept in the encrypted database. Deleted rows stay as
-/// tombstones (deletedAtMs) so a later sync can tell the other phones.
-class DriftLedgerRepository extends LedgerRepository {
+/// tombstones (deletedAtMs) so a sync can tell the other phones.
+class DriftLedgerRepository extends LedgerRepository implements Syncable {
   DriftLedgerRepository(
     this._db, {
     required String deviceId,
@@ -78,6 +79,7 @@ class DriftLedgerRepository extends LedgerRepository {
         deletedAtMs: Value(now),
         updatedAtMs: Value(now),
         deviceId: Value(_deviceId),
+        pendingSync: const Value(true),
       ),
     );
     notifyListeners();
@@ -109,6 +111,130 @@ class DriftLedgerRepository extends LedgerRepository {
           ),
         );
     notifyListeners();
+  }
+
+  // ---- sync ----
+
+  /// What the server sees as the list name. Short on purpose: it is the only
+  /// part of a record the server can read.
+  static const String syncCollection = 'txn';
+
+  @override
+  String get collection => syncCollection;
+
+  @override
+  Future<List<SyncItem>> pendingChanges({int limit = 100}) async {
+    final rows = await (_db.select(_db.ledgerRows)
+          ..where((r) => r.pendingSync.equals(true))
+          ..orderBy([(r) => OrderingTerm.asc(r.updatedAtMs)])
+          ..limit(limit))
+        .get();
+    return [
+      for (final r in rows)
+        SyncItem(id: r.id, updatedAtMs: r.updatedAtMs, fields: _fields(r)),
+    ];
+  }
+
+  @override
+  Future<void> markSynced(String id, int updatedAtMs) =>
+      (_db.update(_db.ledgerRows)
+            ..where((r) => r.id.equals(id) & r.updatedAtMs.equals(updatedAtMs)))
+          .write(const LedgerRowsCompanion(pendingSync: Value(false)));
+
+  @override
+  Future<void> markAllPending() => _db
+      .update(_db.ledgerRows)
+      .write(const LedgerRowsCompanion(pendingSync: Value(true)));
+
+  @override
+  Future<int> applyRemote(List<RemoteItem> items) async {
+    var changed = 0;
+    await _db.transaction(() async {
+      for (final item in items) {
+        final LedgerRowsCompanion row;
+        try {
+          row = _fromFields(item.id, item.fields);
+        } on FormatException {
+          continue; // Not a version this app understands; leave it.
+        }
+        final local = await (_db.select(_db.ledgerRows)
+              ..where((r) => r.id.equals(item.id)))
+            .getSingleOrNull();
+        final time = row.updatedAtMs.value;
+        final device = row.deviceId.value;
+        if (local == null ||
+            isNewer(time, device, local.updatedAtMs, local.deviceId)) {
+          await _db.into(_db.ledgerRows).insertOnConflictUpdate(row);
+          changed++;
+        } else if (local.updatedAtMs != time || local.deviceId != device) {
+          // This phone has a later version than the server: the server got
+          // an older one after ours. Send ours again so all phones agree.
+          await (_db.update(_db.ledgerRows)
+                ..where((r) => r.id.equals(item.id)))
+              .write(const LedgerRowsCompanion(pendingSync: Value(true)));
+        }
+      }
+    });
+    if (changed > 0) notifyListeners();
+    return changed;
+  }
+
+  static Map<String, Object?> _fields(LedgerRow r) => {
+        'v': 1,
+        'amountFils': r.amountFils,
+        'currency': r.currency,
+        'type': r.type,
+        'direction': r.direction,
+        'merchantRaw': r.merchantRaw,
+        'merchantNorm': r.merchantNorm,
+        'category': r.category,
+        'channel': r.channel,
+        'last4': r.last4,
+        'counterpartyLast4': r.counterpartyLast4,
+        'reference': r.reference,
+        'timestampMs': r.timestampMs,
+        'confidence': r.confidence,
+        'templateVersion': r.templateVersion,
+        'flags': r.flags,
+        'source': r.source,
+        'excluded': r.excluded,
+        'updatedAtMs': r.updatedAtMs,
+        'deletedAtMs': r.deletedAtMs,
+        'deviceId': r.deviceId,
+      };
+
+  /// A remote version as a row. Throws [FormatException] for anything that
+  /// would break the table's rules, so one bad record cannot stop a sync.
+  static LedgerRowsCompanion _fromFields(String id, Map<String, Object?> f) {
+    if (f['v'] != 1) throw const FormatException('unknown version');
+    final amount = intField(f, 'amountFils');
+    if (amount <= 0) throw const FormatException('bad amountFils');
+    final currency = stringField(f, 'currency');
+    if (currency.isEmpty) throw const FormatException('bad currency');
+    return LedgerRowsCompanion.insert(
+      id: id,
+      amountFils: amount,
+      currency: currency,
+      type: Value(optionalString(f, 'type')),
+      direction: stringField(f, 'direction'),
+      merchantRaw: Value(optionalString(f, 'merchantRaw')),
+      merchantNorm: Value(optionalString(f, 'merchantNorm')),
+      category: Value(optionalString(f, 'category')),
+      channel: Value(optionalString(f, 'channel')),
+      last4: Value(optionalString(f, 'last4')),
+      counterpartyLast4: Value(optionalString(f, 'counterpartyLast4')),
+      reference: Value(optionalString(f, 'reference')),
+      timestampMs: intField(f, 'timestampMs'),
+      confidence: Value(doubleField(f, 'confidence')),
+      templateVersion: stringField(f, 'templateVersion'),
+      flags: Value(stringField(f, 'flags')),
+      source: stringField(f, 'source'),
+      excluded: Value(boolField(f, 'excluded')),
+      updatedAtMs: intField(f, 'updatedAtMs'),
+      deletedAtMs: Value(optionalInt(f, 'deletedAtMs')),
+      deviceId: stringField(f, 'deviceId'),
+      pendingSync: const Value(false),
+    );
   }
 
   static ExtractionResult _toResult(LedgerRow r) => ExtractionResult(

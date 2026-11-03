@@ -46,6 +46,11 @@ class LedgerRows extends Table {
   IntColumn get deletedAtMs => integer().nullable()();
   TextColumn get deviceId => text()();
 
+  /// Changed here and not yet on the sync server. New rows start pending, so
+  /// everything made before an account existed is sent once one does.
+  /// Added in version 6.
+  BoolColumn get pendingSync => boolean().withDefault(const Constant(true))();
+
   @override
   Set<Column> get primaryKey => {id};
 }
@@ -65,6 +70,9 @@ class SettingsRows extends Table {
   BoolColumn get rollover => boolean()();
   IntColumn get rolloverCapPercent => integer()();
   IntColumn get updatedAtMs => integer()();
+
+  /// See LedgerRows.pendingSync. Added in version 6.
+  BoolColumn get pendingSync => boolean().withDefault(const Constant(true))();
 
   @override
   Set<Column> get primaryKey => {id};
@@ -131,7 +139,7 @@ class AppDatabase extends _$AppDatabase {
   AppDatabase(super.e);
 
   @override
-  int get schemaVersion => 5;
+  int get schemaVersion => 6;
 
   @override
   MigrationStrategy get migration => MigrationStrategy(
@@ -143,6 +151,10 @@ class AppDatabase extends _$AppDatabase {
             await m.addColumn(alertDayRows, alertDayRows.limitFils);
           }
           if (from < 5) await m.createTable(preferenceRows);
+          if (from < 6) {
+            await m.addColumn(ledgerRows, ledgerRows.pendingSync);
+            await m.addColumn(settingsRows, settingsRows.pendingSync);
+          }
         },
         beforeOpen: (details) async {
           await customStatement('PRAGMA foreign_keys = ON');

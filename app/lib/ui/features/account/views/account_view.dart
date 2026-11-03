@@ -1,4 +1,5 @@
 import 'package:beaza/data/repositories/account_repository.dart';
+import 'package:beaza/data/repositories/sync_repository.dart';
 import 'package:beaza/l10n/app_localizations.dart';
 import 'package:beaza/ui/features/account/view_models/account_view_model.dart';
 import 'package:beaza/ui/features/account/views/account_widgets.dart';
@@ -8,12 +9,15 @@ import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 
 /// Signed out: what an account is for, and how to make one or log in.
-/// Signed in: what the server holds (right of access), log out, and delete
-/// the account (right to erasure, withdrawal of consent).
+/// Signed in: sync status, what the server holds (right of access), log
+/// out, and delete the account (right to erasure, withdrawal of consent).
 class AccountView extends StatefulWidget {
-  const AccountView({super.key, required this.repository});
+  const AccountView({super.key, required this.repository, this.sync});
 
   final AccountRepository repository;
+
+  /// Null hides the sync section (tests of the account alone).
+  final SyncRepository? sync;
 
   @override
   State<AccountView> createState() => _AccountViewState();
@@ -136,8 +140,10 @@ class _AccountViewState extends State<AccountView> {
             ),
           ),
         ),
-        const SizedBox(height: 8),
-        Text(l10n.syncNext, style: theme.textTheme.bodySmall),
+        if (widget.sync case final sync?) ...[
+          const SizedBox(height: 8),
+          SyncSection(sync: sync, onSynced: vm.loadInfo),
+        ],
         const SizedBox(height: 8),
         const LegalLinks(),
         const SizedBox(height: 8),
@@ -219,6 +225,71 @@ class _DeleteDialogState extends State<_DeleteDialog> {
           child: Text(l10n.deleteAccount),
         ),
       ],
+    );
+  }
+}
+
+/// When this phone last synced, why the last sync failed, and a button to
+/// sync now.
+class SyncSection extends StatelessWidget {
+  const SyncSection({super.key, required this.sync, this.onSynced});
+
+  final SyncRepository sync;
+
+  /// Called after a sync started with the button succeeds.
+  final VoidCallback? onSynced;
+
+  @override
+  Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context);
+    final theme = Theme.of(context);
+    final locale = Localizations.localeOf(context).toLanguageTag();
+    return ListenableBuilder(
+      listenable: sync,
+      builder: (context, _) {
+        final failure = sync.failure;
+        final last = sync.lastSynced;
+        final Widget status;
+        if (sync.syncing) {
+          status = Row(children: [
+            const SizedBox.square(
+                dimension: 16,
+                child: CircularProgressIndicator(strokeWidth: 2)),
+            const SizedBox(width: 8),
+            Text(l10n.syncing),
+          ]);
+        } else if (failure != null) {
+          status = Text(
+            l10n.syncFailed(accountProblemText(l10n, failure)),
+            style: TextStyle(color: theme.colorScheme.error),
+          );
+        } else if (last != null) {
+          status = Text(l10n.lastSynced(
+              DateFormat.yMMMd(locale).add_jm().format(last.toLocal())));
+        } else {
+          status = Text(l10n.notSyncedYet);
+        }
+        return Column(
+          key: const Key('syncSection'),
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            Text(l10n.syncExplain, style: theme.textTheme.bodySmall),
+            const SizedBox(height: 8),
+            KeyedSubtree(key: const Key('syncStatus'), child: status),
+            const SizedBox(height: 8),
+            OutlinedButton.icon(
+              key: const Key('syncNowButton'),
+              icon: const Icon(Icons.sync),
+              label: Text(l10n.syncNow),
+              onPressed: sync.syncing
+                  ? null
+                  : () async {
+                      if (await sync.syncNow()) onSynced?.call();
+                    },
+            ),
+          ],
+        );
+      },
     );
   }
 }
