@@ -497,4 +497,434 @@ Total Marks: 20
       expect(x.amountFils, isNull);
     });
   });
+
+  // 20 thermal-receipt samples written by another AI in the shape of the
+  // first real receipt (Kids Port Games): sample 1 is that receipt, samples
+  // 2 to 20 are SYNTHETIC. Checked: the shop (from above the "CR:" line),
+  // the total once (never added to "Total Paid", never the cash given, the
+  // change, the subtotal before a discount, or one part of a split payment),
+  // and that a refund slip is not read as spending. Not built: reference
+  // numbers, cash/card/wallet channel, VAT and line items.
+  group('20 thermal receipts from Bahraini shops', () {
+    void check(String name, String text, {required int amount, required String shop}) {
+      test(name, () {
+        final x = r.read(text, now: now);
+        expect(x.status, ExtractionStatus.transaction);
+        expect(x.amountFils, amount);
+        expect(x.merchantRaw, shop);
+        expect(x.currency, 'BHD');
+        expect(x.flags, isNot(contains(ExtractionFlag.totalGuessed)));
+      });
+    }
+
+    test('1 Kids Port Games (real): month-first date, shop under the logo', () {
+      final x = r.read('''
+KIDS R PORT
+مرفأ الأطفال
+KIDS PORT GAMES
+CR: 86184-2
+Garden 55
+WhatsApp: 33000000
+Instagram: kids_r_port
+Email: shop@example.com
+--------------------------------
+Invoice No.              HT32859
+Date          11/03/2026 10:59 PM
+--------------------------------
+#1. Yellow Ticket
+  1.000 x 0.300            0.300
+--------------------------------
+Subtotal:               BD 0.300
+Total:                  BD 0.300
+Card (11/03/2026)       BD 0.300
+Total Paid              BD 0.300
+''', now: now);
+      expect(x.amountFils, 300);
+      expect(x.merchantRaw, 'KIDS PORT GAMES');
+      // 3 November 2026 (the other AI wrote 11 March: the till prints the
+      // month first), 22:59 in Bahrain.
+      expect(x.timestamp, DateTime.utc(2026, 11, 3, 19, 59));
+    });
+
+    check('2 several items, paid with BenefitPay', '''
+KIDS R PORT
+مرفأ الأطفال
+KIDS PORT GAMES
+CR: 86184-2
+Garden 55
+WhatsApp: 33000000
+--------------------------------
+Invoice No.              HT32910
+Date          04/11/2026 05:15 PM
+--------------------------------
+#1. Blue Ride Token
+  3.000 x 0.500            1.500
+#2. VR Game Session
+  1.000 x 1.000            1.000
+--------------------------------
+Subtotal:               BD 2.500
+Total:                  BD 2.500
+BenefitPay (04/11/2026) BD 2.500
+Total Paid              BD 2.500
+''', amount: 2500, shop: 'KIDS PORT GAMES');
+
+    check('3 burger joint with VAT: "Untaxed Amount" is not the total', '''
+JAN BURGER - RIFFA
+CR No: 44912-1
+VAT Account: 200001928300002
+Tel: 17778899
+--------------------------------
+Order: 00412-003-0091
+Date: 04/11/2026 21:30:12
+Cashier: Yousif
+--------------------------------
+1x Classic Beef Burger     1.800
+1x Cheesy Fries            0.900
+1x Kinza Cola              0.250
+--------------------------------
+Untaxed Amount          BD 2.682
+VAT 10%                 BD 0.268
+Total                   BD 2.950
+--------------------------------
+Card                    BD 2.950
+Change                  BD 0.000
+''', amount: 2950, shop: 'JAN BURGER - RIFFA');
+
+    check('4 grill restaurant: cash given and change are not the total', '''
+مشارق البحرين للتكة والمشويات
+MASHAREQ TIKKA & GRILLS
+CR: 71234-3 | Hamad Town
+Tel: 39445566
+--------------------------------
+Bill No: 1084
+Date: 03/11/2026   08:45 PM
+--------------------------------
+#1. صحن تكة لحم
+  2.000 x 1.200            2.400
+#2. خبز حار
+  5.000 x 0.020            0.100
+#3. بيبسي
+  2.000 x 0.250            0.500
+--------------------------------
+Subtotal:               BD 3.000
+Total:                  BD 3.000
+Cash Tendered:          BD 5.000
+Change Due:             BD 2.000
+Total Paid              BD 3.000
+''', amount: 3000, shop: 'MASHAREQ TIKKA & GRILLS');
+
+    check('5 specialty coffee, table of items', '''
+668 COFFEE ROASTERS
+CR: 119283-1
+Block 338, Adliya
+VAT NO: 220019283700003
+--------------------------------
+Receipt #FD-88219
+04/11/2026 09:12 AM
+Order Type: Dine In
+--------------------------------
+Qty  Item                  Price
+1    Iced Rose Latte       2.300
+1    Zaatar Croissant      1.200
+--------------------------------
+Subtotal                3.182 BHD
+10% VAT                 0.318 BHD
+Total                   3.500 BHD
+Payment: Visa Contactless
+''', amount: 3500, shop: '668 COFFEE ROASTERS');
+
+    check('6 bakery', '''
+AL MANAR BAKERY
+مخبز المنار
+CR: 33102-1 | Muharraq
+Tel: 17334455
+--------------------------------
+Inv No:                 MB-44910
+Date:         02/11/2026 07:15 AM
+--------------------------------
+#1. Cheese Samboosa (Doz)
+  1.000 x 0.800            0.800
+#2. Cream Puffs
+  2.000 x 0.350            0.700
+--------------------------------
+Total:                  BD 1.500
+BenefitPay              BD 1.500
+Total Paid              BD 1.500
+''', amount: 1500, shop: 'AL MANAR BAKERY');
+
+    check('7 gents salon', '''
+TARIQ GENTS SALON
+صالون طارق الرجالي
+CR: 99120-4
+Isa Town, Bahrain
+WhatsApp: 36112233
+--------------------------------
+Invoice No.               TS1029
+Date          01/11/2026 06:20 PM
+--------------------------------
+#1. Haircut & Beard Trim
+  1.000 x 2.500            2.500
+--------------------------------
+Subtotal:               BD 2.500
+Total:                  BD 2.500
+BenefitPay (01/11/2026) BD 2.500
+Total Paid              BD 2.500
+''', amount: 2500, shop: 'TARIQ GENTS SALON');
+
+    check('8 stationery', '''
+AL HILAL STATIONERY
+مكتبة الهلال للقرطاسية
+CR: 55123-1 | Riffa
+Tel: 17661122
+--------------------------------
+Invoice No:              HS-9012
+Date:         04/11/2026 01:10 PM
+--------------------------------
+#1. A4 Printing Color
+  10.000 x 0.100           1.000
+#2. Spiral Binding
+  1.000 x 0.400            0.400
+--------------------------------
+Subtotal:               BD 1.400
+Total:                  BD 1.400
+Card (04/11/2026)       BD 1.400
+Total Paid              BD 1.400
+''', amount: 1400, shop: 'AL HILAL STATIONERY');
+
+    check('9 car wash, cash', '''
+SPEED SHINE CAR CARE
+CR: 102938-2
+Salmabad, Kingdom of Bahrain
+Tel: 33998877
+--------------------------------
+Bill No.                  CW8812
+Date          03/11/2026 04:00 PM
+--------------------------------
+#1. Full Body & Interior Wash
+  1.000 x 2.000            2.000
+--------------------------------
+Subtotal:               BD 2.000
+Total:                  BD 2.000
+Cash                    BD 2.000
+Total Paid              BD 2.000
+''', amount: 2000, shop: 'SPEED SHINE CAR CARE');
+
+    check('10 karak corner, a small amount', '''
+KARAK & CHAPATI CORNER
+CR: 88219-1 | Juffair
+Instagram: @karak_corner_bh
+--------------------------------
+Invoice No.               KC9921
+Date          04/11/2026 06:40 AM
+--------------------------------
+#1. Karak Zafran
+  2.000 x 0.150            0.300
+#2. Egg Cheese Chapati
+  1.000 x 0.350            0.350
+--------------------------------
+Subtotal:               BD 0.650
+Total:                  BD 0.650
+Card (04/11/2026)       BD 0.650
+Total Paid              BD 0.650
+''', amount: 650, shop: 'KARAK & CHAPATI CORNER');
+
+    check('11 electronics: "Grand Total" after VAT', '''
+ADVANTI COMPUTER SYSTEMS
+CR: 60192-1 | Seef District
+VAT Reg: 200001122300002
+Tel: 17580580
+--------------------------------
+Tax Invoice:           INV-48291
+Date:         01/11/2026 03:22 PM
+--------------------------------
+#1.PLA Filament 1KG Black
+  2.000 x 6.500           13.000
+#2. Thermal Paste MX-4
+  1.000 x 3.500            3.500
+--------------------------------
+Subtotal (Excl. VAT):  BD 15.000
+VAT 10%:                BD 1.500
+Grand Total:           BD 16.500
+Card (**** 5517)       BD 16.500
+Total Paid             BD 16.500
+''', amount: 16500, shop: 'ADVANTI COMPUTER SYSTEMS');
+
+    check('12 laundry', '''
+SNOW WHITE LAUNDRY
+مغسلة الثلج الأبيض
+CR: 29182-1 | Karzakan
+WhatsApp: 38112244
+--------------------------------
+Ticket No.                LW4012
+Date          02/11/2026 09:00 PM
+--------------------------------
+#1. Thobe Wash & Steam Press
+  4.000 x 0.300            1.200
+#2. Shirt Press Only
+  2.000 x 0.150            0.300
+--------------------------------
+Subtotal:               BD 1.500
+Total:                  BD 1.500
+BenefitPay              BD 1.500
+Total Paid              BD 1.500
+''', amount: 1500, shop: 'SNOW WHITE LAUNDRY');
+
+    check('13 juice shop', '''
+FRUITY JUICE CENTER
+عصائر فروتي
+CR: 77412-2 | Budaiya
+Tel: 17690011
+--------------------------------
+Order No.                 FJ2190
+Date          03/11/2026 11:15 PM
+--------------------------------
+#1. Avocado Honey Lrg
+  1.000 x 1.200            1.200
+#2. Mango Shake Med
+  1.000 x 0.800            0.800
+--------------------------------
+Subtotal:               BD 2.000
+Total:                  BD 2.000
+Card (03/11/2026)       BD 2.000
+Total Paid              BD 2.000
+''', amount: 2000, shop: 'FRUITY JUICE CENTER');
+
+    check('14 sweets with VAT', '''
+SHOWAITER SWEETS
+حلويات شويطر
+CR: 10921-1 | Muharraq
+VAT: 200005544300002
+--------------------------------
+Invoice No.               SS7712
+Date          01/11/2026 05:40 PM
+--------------------------------
+#1. Royal Bahraini Halwa 1KG
+  1.000 x 4.000            4.000
+#2. Samboosa Helwa 500G
+  1.000 x 2.200            2.200
+--------------------------------
+Subtotal:               BD 5.636
+VAT 10%:                BD 0.564
+Total:                  BD 6.200
+Card (01/11/2026)       BD 6.200
+Total Paid              BD 6.200
+''', amount: 6200, shop: 'SHOWAITER SWEETS');
+
+    check('15 discount line: the total after the discount, not the subtotal', '''
+PROTEIN LAB CAFE
+CR: 94812-1 | Seef
+Instagram: proteinlab_bh
+--------------------------------
+Invoice No.               PL5501
+Date          04/11/2026 02:30 PM
+--------------------------------
+#1. Grilled Chicken Bowl
+  1.000 x 3.200            3.200
+#2. Whey Protein Shake
+  1.000 x 1.800            1.800
+--------------------------------
+Subtotal:               BD 5.000
+Student Discount (20%): -BD 1.000
+Total:                  BD 4.000
+Card (04/11/2026)       BD 4.000
+Total Paid              BD 4.000
+''', amount: 4000, shop: 'PROTEIN LAB CAFE');
+
+    check('16 billiards lounge', '''
+CUE CLUB GAMING LOUNGE
+نادي كيو للبليارد والألعاب
+CR: 83910-1 | Jid Ali
+WhatsApp: 33441122
+--------------------------------
+Invoice No.               CC1109
+Date          02/11/2026 11:50 PM
+--------------------------------
+#1. Billiard Table (1 Hour)
+  1.500 x 2.400            3.600
+#2. Water 500ml
+  2.000 x 0.150            0.300
+--------------------------------
+Subtotal:               BD 3.900
+Total:                  BD 3.900
+BenefitPay              BD 3.900
+Total Paid              BD 3.900
+''', amount: 3900, shop: 'CUE CLUB GAMING LOUNGE');
+
+    check('17 fruit market, cash', '''
+CENTRAL MARKET FRUITS
+فرشة السوق المركزي للخضار
+CR: 41029-2 | Manama
+--------------------------------
+Receipt No:               CM3021
+Date:         03/11/2026 10:20 AM
+--------------------------------
+#1. Banana KG
+  1.500 x 0.500            0.750
+#2. Tomato Box
+  1.000 x 1.250            1.250
+--------------------------------
+Total:                  BD 2.000
+Cash                    BD 2.000
+Total Paid              BD 2.000
+''', amount: 2000, shop: 'CENTRAL MARKET FRUITS');
+
+    check('18 printing centre with no CR line: the first line is the shop', '''
+UOB STUDENT PRINTING CENTER
+مركز خدمات الطالب - الصخير
+--------------------------------
+Invoice No.               UP8821
+Date          04/11/2026 11:05 AM
+--------------------------------
+#1. Lab Manual Binding
+  1.000 x 0.750            0.750
+--------------------------------
+Subtotal:               BD 0.750
+Total:                  BD 0.750
+BenefitPay (04/11/2026) BD 0.750
+Total Paid              BD 0.750
+''', amount: 750, shop: 'UOB STUDENT PRINTING CENTER');
+
+    check('19 split payment: the whole bill, not one part', '''
+PATCHI CHOCOLATES
+CR: 19283-1 | City Centre Bahrain
+Date: 01/11/2026 08:10 PM
+Invoice No: PT-9910
+--------------------------------
+#1. Classic Gift Box 500g
+  1.000 x 9.500            9.500
+--------------------------------
+Subtotal:               BD 9.500
+Total:                  BD 9.500
+Cash Paid:              BD 4.000
+Card (01/11/2026):      BD 5.500
+Total Paid:             BD 9.500
+''', amount: 9500, shop: 'PATCHI CHOCOLATES');
+
+    test('20 a refund slip is not spending', () {
+      final x = r.read('''
+H&M - AVENUE MALL BAHRAIN
+CR: 50192-1
+Date: 02/11/2026 04:45 PM
+Receipt No: HM-77210-R
+*** REFUND RECEIPT / إيصال استرجاع ***
+--------------------------------
+#1. Basic Cotton Hoodie
+  -1.000 x 8.900          -8.900
+--------------------------------
+Subtotal:              -BD 8.900
+Total Refund:           BD 8.900
+Refunded to Card:       BD 8.900
+''', now: now);
+      expect(x.status, ExtractionStatus.nonTransaction);
+      expect(x.kind, MessageKind.refund);
+      expect(x.amountFils, isNull);
+      expect(x.merchantRaw, 'H&M - AVENUE MALL BAHRAIN');
+    });
+
+    test('"no refund" on an ordinary receipt does not make it a refund', () {
+      final x = r.read('SAMPLE SHOP\\nGoods sold are not returnable. No refund.\\nTOTAL 1.500\\n', now: now);
+      expect(x.status, ExtractionStatus.transaction);
+      expect(x.amountFils, 1500);
+    });
+  });
 }

@@ -160,6 +160,8 @@ class _ReceiptSheetState extends State<ReceiptSheet> {
     final notes = <String>[
       if (r.kind == MessageKind.declined)
         l10n.receiptDeclined
+      else if (r.kind == MessageKind.refund)
+        l10n.receiptRefund
       else if (r.amountFils == null)
         l10n.receiptNoAmount,
       if (r.flags.contains(ExtractionFlag.totalGuessed)) l10n.receiptTotalGuessed,

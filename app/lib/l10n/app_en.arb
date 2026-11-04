@@ -466,6 +466,7 @@
   "receiptShop": "Shop",
   "receiptNoAmount": "No amount found. Type it from the receipt.",
   "receiptDeclined": "This looks like a failed or declined payment, so no amount was taken. Add it only if money really left your account.",
+  "receiptRefund": "This is a refund or return receipt: money came back, so it is not added as spending.",
   "receiptTotalGuessed": "No total line found, so the amount that repeats most was taken. Check it.",
   "receiptCurrencyAssumed": "No currency printed: BHD assumed.",
   "receiptNoDate": "No date printed: the current time is used.",

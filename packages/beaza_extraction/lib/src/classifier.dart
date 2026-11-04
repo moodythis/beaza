@@ -4,6 +4,9 @@ library;
 enum MessageKind {
   transaction,
   declined,
+
+  /// A refund or return receipt: money came back, nothing was spent.
+  refund,
   otp,
   securityNotice,
   promotion,

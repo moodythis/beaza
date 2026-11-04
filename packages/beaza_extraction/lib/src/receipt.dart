@@ -35,7 +35,7 @@ class ReceiptReader {
 
   /// Lines that are not the shop's name.
   static final RegExp _notShop = RegExp(
-    r'afs\b|credimax|arab\s*financial|benefit\s*-?\s*pay|بنفت|fawri|فوري|fawateer|transaction|approved|successful|completed|payment|تحويل|عملية|ناجحة|tax\s*invoice|invoice|receipt|welcome|\bvat\b|c\.?\s?r\.?\s*(?:no|#)|\btel\b|phone|mobile|\bdate\b|\btime\b|www|http|فاتورة|ضريبية|اهلا|أهلا|مرحبا|شكرا|سجل\s*تجاري',
+    r'\bafs\b|credimax|arab\s*financial|benefit\s*-?\s*pay|بنفت|fawri|فوري|fawateer|transaction|approved|successful|completed|payment|تحويل|عملية|ناجحة|tax\s*invoice|invoice|receipt|welcome|\bvat\b|c\.?\s?r\.?\s*(?:no|#)|\btel\b|phone|mobile|\bdate\b|\btime\b|www|http|فاتورة|ضريبية|اهلا|أهلا|مرحبا|شكرا|سجل\s*تجاري',
     caseSensitive: false,
     unicode: true,
   );
@@ -46,6 +46,18 @@ class ReceiptReader {
     caseSensitive: false,
     unicode: true,
   );
+
+  /// A refund or return slip. Specific on purpose: "no refund" is printed on
+  /// many ordinary receipts.
+  static final RegExp _refund = RegExp(
+    r'refund\s*receipt|total\s*refund|refunded\s*to|credit\s*note|return\s*receipt|إيصال\s*استرجاع|فاتورة\s*مرتجع|مرتجعات',
+    caseSensitive: false,
+    unicode: true,
+  );
+
+  /// The commercial registration line under the shop's name: "CR: 86184-2".
+  static final RegExp _crLine = RegExp(r'^c\.?\s?r\.?\s*(?:no\.?|#)?\s*[:#]\s*\d',
+      caseSensitive: false);
 
   /// "Merchant Name: KARAK EXPRESS CAFE", "Biller: ZAIN BAHRAIN B.S.C".
   static final RegExp _shopLabel = RegExp(
@@ -84,6 +96,16 @@ class ReceiptReader {
         status: ExtractionStatus.nonTransaction,
         kind: MessageKind.declined,
         currency: _currency(text),
+        templateVersion: kReceiptReaderVersion,
+      );
+    }
+
+    if (_refund.hasMatch(text)) {
+      return ExtractionResult(
+        status: ExtractionStatus.nonTransaction,
+        kind: MessageKind.refund,
+        currency: _currency(text),
+        merchantRaw: _labelledShop(lines) ?? _shop(lines),
         templateVersion: kReceiptReaderVersion,
       );
     }
@@ -312,12 +334,26 @@ class ReceiptReader {
     return null;
   }
 
+  bool _shopLine(String l) {
+    final letters = RegExp(r'[A-Za-z؀-ۿ]').allMatches(l).length;
+    return letters >= 3 && !_notShop.hasMatch(l) && !_amount.hasMatch(l);
+  }
+
+  /// The shop's name. Thermal receipts print it just above the "CR: ..."
+  /// line, often after a logo and with an Arabic name beside the Latin one:
+  /// then the last Latin-script line before the CR line (else the last line
+  /// of any script). Without a CR line, the first plausible line of the top.
   String? _shop(List<String> lines) {
+    final cr = lines.take(8).toList().indexWhere(_crLine.hasMatch);
+    if (cr > 0) {
+      final above = [for (final l in lines.take(cr)) if (_shopLine(l)) l];
+      if (above.isNotEmpty) {
+        final latin = above.where((l) => RegExp(r'[A-Za-z]{3}').hasMatch(l));
+        return (latin.isNotEmpty ? latin.last : above.last).replaceAll(RegExp(r'\s+'), ' ');
+      }
+    }
     for (final l in lines.take(4)) {
-      final letters = RegExp(r'[A-Za-z؀-ۿ]').allMatches(l).length;
-      if (letters < 3) continue;
-      if (_notShop.hasMatch(l) || _amount.hasMatch(l)) continue;
-      return l.replaceAll(RegExp(r'\s+'), ' ');
+      if (_shopLine(l)) return l.replaceAll(RegExp(r'\s+'), ' ');
     }
     return null;
   }
