@@ -138,6 +138,8 @@ void main() {
     await tester.scrollUntilVisible(find.byKey(const Key('savingsCard')), 300,
         scrollable: find.byType(Scrollable).first);
     expect(find.text('Subscriptions BHD 3.500 a month'), findsOneWidget);
+    await tester.ensureVisible(find.byKey(const Key('savingsCard')));
+    await tester.pumpAndSettle();
     await tester.tap(find.byKey(const Key('savingsCard')));
     await tester.pumpAndSettle();
 
