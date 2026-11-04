@@ -14,12 +14,20 @@ class FakeVoice implements VoiceInput {
   final bool fail;
   final List<String> languages = [];
 
+  String failCode = 'no_speech';
+
   @override
   Future<String?> listen({required String language}) async {
     languages.add(language);
-    if (fail) throw PlatformException(code: 'no_speech');
+    if (fail) throw PlatformException(code: failCode);
     return said;
   }
+
+  @override
+  Future<void> stop() async {}
+
+  @override
+  Stream<String> get partials => const Stream.empty();
 }
 
 final DateTime now = DateTime.utc(2026, 11, 4, 9); // 12:00 in Bahrain
@@ -83,11 +91,10 @@ void main() {
     expect(find.text('No unit written: check the amount'), findsOneWidget);
   });
 
-  testWidgets('speaking fills the text in Bahraini Arabic', (tester) async {
+  testWidgets('opening the sheet starts listening in Bahraini Arabic',
+      (tester) async {
     final voice = FakeVoice('دفعت دينار ونص في البرادة');
     await pump(tester, voice: voice, locale: const Locale('ar'));
-    await tester.tap(find.byKey(const Key('quickAddSpeak')));
-    await tester.pumpAndSettle();
     expect(voice.languages, ['ar-BH']);
     expect(find.byKey(const Key('draft_0')), findsOneWidget);
     expect(find.text('البراده'), findsOneWidget);
@@ -97,8 +104,6 @@ void main() {
       (tester) async {
     final voice = FakeVoice('كرك بربيتين');
     await pump(tester, voice: voice);
-    await tester.tap(find.byKey(const Key('quickAddSpeak')));
-    await tester.pumpAndSettle();
     await tester.tap(find.byKey(const Key('speechEnglish')));
     await tester.pumpAndSettle();
     await tester.tap(find.byKey(const Key('quickAddSpeak')));
@@ -111,9 +116,13 @@ void main() {
 
   testWidgets('no speech service on the phone is explained', (tester) async {
     await pump(tester, voice: FakeVoice(null, fail: true));
-    await tester.tap(find.byKey(const Key('quickAddSpeak')));
-    await tester.pumpAndSettle();
     expect(find.text('Voice input is not available on this phone'),
+        findsOneWidget);
+  });
+
+  testWidgets('a refused microphone is explained', (tester) async {
+    await pump(tester, voice: FakeVoice(null, fail: true)..failCode = 'no_permission');
+    expect(find.text('Allow the microphone for Beaza to add by voice'),
         findsOneWidget);
   });
 

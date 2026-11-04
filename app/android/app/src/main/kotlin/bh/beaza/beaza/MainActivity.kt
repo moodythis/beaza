@@ -10,7 +10,10 @@ import android.content.pm.PackageManager
 import android.net.Uri
 import android.os.Build
 import android.provider.Settings
+import android.os.Bundle
+import android.speech.RecognitionListener
 import android.speech.RecognizerIntent
+import android.speech.SpeechRecognizer
 import java.io.IOException
 import io.flutter.embedding.android.FlutterActivity
 import io.flutter.embedding.engine.FlutterEngine
@@ -22,7 +25,10 @@ class MainActivity : FlutterActivity(), PermissionRequester {
     private var pendingSms: MethodChannel.Result? = null
     private var pendingNotify: MethodChannel.Result? = null
     private var pendingSave: Pair<String, MethodChannel.Result>? = null
-    private var pendingListen: MethodChannel.Result? = null
+    private var pendingMic: Pair<String, MethodChannel.Result>? = null
+    private var pendingSpeech: MethodChannel.Result? = null
+    private var recognizer: SpeechRecognizer? = null
+    private var speechEvents: EventChannel.EventSink? = null
     private var smsReceiver: BroadcastReceiver? = null
 
     override fun configureFlutterEngine(flutterEngine: FlutterEngine) {
@@ -31,6 +37,18 @@ class MainActivity : FlutterActivity(), PermissionRequester {
         Channels.attach(this, messenger, this)
         uiAlive = true
 
+        EventChannel(messenger, "beaza/speech_events").setStreamHandler(
+            object : EventChannel.StreamHandler {
+                override fun onListen(arguments: Any?, events: EventChannel.EventSink) {
+                    speechEvents = events
+                }
+
+                override fun onCancel(arguments: Any?) {
+                    speechEvents = null
+                }
+            },
+        )
+
         EventChannel(messenger, "beaza/sms_events").setStreamHandler(
             object : EventChannel.StreamHandler {
                 override fun onListen(arguments: Any?, events: EventChannel.EventSink) {
@@ -38,7 +56,7 @@ class MainActivity : FlutterActivity(), PermissionRequester {
                 }
 
                 override fun onCancel(arguments: Any?) {
-                    stopListening()
+                    stopSmsListening()
                 }
             },
         )
@@ -90,6 +108,17 @@ class MainActivity : FlutterActivity(), PermissionRequester {
                 pendingSms?.success(Channels.hasSms(this))
                 pendingSms = null
             }
+            MIC_PERMISSION_REQUEST -> {
+                val (language, result) = pendingMic ?: return
+                pendingMic = null
+                if (grantResults.isNotEmpty() &&
+                    grantResults[0] == PackageManager.PERMISSION_GRANTED
+                ) {
+                    startRecognizer(language, result)
+                } else {
+                    result.error("no_permission", "Microphone not allowed", null)
+                }
+            }
             NOTIFY_PERMISSION_REQUEST -> {
                 pendingNotify?.success(
                     grantResults.isNotEmpty() &&
@@ -137,46 +166,91 @@ class MainActivity : FlutterActivity(), PermissionRequester {
     }
 
     /**
-     * Opens the phone's own speech screen and answers with what was said, or
-     * null if cancelled. Beaza never records audio itself (no microphone
-     * permission). The phone's speech service may use the internet; the
-     * quick-add screen says so.
+     * Listens inside Beaza (no Google screen on top). Audio goes from the
+     * microphone to the phone's speech service, which may use the internet;
+     * Beaza keeps only the text. Answers the text, or null when nothing was
+     * heard. Live text goes to the `beaza/speech_events` stream.
      */
     override fun listen(language: String, result: MethodChannel.Result) {
-        if (pendingListen != null) {
-            result.error("busy", "Voice input is already open", null)
+        if (checkSelfPermission(Manifest.permission.RECORD_AUDIO) !=
+            PackageManager.PERMISSION_GRANTED
+        ) {
+            if (pendingMic != null) {
+                result.error("busy", "A permission request is already open", null)
+                return
+            }
+            pendingMic = language to result
+            requestPermissions(arrayOf(Manifest.permission.RECORD_AUDIO), MIC_PERMISSION_REQUEST)
             return
         }
+        startRecognizer(language, result)
+    }
+
+    override fun stopListening() {
+        recognizer?.stopListening()
+    }
+
+    private fun startRecognizer(language: String, result: MethodChannel.Result) {
+        if (!SpeechRecognizer.isRecognitionAvailable(this)) {
+            result.error("no_speech", "No speech service on this phone", null)
+            return
+        }
+        finishSpeech(null, null) // a new request replaces an open one
+        val r = SpeechRecognizer.createSpeechRecognizer(this)
+        r.setRecognitionListener(object : RecognitionListener {
+            override fun onReadyForSpeech(params: Bundle?) {
+                speechEvents?.success(mapOf("state" to "listening"))
+            }
+            override fun onBeginningOfSpeech() {}
+            override fun onRmsChanged(rmsdB: Float) {}
+            override fun onBufferReceived(buffer: ByteArray?) {}
+            override fun onEndOfSpeech() {
+                speechEvents?.success(mapOf("state" to "processing"))
+            }
+            override fun onError(error: Int) = finishSpeech(null, error)
+            override fun onResults(results: Bundle?) = finishSpeech(
+                results?.getStringArrayList(SpeechRecognizer.RESULTS_RECOGNITION)?.firstOrNull(),
+                null,
+            )
+            override fun onPartialResults(partialResults: Bundle?) {
+                val text = partialResults
+                    ?.getStringArrayList(SpeechRecognizer.RESULTS_RECOGNITION)
+                    ?.firstOrNull()
+                if (!text.isNullOrBlank()) speechEvents?.success(mapOf("partial" to text))
+            }
+            override fun onEvent(eventType: Int, params: Bundle?) {}
+        })
         val intent = Intent(RecognizerIntent.ACTION_RECOGNIZE_SPEECH).apply {
             putExtra(RecognizerIntent.EXTRA_LANGUAGE_MODEL, RecognizerIntent.LANGUAGE_MODEL_FREE_FORM)
             putExtra(RecognizerIntent.EXTRA_LANGUAGE, language)
-            // No EXTRA_PREFER_OFFLINE: on a real phone (4 Nov 2026) asking
-            // for offline made Google's screen answer "Voice search isn't
-            // available" when no offline language pack was installed.
+            putExtra(RecognizerIntent.EXTRA_PARTIAL_RESULTS, true)
             putExtra(RecognizerIntent.EXTRA_MAX_RESULTS, 1)
+            putExtra(RecognizerIntent.EXTRA_CALLING_PACKAGE, packageName)
         }
-        pendingListen = result
-        try {
-            startActivityForResult(intent, LISTEN_REQUEST)
-        } catch (e: ActivityNotFoundException) {
-            pendingListen = null
-            result.error("no_speech", e.message, null)
+        pendingSpeech = result
+        recognizer = r
+        r.startListening(intent)
+    }
+
+    private fun finishSpeech(text: String?, error: Int?) {
+        val result = pendingSpeech
+        pendingSpeech = null
+        recognizer?.destroy()
+        recognizer = null
+        if (result == null) return
+        when (error) {
+            null, SpeechRecognizer.ERROR_NO_MATCH, SpeechRecognizer.ERROR_SPEECH_TIMEOUT ->
+                result.success(text)
+            SpeechRecognizer.ERROR_INSUFFICIENT_PERMISSIONS ->
+                result.error("no_permission", "Microphone not allowed", null)
+            SpeechRecognizer.ERROR_NETWORK, SpeechRecognizer.ERROR_NETWORK_TIMEOUT ->
+                result.error("network", "Speech needs the internet", null)
+            else -> result.error("speech_error", "Speech error $error", null)
         }
     }
 
     override fun onActivityResult(requestCode: Int, resultCode: Int, data: Intent?) {
         super.onActivityResult(requestCode, resultCode, data)
-        if (requestCode == LISTEN_REQUEST) {
-            val result = pendingListen ?: return
-            pendingListen = null
-            val text = if (resultCode == RESULT_OK) {
-                data?.getStringArrayListExtra(RecognizerIntent.EXTRA_RESULTS)?.firstOrNull()
-            } else {
-                null
-            }
-            result.success(text)
-            return
-        }
         if (requestCode != SAVE_FILE_REQUEST) return
         val (text, result) = pendingSave ?: return
         pendingSave = null
@@ -199,7 +273,7 @@ class MainActivity : FlutterActivity(), PermissionRequester {
 
     /** While the screen exists it handles new SMS itself (no background run). */
     private fun startListening(events: EventChannel.EventSink) {
-        stopListening()
+        stopSmsListening()
         val receiver = object : BroadcastReceiver() {
             override fun onReceive(context: Context, intent: Intent) {
                 events.success(System.currentTimeMillis())
@@ -214,13 +288,14 @@ class MainActivity : FlutterActivity(), PermissionRequester {
         smsReceiver = receiver
     }
 
-    private fun stopListening() {
+    private fun stopSmsListening() {
         smsReceiver?.let { unregisterReceiver(it) }
         smsReceiver = null
     }
 
     override fun onDestroy() {
-        stopListening()
+        finishSpeech(null, null)
+        stopSmsListening()
         uiAlive = false
         super.onDestroy()
     }
@@ -229,7 +304,7 @@ class MainActivity : FlutterActivity(), PermissionRequester {
         private const val SMS_PERMISSION_REQUEST = 4101
         private const val NOTIFY_PERMISSION_REQUEST = 4102
         private const val SAVE_FILE_REQUEST = 4103
-        private const val LISTEN_REQUEST = 4104
+        private const val MIC_PERMISSION_REQUEST = 4105
 
         /** True while the app screen's engine is running. */
         @Volatile

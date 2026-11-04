@@ -445,7 +445,7 @@
   "quickAddCheck": "No unit written: check the amount",
   "quickAddSave": "Add",
   "quickAddUnnamed": "Expense",
-  "quickAddPrivacy": "Your phone's speech service turns your voice into text and may use the internet. Beaza records nothing.",
+  "quickAddPrivacy": "Your phone's speech service turns your voice into text and may use the internet. Beaza keeps only the text, never the audio.",
   "voiceUnavailable": "Voice input is not available on this phone",
   "quickAddTotal": "Total {total}",
   "@quickAddTotal": {
@@ -453,5 +453,8 @@
       "total": { "type": "String" }
     }
   },
-  "quickAddSpeechLanguage": "Speech:"
+  "quickAddSpeechLanguage": "Speech:",
+  "quickAddListening": "Listening… tap when done",
+  "voiceNoPermission": "Allow the microphone for Beaza to add by voice",
+  "voiceNetwork": "Voice needs the internet right now"
 }

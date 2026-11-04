@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:beaza/data/services/voice_input.dart';
 import 'package:beaza/l10n/app_localizations.dart';
 import 'package:beaza/ui/core/category_style.dart';
@@ -7,7 +9,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 
 /// Type or say cash expenses in everyday words; they are read on the phone
-/// (beaza_assistant) and only saved when the person taps Add.
+/// (beaza_assistant) and only saved when the person taps Add. With voice,
+/// listening starts as soon as the sheet opens.
 Future<void> showQuickAdd(BuildContext context, HomeViewModel viewModel) =>
     showModalBottomSheet<void>(
       context: context,
@@ -34,19 +37,47 @@ class _QuickAddSheetState extends State<QuickAddSheet> {
   /// hear "كرك بربيتين" as "Karak do Rupaiya").
   bool _arabicSpeech = true;
 
+  /// Words heard so far while listening.
+  String _partial = '';
+  StreamSubscription<String>? _partials;
+
+  @override
+  void initState() {
+    super.initState();
+    final voice = widget.viewModel.voice;
+    if (voice != null) {
+      _partials = voice.partials.listen((p) {
+        if (mounted && _listening) setState(() => _partial = p);
+      }, onError: (Object _) {});
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (mounted) _speak();
+      });
+    }
+  }
+
   @override
   void dispose() {
+    _partials?.cancel();
+    if (_listening) widget.viewModel.voice?.stop();
     _text.dispose();
     super.dispose();
   }
 
   Future<void> _speak() async {
     final voice = widget.viewModel.voice;
-    if (voice == null || _listening) return;
+    if (voice == null) return;
+    if (_listening) {
+      // Second tap: done talking.
+      await voice.stop();
+      return;
+    }
     final l10n = AppLocalizations.of(context);
     final messenger = ScaffoldMessenger.of(context);
     final language = speechLanguage(_arabicSpeech ? 'ar' : 'en');
-    setState(() => _listening = true);
+    setState(() {
+      _listening = true;
+      _partial = '';
+    });
     try {
       final said = await voice.listen(language: language);
       if (said != null && said.trim().isNotEmpty) {
@@ -54,10 +85,20 @@ class _QuickAddSheetState extends State<QuickAddSheet> {
         // A new line per recording: each one is its own item.
         _text.text = before.isEmpty ? said : '$before\n$said';
       }
-    } on PlatformException {
-      messenger.showSnackBar(SnackBar(content: Text(l10n.voiceUnavailable)));
+    } on PlatformException catch (e) {
+      final message = switch (e.code) {
+        'no_permission' => l10n.voiceNoPermission,
+        'network' => l10n.voiceNetwork,
+        _ => l10n.voiceUnavailable,
+      };
+      messenger.showSnackBar(SnackBar(content: Text(message)));
     } finally {
-      if (mounted) setState(() => _listening = false);
+      if (mounted) {
+        setState(() {
+          _listening = false;
+          _partial = '';
+        });
+      }
     }
   }
 
@@ -86,19 +127,32 @@ class _QuickAddSheetState extends State<QuickAddSheet> {
             decoration: InputDecoration(
               hintText: l10n.quickAddHint,
               border: const OutlineInputBorder(),
-              suffixIcon: widget.viewModel.voice == null
-                  ? null
-                  : IconButton(
-                      key: const Key('quickAddSpeak'),
-                      tooltip: l10n.quickAddSpeak,
-                      icon: Icon(_listening
-                          ? Icons.hearing
-                          : Icons.keyboard_voice_outlined),
-                      onPressed: _speak,
-                    ),
             ),
           ),
           if (widget.viewModel.voice != null) ...[
+            const SizedBox(height: 12),
+            FilledButton.tonalIcon(
+              key: const Key('quickAddSpeak'),
+              onPressed: _speak,
+              style: _listening
+                  ? FilledButton.styleFrom(
+                      backgroundColor: theme.colorScheme.errorContainer,
+                      foregroundColor: theme.colorScheme.onErrorContainer,
+                    )
+                  : null,
+              icon: Icon(_listening ? Icons.stop_circle_outlined : Icons.mic),
+              label: Text(_listening ? l10n.quickAddListening : l10n.quickAddSpeak),
+            ),
+            if (_listening && _partial.isNotEmpty)
+              Padding(
+                padding: const EdgeInsets.only(top: 8),
+                child: Text(
+                  _partial,
+                  key: const Key('quickAddPartial'),
+                  style: theme.textTheme.bodyLarge
+                      ?.copyWith(fontStyle: FontStyle.italic),
+                ),
+              ),
             const SizedBox(height: 8),
             Wrap(
               spacing: 8,

@@ -19,6 +19,7 @@ interface PermissionRequester {
     fun saveText(name: String, text: String, result: MethodChannel.Result)
     fun openAppSettings(result: MethodChannel.Result)
     fun listen(language: String, result: MethodChannel.Result)
+    fun stopListening()
 }
 
 /**
@@ -97,6 +98,10 @@ object Channels {
                     val language = call.argument<String>("language") ?: "ar-BH"
                     permissions?.listen(language, result)
                         ?: result.error("no_screen", "Voice input needs the app screen", null)
+                }
+                "stopListening" -> {
+                    permissions?.stopListening()
+                    result.success(null)
                 }
                 "saveText" -> {
                     val name = call.argument<String>("name") ?: "beaza-export.json"

@@ -232,7 +232,7 @@
   "quickAddCheck": "ما كُتبت العملة، تأكد من المبلغ",
   "quickAddSave": "أضف",
   "quickAddUnnamed": "مصروف",
-  "quickAddPrivacy": "خدمة الكلام في جوالك تحوّل صوتك لنص، وقد تستخدم الإنترنت. بيزة ما تسجّل شي.",
+  "quickAddPrivacy": "خدمة الكلام في جوالك تحوّل صوتك لنص، وقد تستخدم الإنترنت. بيزة تحفظ النص بس، وما تحفظ الصوت أبداً.",
   "voiceUnavailable": "الإدخال بالصوت غير متوفر في هذا الجوال",
   "quickAddTotal": "المجموع {total}",
   "@quickAddTotal": {
@@ -240,5 +240,8 @@
       "total": { "type": "String" }
     }
   },
-  "quickAddSpeechLanguage": "لغة الكلام:"
+  "quickAddSpeechLanguage": "لغة الكلام:",
+  "quickAddListening": "أسمعك… اضغط لما تخلص",
+  "voiceNoPermission": "اسمح لبيزة باستخدام المايك علشان تضيف بالصوت",
+  "voiceNetwork": "الصوت يحتاج إنترنت الحين"
 }
