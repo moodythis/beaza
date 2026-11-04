@@ -90,6 +90,7 @@ Future<void> main() async {
       intake: buildIntake(storage),
       device: device,
       voice: PlatformVoiceInput(),
+      preferences: storage.preferences,
       receipts: PlatformReceiptScanner(),
       savings: SavingsViewModel(
         repo: SavingsRepository(storage.preferences),

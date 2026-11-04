@@ -1,7 +1,9 @@
 import 'dart:async';
 
 import 'package:beaza/data/repositories/ledger_repository.dart';
+import 'package:beaza/data/repositories/preferences_store.dart';
 import 'package:beaza/data/repositories/settings_repository.dart';
+import 'package:beaza/domain/use_cases/daily_budget.dart';
 import 'package:beaza/data/services/device_service.dart';
 import 'package:beaza/data/services/receipt_scanner.dart';
 import 'package:beaza/data/services/voice_input.dart';
@@ -50,12 +52,14 @@ class HomeViewModel extends ChangeNotifier {
     this.coach,
     this.savings,
     this.export,
+    PreferencesStore? preferences,
     DateTime Function()? clock,
     this.arrivalDelay = const Duration(seconds: 3),
   })  : _ledger = ledger,
         _settings = settings,
         _intake = intake,
         _device = device,
+        _prefs = preferences,
         _clock = clock ?? DateTime.now {
     _ledger.addListener(load);
     _settings.addListener(load);
@@ -70,6 +74,7 @@ class HomeViewModel extends ChangeNotifier {
   final SettingsRepository _settings;
   final MessageIntake? _intake;
   final DeviceService? _device;
+  final PreferencesStore? _prefs;
   final DateTime Function() _clock;
 
   /// Speech to text for quick add; null hides the microphone.
@@ -157,7 +162,18 @@ class HomeViewModel extends ChangeNotifier {
     try {
       final entries = await _ledger.entries();
       _duplicates = await _ledger.countDuplicates();
-      final settings = await _settings.load();
+      var settings = await _settings.load();
+      _budget = await _readBudget();
+      final plan = _budget;
+      if (plan != null) {
+        // The limit follows the month: each day it is worked out again from
+        // what is left, so yesterday's overspending is already in it.
+        final fils = safeDailyLimitFils(plan, entries, Day.of(_clock()));
+        if (fils != settings.dailyLimitFils) {
+          settings = settings.copyWith(dailyLimitFils: fils);
+          await _settings.save(settings);
+        }
+      }
       final guardrail = Guardrail(settings);
       final day = Day.of(_clock());
       _state = HomeState(
@@ -243,7 +259,42 @@ class HomeViewModel extends ChangeNotifier {
   Future<void> addExpense({required int amountFils, String? merchant}) =>
       _ledger.addManual(amountFils: amountFils, merchant: merchant, at: _clock());
 
+  BudgetPlan? _budget;
+
+  /// The income and fixed commitments the limit is worked out from; null
+  /// while the person sets the limit by hand.
+  BudgetPlan? get budget => _budget;
+
+  Future<BudgetPlan?> _readBudget() async {
+    final prefs = _prefs;
+    if (prefs == null) return null;
+    final income = int.tryParse(await prefs.read(_incomeKey) ?? '');
+    if (income == null || income <= 0) return null;
+    final fixed = int.tryParse(await prefs.read(_fixedKey) ?? '') ?? 0;
+    return BudgetPlan(incomeFils: income, fixedFils: fixed < 0 ? 0 : fixed);
+  }
+
+  static const _incomeKey = 'budget.income';
+  static const _fixedKey = 'budget.fixed';
+
+  /// Turns on the worked-out limit.
+  Future<void> setBudget(BudgetPlan plan) async {
+    await _prefs?.write(_incomeKey, '${plan.incomeFils}');
+    await _prefs?.write(_fixedKey, '${plan.fixedFils}');
+    await load();
+  }
+
+  /// Back to a limit set by hand; the last worked-out value stays as it is.
+  Future<void> clearBudget() async {
+    await _prefs?.write(_incomeKey, null);
+    await _prefs?.write(_fixedKey, null);
+    await load();
+  }
+
   Future<void> setDailyLimit(int fils) async {
+    // A hand-set limit replaces the worked-out one.
+    await _prefs?.write(_incomeKey, null);
+    await _prefs?.write(_fixedKey, null);
     final current = await _settings.load();
     await _settings.save(current.copyWith(dailyLimitFils: fils));
   }

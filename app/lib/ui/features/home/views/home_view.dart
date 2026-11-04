@@ -3,6 +3,7 @@ import 'package:beaza/data/repositories/sync_repository.dart';
 import 'package:beaza/domain/use_cases/savings_tips.dart';
 import 'package:beaza/domain/use_cases/spending_by_category.dart';
 import 'package:beaza/l10n/app_localizations.dart';
+import 'package:beaza/ui/features/home/views/budget_dialog.dart';
 import 'package:beaza/ui/core/alert_text.dart';
 import 'package:beaza/ui/core/amount_dialog.dart';
 import 'package:beaza/ui/core/category_picker.dart';
@@ -156,6 +157,8 @@ class HomeView extends StatelessWidget {
               LimitCard(
                 summary: state.summary,
                 onEditLimit: () => _editLimit(context),
+                onBudget: () => _editBudget(context),
+                fromBudget: viewModel.budget != null,
               ),
               if (viewModel.smsAllowed == false) ...[
                 const SizedBox(height: 12),
@@ -269,6 +272,18 @@ class HomeView extends StatelessWidget {
     await viewModel.setCategory(entry, picked);
   }
 
+  Future<void> _editBudget(BuildContext context) async {
+    final choice = await showBudgetDialog(context, current: viewModel.budget);
+    if (choice == null || !context.mounted) return;
+    final plan = choice.plan;
+    if (plan != null) {
+      await viewModel.setBudget(plan);
+    } else {
+      await viewModel.clearBudget();
+      if (context.mounted) await _editLimit(context);
+    }
+  }
+
   Future<void> _editLimit(BuildContext context) async {
     final l10n = AppLocalizations.of(context);
     final current = viewModel.state?.summary.baseLimitFils ?? 0;
@@ -287,10 +302,14 @@ class LimitCard extends StatelessWidget {
     super.key,
     required this.summary,
     required this.onEditLimit,
+    this.onBudget,
+    this.fromBudget = false,
   });
 
   final DaySummary summary;
   final VoidCallback onEditLimit;
+  final VoidCallback? onBudget;
+  final bool fromBudget;
 
   @override
   Widget build(BuildContext context) {
@@ -300,12 +319,23 @@ class LimitCard extends StatelessWidget {
 
     if (summary.limitFils <= 0) {
       return Card(
-        child: ListTile(
-          key: const Key('setLimit'),
-          title: Text(l10n.setLimitTitle),
-          subtitle: Text(l10n.spentToday(spent)),
-          trailing: const Icon(Icons.chevron_right),
-          onTap: onEditLimit,
+        child: Column(
+          children: [
+            ListTile(
+              key: const Key('setLimit'),
+              title: Text(l10n.setLimitTitle),
+              subtitle: Text(l10n.spentToday(spent)),
+              trailing: const Icon(Icons.chevron_right),
+              onTap: onEditLimit,
+            ),
+            if (onBudget != null)
+              TextButton.icon(
+                key: const Key('budgetOpen'),
+                onPressed: onBudget,
+                icon: const Icon(Icons.calculate_outlined),
+                label: Text(l10n.budgetFromIncome),
+              ),
+          ],
         ),
       );
     }
@@ -365,6 +395,14 @@ class LimitCard extends StatelessWidget {
               key: const Key('level'),
               style: theme.textTheme.bodyMedium?.copyWith(color: color),
             ),
+            if (onBudget != null)
+              TextButton.icon(
+                key: const Key('budgetOpen'),
+                onPressed: onBudget,
+                icon: const Icon(Icons.calculate_outlined),
+                label: Text(
+                    fromBudget ? l10n.budgetNote : l10n.budgetFromIncome),
+              ),
           ],
         ),
       ),

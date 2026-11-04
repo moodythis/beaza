@@ -641,5 +641,14 @@
       "points": { "type": "int" }
     }
   },
-  "rewardsCodeDemo": "Demo code: no real shop accepts it."
+  "rewardsCodeDemo": "Demo code: no real shop accepts it.",
+  "budgetTitle": "Work out my daily limit",
+  "budgetExplain": "Beaza divides what is left of your month by the days left. If one day goes over, the next days get a little less, so the month still lasts.",
+  "budgetIncome": "Monthly income (BHD)",
+  "budgetFixed": "Fixed commitments (BHD)",
+  "budgetFixedHint": "Rent, installments, subscriptions. Do not add these again as expenses, or they are counted twice (exclude them from the list if they arrive by message).",
+  "budgetInvalid": "Enter your income; fixed commitments must be less than it.",
+  "budgetByHand": "Set by hand",
+  "budgetFromIncome": "Work it out from my income",
+  "budgetNote": "Worked out from your income"
 }
