@@ -1,0 +1,6 @@
+# Keep LF on every system. Some tests compare generated files byte for byte,
+# and they fail on Windows when Git checks files out with CRLF.
+* text=auto eol=lf
+
+*.png binary
+*.jks binary
