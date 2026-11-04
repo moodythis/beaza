@@ -465,7 +465,7 @@
   "receiptAmount": "Amount (BHD)",
   "receiptShop": "Shop",
   "receiptNoAmount": "No amount found. Type it from the receipt.",
-  "receiptTotalGuessed": "No total line found, so the largest amount was taken. Check it.",
+  "receiptTotalGuessed": "No total line found, so the amount that repeats most was taken. Check it.",
   "receiptCurrencyAssumed": "No currency printed: BHD assumed.",
   "receiptNoDate": "No date printed: the current time is used.",
   "receiptSkip": "Don't add",

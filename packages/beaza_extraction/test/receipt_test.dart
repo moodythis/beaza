@@ -159,4 +159,37 @@ Total Paid BD 0.300
     final old = r.read('SHOP\n04/03/2026 10:00\nTOTAL 1.500\n', now: now);
     expect(old.timestamp, DateTime.utc(2026, 3, 4, 7));
   });
+
+  test('the second real receipt: labels misread, the repeated amount is the total', () {
+    // 4 November 2026, same shop, two items. The photo was taken at an angle
+    // and the app found no "total" line: it took 8.000 (a quantity) instead
+    // of 1.100. Labels are misspelt below to stand for that.
+    final x = r.read('''
+KIDS PORT GAMES
+Date 11/03/2026 10:56 PM
+#1. SmallFrisc
+1.000 x 0.300
+0.300
+#2. Snacks
+8.000 x 0.100
+0.800
+Subtotai:
+Totai:
+Card (11/03/2026)
+Totai Paid
+BD 1.100
+BD 1.100
+BD 1.100
+BD 1.100
+''', now: now);
+    expect(x.amountFils, 1100);
+    expect(x.timestamp, DateTime.utc(2026, 11, 3, 19, 56));
+    expect(x.merchantRaw, 'KIDS PORT GAMES');
+    expect(x.flags, contains(ExtractionFlag.totalGuessed));
+  });
+
+  test('a quantity line is never taken as the total', () {
+    final x = r.read('SHOP\n2.000 x 0.500\n1.000\n', now: now);
+    expect(x.amountFils, 1000);
+  });
 }

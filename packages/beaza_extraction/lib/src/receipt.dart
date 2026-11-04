@@ -70,7 +70,7 @@ class ReceiptReader {
     var found = _byKeyword(lines, _grandTotal) ?? _byKeyword(lines, _total);
     var confidence = found == null ? 0.0 : (found.$2 ? 0.9 : 0.8);
     if (found == null) {
-      final guess = _largest(lines);
+      final guess = _guess(lines);
       if (guess != null) {
         found = (guess, true);
         confidence = 0.4;
@@ -172,13 +172,28 @@ class ReceiptReader {
     return last;
   }
 
-  int? _largest(List<String> lines) {
-    int? best;
+  /// "8.000 x 0.100": a quantity times a unit price, never the total.
+  static final RegExp _quantityLine = RegExp(r'\d\s*[x×*]\s*\d', caseSensitive: false);
+
+  /// With no total line (OCR may misread a label): the amount that appears
+  /// most often, since a till prints the total again as subtotal, card and
+  /// paid; when every amount appears once, the largest. Quantity lines,
+  /// cash and change are left out.
+  int? _guess(List<String> lines) {
+    final counts = <int, int>{};
     for (final l in lines) {
-      if (_skip(l)) continue;
+      if (_skip(l) || _quantityLine.hasMatch(l)) continue;
       for (final m in _amount.allMatches(l)) {
         final f = _fils(m);
-        if (f > 0 && (best == null || f > best)) best = f;
+        if (f > 0) counts[f] = (counts[f] ?? 0) + 1;
+      }
+    }
+    int? best;
+    for (final e in counts.entries) {
+      if (best == null ||
+          e.value > counts[best]! ||
+          (e.value == counts[best] && e.key > best)) {
+        best = e.key;
       }
     }
     return best;
