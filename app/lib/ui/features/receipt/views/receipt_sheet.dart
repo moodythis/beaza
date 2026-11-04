@@ -158,7 +158,10 @@ class _ReceiptSheetState extends State<ReceiptSheet> {
     final r = vm.result!;
     final foreign = r.currency != null && r.currency != 'BHD';
     final notes = <String>[
-      if (r.amountFils == null) l10n.receiptNoAmount,
+      if (r.kind == MessageKind.declined)
+        l10n.receiptDeclined
+      else if (r.amountFils == null)
+        l10n.receiptNoAmount,
       if (r.flags.contains(ExtractionFlag.totalGuessed)) l10n.receiptTotalGuessed,
       if (r.flags.contains(ExtractionFlag.currencyAssumed)) l10n.receiptCurrencyAssumed,
       if (foreign) l10n.receiptForeign(r.currency!),
