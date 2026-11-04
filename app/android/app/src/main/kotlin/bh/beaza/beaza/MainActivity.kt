@@ -323,7 +323,7 @@ class MainActivity : FlutterActivity(), PermissionRequester {
                 recognizer.process(image)
                     .addOnSuccessListener { text -> result.success(text.text) }
                     .addOnFailureListener { e ->
-                        result.error("ocr", "recognize: ${e.javaClass.simpleName}: ${e.message}", null)
+                        result.error("ocr", "recognize: ${describe(e)}", null)
                     }
                     .addOnCompleteListener {
                         recognizer.close()
@@ -332,11 +332,16 @@ class MainActivity : FlutterActivity(), PermissionRequester {
             } catch (e: Throwable) {
                 file?.delete()
                 runOnUiThread {
-                    result.error("ocr", "load: ${e.javaClass.simpleName}: ${e.message}", null)
+                    result.error("ocr", "load: ${describe(e)}", null)
                 }
             }
         }.start()
     }
+
+    /** The error and the first lines of where it happened, for the person to send. */
+    private fun describe(e: Throwable): String =
+        "${e.javaClass.simpleName}: ${e.message}\n" +
+            e.stackTrace.take(6).joinToString("\n") { "${it.className.substringAfterLast('.')}.${it.methodName}:${it.lineNumber}" }
 
     /**
      * The picture as a bitmap of at most about 2400 px on its long side (a
