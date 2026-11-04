@@ -27,7 +27,17 @@ enum ValidationIssue {
 }
 
 /// Soft warnings: the result stays a transaction but the user should look.
-enum ExtractionFlag { foreignCurrency, timestampFromReceipt, dateMissing }
+enum ExtractionFlag {
+  foreignCurrency,
+  timestampFromReceipt,
+  dateMissing,
+
+  /// Receipts: no "total" line was found, the largest amount was taken.
+  totalGuessed,
+
+  /// Receipts: no currency was printed, BHD was assumed.
+  currencyAssumed,
+}
 
 /// Public result of the extraction pipeline (the library contract).
 ///

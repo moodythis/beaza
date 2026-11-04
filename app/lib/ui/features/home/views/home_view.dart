@@ -16,6 +16,8 @@ import 'package:beaza/ui/features/history/view_models/history_view_model.dart';
 import 'package:beaza/ui/features/history/views/history_view.dart';
 import 'package:beaza/ui/features/home/view_models/home_view_model.dart';
 import 'package:beaza/ui/features/home/views/quick_add_sheet.dart';
+import 'package:beaza/ui/features/receipt/view_models/receipt_view_model.dart';
+import 'package:beaza/ui/features/receipt/views/receipt_sheet.dart';
 import 'package:beaza/ui/features/review/view_models/review_view_model.dart';
 import 'package:beaza/ui/features/review/views/review_view.dart';
 import 'package:beaza_extraction/beaza_extraction.dart';
@@ -101,6 +103,23 @@ class HomeView extends StatelessWidget {
         mainAxisSize: MainAxisSize.min,
         crossAxisAlignment: CrossAxisAlignment.end,
         children: [
+          if (viewModel.receipts != null) ...[
+            FloatingActionButton.small(
+              key: const Key('addReceipt'),
+              heroTag: 'addReceipt',
+              tooltip: l10n.receiptTitle,
+              onPressed: () => showReceiptSheet(
+                context,
+                ReceiptViewModel(
+                  scanner: viewModel.receipts!,
+                  ledger: viewModel.ledger,
+                  clock: viewModel.now,
+                ),
+              ),
+              child: const Icon(Icons.receipt_long_outlined),
+            ),
+            const SizedBox(height: 12),
+          ],
           FloatingActionButton.small(
             key: const Key('quickAdd'),
             heroTag: 'quickAdd',

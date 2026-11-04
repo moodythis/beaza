@@ -56,3 +56,11 @@ kotlin {
 flutter {
     source = "../.."
 }
+
+dependencies {
+    // Receipt text recognition on the phone (Latin script; the model ships
+    // inside the app, so no download and no network is needed).
+    implementation("com.google.mlkit:text-recognition:16.0.1")
+    // FileProvider: the camera writes the photo to a temporary file.
+    implementation("androidx.core:core:1.13.1")
+}

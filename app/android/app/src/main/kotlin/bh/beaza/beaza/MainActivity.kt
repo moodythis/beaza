@@ -11,9 +11,15 @@ import android.net.Uri
 import android.os.Build
 import android.provider.Settings
 import android.os.Bundle
+import android.provider.MediaStore
 import android.speech.RecognitionListener
 import android.speech.RecognizerIntent
 import android.speech.SpeechRecognizer
+import androidx.core.content.FileProvider
+import com.google.mlkit.vision.common.InputImage
+import com.google.mlkit.vision.text.TextRecognition
+import com.google.mlkit.vision.text.latin.TextRecognizerOptions
+import java.io.File
 import java.io.IOException
 import io.flutter.embedding.android.FlutterActivity
 import io.flutter.embedding.engine.FlutterEngine
@@ -26,6 +32,8 @@ class MainActivity : FlutterActivity(), PermissionRequester {
     private var pendingNotify: MethodChannel.Result? = null
     private var pendingSave: Pair<String, MethodChannel.Result>? = null
     private var pendingMic: Pair<String, MethodChannel.Result>? = null
+    private var pendingScan: MethodChannel.Result? = null
+    private var cameraFile: File? = null
     private var pendingSpeech: MethodChannel.Result? = null
     private var recognizer: SpeechRecognizer? = null
     private var speechEvents: EventChannel.EventSink? = null
@@ -35,6 +43,7 @@ class MainActivity : FlutterActivity(), PermissionRequester {
         super.configureFlutterEngine(flutterEngine)
         val messenger = flutterEngine.dartExecutor.binaryMessenger
         Channels.attach(this, messenger, this)
+        clearReceiptPhotos()
         uiAlive = true
 
         EventChannel(messenger, "beaza/speech_events").setStreamHandler(
@@ -249,8 +258,87 @@ class MainActivity : FlutterActivity(), PermissionRequester {
         }
     }
 
+    /**
+     * A receipt photo (camera) or picture (gallery) to text, on the phone
+     * with ML Kit. A camera photo goes to a temporary file that is deleted as
+     * soon as its text is read, also on failure; a gallery picture is read in
+     * place and never copied. Answers the text, or null when cancelled.
+     */
+    override fun scanReceipt(source: String, result: MethodChannel.Result) {
+        if (pendingScan != null) {
+            result.error("busy", "A scan is already open", null)
+            return
+        }
+        pendingScan = result
+        try {
+            if (source == "camera") {
+                val dir = File(cacheDir, "receipts").apply { mkdirs() }
+                val file = File.createTempFile("receipt", ".jpg", dir)
+                cameraFile = file
+                val uri = FileProvider.getUriForFile(this, "$packageName.receipts", file)
+                val intent = Intent(MediaStore.ACTION_IMAGE_CAPTURE).apply {
+                    putExtra(MediaStore.EXTRA_OUTPUT, uri)
+                    addFlags(
+                        Intent.FLAG_GRANT_WRITE_URI_PERMISSION or Intent.FLAG_GRANT_READ_URI_PERMISSION,
+                    )
+                }
+                startActivityForResult(intent, SCAN_REQUEST)
+            } else {
+                val intent = Intent(Intent.ACTION_GET_CONTENT).apply {
+                    type = "image/*"
+                    addCategory(Intent.CATEGORY_OPENABLE)
+                }
+                startActivityForResult(intent, SCAN_REQUEST)
+            }
+        } catch (e: Exception) {
+            pendingScan = null
+            clearReceiptPhotos()
+            result.error(if (source == "camera") "no_camera" else "no_picker", e.message, null)
+        }
+    }
+
+    private fun readReceipt(resultCode: Int, data: Intent?) {
+        val result = pendingScan ?: return
+        pendingScan = null
+        val file = cameraFile
+        cameraFile = null
+        val uri = when {
+            resultCode != RESULT_OK -> null
+            file != null -> if (file.length() > 0) Uri.fromFile(file) else null
+            else -> data?.data
+        }
+        if (uri == null) {
+            file?.delete()
+            result.success(null)
+            return
+        }
+        try {
+            val image = InputImage.fromFilePath(this, uri)
+            val recognizer = TextRecognition.getClient(TextRecognizerOptions.DEFAULT_OPTIONS)
+            recognizer.process(image)
+                .addOnSuccessListener { text -> result.success(text.text) }
+                .addOnFailureListener { e -> result.error("ocr", e.message, null) }
+                .addOnCompleteListener {
+                    recognizer.close()
+                    file?.delete()
+                }
+        } catch (e: Exception) {
+            file?.delete()
+            result.error("ocr", e.message, null)
+        }
+    }
+
+    /** Anything left from a scan that was interrupted (the app was closed). */
+    private fun clearReceiptPhotos() {
+        File(cacheDir, "receipts").listFiles()?.forEach { it.delete() }
+    }
+
     override fun onActivityResult(requestCode: Int, resultCode: Int, data: Intent?) {
         super.onActivityResult(requestCode, resultCode, data)
+        if (requestCode == SCAN_REQUEST) {
+            readReceipt(resultCode, data)
+            return
+        }
         if (requestCode != SAVE_FILE_REQUEST) return
         val (text, result) = pendingSave ?: return
         pendingSave = null
@@ -305,6 +393,7 @@ class MainActivity : FlutterActivity(), PermissionRequester {
         private const val NOTIFY_PERMISSION_REQUEST = 4102
         private const val SAVE_FILE_REQUEST = 4103
         private const val MIC_PERMISSION_REQUEST = 4105
+        private const val SCAN_REQUEST = 4106
 
         /** True while the app screen's engine is running. */
         @Volatile

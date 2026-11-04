@@ -20,6 +20,7 @@ interface PermissionRequester {
     fun openAppSettings(result: MethodChannel.Result)
     fun listen(language: String, result: MethodChannel.Result)
     fun stopListening()
+    fun scanReceipt(source: String, result: MethodChannel.Result)
 }
 
 /**
@@ -98,6 +99,11 @@ object Channels {
                     val language = call.argument<String>("language") ?: "ar-BH"
                     permissions?.listen(language, result)
                         ?: result.error("no_screen", "Voice input needs the app screen", null)
+                }
+                "scanReceipt" -> {
+                    val source = call.argument<String>("source") ?: "gallery"
+                    permissions?.scanReceipt(source, result)
+                        ?: result.error("no_screen", "Scanning needs the app screen", null)
                 }
                 "stopListening" -> {
                     permissions?.stopListening()

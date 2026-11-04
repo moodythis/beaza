@@ -456,5 +456,43 @@
   "quickAddSpeechLanguage": "Speech:",
   "quickAddListening": "Listening… tap when done",
   "voiceNoPermission": "Allow the microphone for Beaza to add by voice",
-  "voiceNetwork": "Voice needs the internet right now"
+  "voiceNetwork": "Voice needs the internet right now",
+  "receiptTitle": "Add a receipt",
+  "receiptCamera": "Take a photo",
+  "receiptGallery": "Choose a picture or screenshot",
+  "receiptPrivacy": "The picture is read on this phone and not kept. Only what you confirm is saved.",
+  "receiptReading": "Reading…",
+  "receiptAmount": "Amount (BHD)",
+  "receiptShop": "Shop",
+  "receiptNoAmount": "No amount found. Type it from the receipt.",
+  "receiptTotalGuessed": "No total line found, so the largest amount was taken. Check it.",
+  "receiptCurrencyAssumed": "No currency printed: BHD assumed.",
+  "receiptNoDate": "No date printed: the current time is used.",
+  "receiptSkip": "Don't add",
+  "receiptAddAnyway": "Add anyway",
+  "receiptSave": "Add",
+  "receiptAgain": "Try another picture",
+  "receiptError": "Could not read the picture. Try again or add it by hand.",
+  "receiptNoCamera": "No camera app found on this phone.",
+  "receiptInvalid": "Type a valid amount",
+  "receiptForeign": "This receipt is in {currency}. Only BHD counts toward your limit, so it cannot be added.",
+  "@receiptForeign": {
+    "placeholders": {
+      "currency": { "type": "String" }
+    }
+  },
+  "receiptWhen": "When: {time}",
+  "@receiptWhen": {
+    "placeholders": {
+      "time": { "type": "String" }
+    }
+  },
+  "receiptDuplicate": "This looks already recorded: {shop} {amount} at {time}. Adding it would count it twice.",
+  "@receiptDuplicate": {
+    "placeholders": {
+      "shop": { "type": "String" },
+      "amount": { "type": "String" },
+      "time": { "type": "String" }
+    }
+  }
 }

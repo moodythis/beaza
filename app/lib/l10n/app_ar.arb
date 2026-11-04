@@ -243,5 +243,43 @@
   "quickAddSpeechLanguage": "لغة الكلام:",
   "quickAddListening": "أسمعك… اضغط لما تخلص",
   "voiceNoPermission": "اسمح لبيزة باستخدام المايك علشان تضيف بالصوت",
-  "voiceNetwork": "الصوت يحتاج إنترنت الحين"
+  "voiceNetwork": "الصوت يحتاج إنترنت الحين",
+  "receiptTitle": "إضافة فاتورة",
+  "receiptCamera": "صوّر الفاتورة",
+  "receiptGallery": "اختر صورة أو لقطة شاشة",
+  "receiptPrivacy": "تُقرأ الصورة على هذا الجوال ولا تُحفظ. ما يُحفظ إلا اللي تأكده.",
+  "receiptReading": "جاري القراءة…",
+  "receiptAmount": "المبلغ (د.ب)",
+  "receiptShop": "المحل",
+  "receiptNoAmount": "ما لقيت المبلغ، اكتبه من الفاتورة.",
+  "receiptTotalGuessed": "ما لقيت سطر المجموع، فأخذت أكبر مبلغ. تأكد منه.",
+  "receiptCurrencyAssumed": "ما فيه عملة مكتوبة، اعتبرتها دينار.",
+  "receiptNoDate": "ما فيه تاريخ مكتوب، استخدمت الوقت الحالي.",
+  "receiptSkip": "لا تضيف",
+  "receiptAddAnyway": "أضف على أي حال",
+  "receiptSave": "أضف",
+  "receiptAgain": "جرّب صورة ثانية",
+  "receiptError": "ما قدرت أقرأ الصورة. جرّب مرة ثانية أو أضفها يدوياً.",
+  "receiptNoCamera": "ما فيه تطبيق كاميرا في هذا الجوال.",
+  "receiptInvalid": "اكتب مبلغ صحيح",
+  "receiptForeign": "هذي الفاتورة بعملة {currency}. بس الدينار ينحسب في حدك، فما تنضاف.",
+  "@receiptForeign": {
+    "placeholders": {
+      "currency": { "type": "String" }
+    }
+  },
+  "receiptWhen": "الوقت: {time}",
+  "@receiptWhen": {
+    "placeholders": {
+      "time": { "type": "String" }
+    }
+  },
+  "receiptDuplicate": "يبين إنها مسجلة من قبل: {shop} {amount} الساعة {time}. إضافتها تحسبها مرتين.",
+  "@receiptDuplicate": {
+    "placeholders": {
+      "shop": { "type": "String" },
+      "amount": { "type": "String" },
+      "time": { "type": "String" }
+    }
+  }
 }

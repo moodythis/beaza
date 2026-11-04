@@ -1,0 +1,6 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- The only place the camera may write a receipt photo. Beaza deletes the
+     file as soon as its text is read, and clears the folder at start. -->
+<paths>
+    <cache-path name="receipts" path="receipts/" />
+</paths>

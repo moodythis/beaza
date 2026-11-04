@@ -8,6 +8,7 @@ import 'package:beaza/data/services/alert_notifier.dart';
 import 'package:beaza/data/services/device_service.dart';
 import 'package:beaza/data/services/google_auth.dart';
 import 'package:beaza/data/services/key_store.dart';
+import 'package:beaza/data/services/receipt_scanner.dart';
 import 'package:beaza/data/services/sms_source.dart';
 import 'package:beaza/data/services/storage.dart';
 import 'package:beaza/data/services/sync_api.dart';
@@ -84,6 +85,7 @@ Future<void> main() async {
       intake: buildIntake(storage),
       device: device,
       voice: PlatformVoiceInput(),
+      receipts: PlatformReceiptScanner(),
       export: DataExport(
         ledger: storage.ledger,
         settings: storage.settings,

@@ -3,6 +3,7 @@ import 'dart:async';
 import 'package:beaza/data/repositories/ledger_repository.dart';
 import 'package:beaza/data/repositories/settings_repository.dart';
 import 'package:beaza/data/services/device_service.dart';
+import 'package:beaza/data/services/receipt_scanner.dart';
 import 'package:beaza/data/services/voice_input.dart';
 import 'package:beaza/domain/use_cases/data_export.dart';
 import 'package:beaza/domain/use_cases/message_intake.dart';
@@ -43,6 +44,7 @@ class HomeViewModel extends ChangeNotifier {
     MessageIntake? intake,
     DeviceService? device,
     this.voice,
+    this.receipts,
     this.export,
     DateTime Function()? clock,
     this.arrivalDelay = const Duration(seconds: 3),
@@ -68,6 +70,12 @@ class HomeViewModel extends ChangeNotifier {
 
   /// Speech to text for quick add; null hides the microphone.
   final VoiceInput? voice;
+
+  /// Receipt photos to text on the phone; null hides the receipt button.
+  final ReceiptScanner? receipts;
+
+  /// The clock, for screens that work on the same "now" (receipts).
+  DateTime now() => _clock();
 
   static const ExpenseParser _parser = ExpenseParser();
 
