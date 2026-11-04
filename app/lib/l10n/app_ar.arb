@@ -330,5 +330,86 @@
       "amount": { "type": "String" },
       "percent": { "type": "int" }
     }
+  },
+  "savingsTitle": "التوفير",
+  "savingsCardTitle": "الهدف والتريث والاشتراكات",
+  "savingsCardGoal": "{name}: {saved} من {target}",
+  "@savingsCardGoal": {
+    "placeholders": {
+      "name": { "type": "String" },
+      "saved": { "type": "String" },
+      "target": { "type": "String" }
+    }
+  },
+  "savingsCardNoGoal": "حط هدف توفير",
+  "savingsCardHolds": "{count} بالانتظار",
+  "@savingsCardHolds": {
+    "placeholders": {
+      "count": { "type": "int" }
+    }
+  },
+  "savingsCardSubs": "اشتراكات {amount} بالشهر",
+  "@savingsCardSubs": {
+    "placeholders": {
+      "amount": { "type": "String" }
+    }
+  },
+  "goalTitle": "هدف التوفير",
+  "goalEmpty": "شي تجمع له، مثل لابتوب.",
+  "goalSet": "حط هدف",
+  "goalName": "لأي شي",
+  "goalProgress": "{saved} من {target}",
+  "@goalProgress": {
+    "placeholders": {
+      "saved": { "type": "String" },
+      "target": { "type": "String" }
+    }
+  },
+  "goalReached": "وصلت لهدفك!",
+  "goalAdd": "أضف مبلغ جمّعته",
+  "goalClear": "شيل الهدف",
+  "goalHow": "يحسب اللي تجمّعه والمشتريات اللي تركتها بعد الانتظار.",
+  "holdTitle": "درع التريث",
+  "holdExplain": "تبي تشتري شي؟ حطه هني وانتظر 24 ساعة. إذا بعدك تبيه اشتره، وإذا لا فقد وفّرته.",
+  "holdSaved": "وفّرت بالانتظار: {amount}",
+  "@holdSaved": {
+    "placeholders": {
+      "amount": { "type": "String" }
+    }
+  },
+  "holdReady": "مرّت 24 ساعة: بعدك تبيه؟",
+  "holdLeft": "باقي {hours} ساعة",
+  "@holdLeft": {
+    "placeholders": {
+      "hours": { "type": "int" }
+    }
+  },
+  "holdSkip": "تركته",
+  "holdBuy": "اشتريته",
+  "holdAdd": "حط شي بالانتظار",
+  "holdName": "شنو هو",
+  "subsTitle": "الاشتراكات المتكررة",
+  "subsMonthly": "{amount} بالشهر",
+  "@subsMonthly": {
+    "placeholders": {
+      "amount": { "type": "String" }
+    }
+  },
+  "subsEmpty": "ما لقيت شي بعد. يحتاج عمليتين على الأقل من نفس المحل بينهم شهر أو أسبوع تقريباً.",
+  "subsLine": "{every} · {times} مرات · الجاية تقريباً {date}",
+  "@subsLine": {
+    "placeholders": {
+      "every": { "type": "String" },
+      "times": { "type": "int" },
+      "date": { "type": "String" }
+    }
+  },
+  "subsWeekly": "أسبوعي",
+  "subsMonth": "شهري",
+  "subsKnownOnce": "اشتراك معروف · مرة وحدة لين الحين · الجاية تقريباً {date}",
+  "@subsKnownOnce": {
+    "placeholders": {
+      "date": { "type": "String" }
+    }
   }
 }

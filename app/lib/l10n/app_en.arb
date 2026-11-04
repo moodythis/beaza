@@ -543,5 +543,86 @@
       "amount": { "type": "String" },
       "percent": { "type": "int" }
     }
+  },
+  "savingsTitle": "Saving",
+  "savingsCardTitle": "Goal, cooling-off and subscriptions",
+  "savingsCardGoal": "{name}: {saved} of {target}",
+  "@savingsCardGoal": {
+    "placeholders": {
+      "name": { "type": "String" },
+      "saved": { "type": "String" },
+      "target": { "type": "String" }
+    }
+  },
+  "savingsCardNoGoal": "Set a savings goal",
+  "savingsCardHolds": "{count} on hold",
+  "@savingsCardHolds": {
+    "placeholders": {
+      "count": { "type": "int" }
+    }
+  },
+  "savingsCardSubs": "Subscriptions {amount} a month",
+  "@savingsCardSubs": {
+    "placeholders": {
+      "amount": { "type": "String" }
+    }
+  },
+  "goalTitle": "Savings goal",
+  "goalEmpty": "Something you are saving for, like a laptop.",
+  "goalSet": "Set a goal",
+  "goalName": "What for",
+  "goalProgress": "{saved} of {target}",
+  "@goalProgress": {
+    "placeholders": {
+      "saved": { "type": "String" },
+      "target": { "type": "String" }
+    }
+  },
+  "goalReached": "Goal reached!",
+  "goalAdd": "Add money put aside",
+  "goalClear": "Remove goal",
+  "goalHow": "Counts what you put aside and purchases you skipped after waiting.",
+  "holdTitle": "Cooling-off shield",
+  "holdExplain": "Want to buy something? Put it here and wait 24 hours. If you still want it, buy it; if not, you saved it.",
+  "holdSaved": "Saved by waiting: {amount}",
+  "@holdSaved": {
+    "placeholders": {
+      "amount": { "type": "String" }
+    }
+  },
+  "holdReady": "24 hours passed: do you still want it?",
+  "holdLeft": "{hours} h left",
+  "@holdLeft": {
+    "placeholders": {
+      "hours": { "type": "int" }
+    }
+  },
+  "holdSkip": "Skip it",
+  "holdBuy": "Bought it",
+  "holdAdd": "Put something on hold",
+  "holdName": "What is it",
+  "subsTitle": "Repeating charges",
+  "subsMonthly": "{amount}/month",
+  "@subsMonthly": {
+    "placeholders": {
+      "amount": { "type": "String" }
+    }
+  },
+  "subsEmpty": "None found yet. It needs at least two charges from the same shop about a month or a week apart.",
+  "subsLine": "{every} · {times} times · next about {date}",
+  "@subsLine": {
+    "placeholders": {
+      "every": { "type": "String" },
+      "times": { "type": "int" },
+      "date": { "type": "String" }
+    }
+  },
+  "subsWeekly": "Weekly",
+  "subsMonth": "Monthly",
+  "subsKnownOnce": "Known subscription · seen once · next about {date}",
+  "@subsKnownOnce": {
+    "placeholders": {
+      "date": { "type": "String" }
+    }
   }
 }

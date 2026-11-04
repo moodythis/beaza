@@ -2,6 +2,7 @@ import 'dart:async';
 
 import 'package:beaza/app.dart';
 import 'package:beaza/data/repositories/account_repository.dart';
+import 'package:beaza/data/repositories/savings_repository.dart';
 import 'package:beaza/data/repositories/sync_repository.dart';
 import 'package:beaza/data/services/account_store.dart';
 import 'package:beaza/data/services/alert_notifier.dart';
@@ -22,6 +23,7 @@ import 'package:beaza/ui/core/alert_text.dart';
 import 'package:beaza/ui/core/language_controller.dart';
 import 'package:beaza/ui/features/coach/view_models/coach_view_model.dart';
 import 'package:beaza/ui/features/home/view_models/home_view_model.dart';
+import 'package:beaza/ui/features/savings/view_models/savings_view_model.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:path_provider/path_provider.dart';
@@ -88,6 +90,10 @@ Future<void> main() async {
       device: device,
       voice: PlatformVoiceInput(),
       receipts: PlatformReceiptScanner(),
+      savings: SavingsViewModel(
+        repo: SavingsRepository(storage.preferences),
+        ledger: storage.ledger,
+      )..load(),
       coach: CoachViewModel(
         api: HttpCoachApi(),
         preferences: storage.preferences,

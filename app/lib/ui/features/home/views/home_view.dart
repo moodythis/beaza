@@ -19,6 +19,7 @@ import 'package:beaza/ui/features/home/view_models/home_view_model.dart';
 import 'package:beaza/ui/features/home/views/quick_add_sheet.dart';
 import 'package:beaza/ui/features/receipt/view_models/receipt_view_model.dart';
 import 'package:beaza/ui/features/receipt/views/receipt_sheet.dart';
+import 'package:beaza/ui/features/savings/views/savings_view.dart';
 import 'package:beaza/ui/features/review/view_models/review_view_model.dart';
 import 'package:beaza/ui/features/review/views/review_view.dart';
 import 'package:beaza_extraction/beaza_extraction.dart';
@@ -230,6 +231,10 @@ class HomeView extends StatelessWidget {
                   adviceText(l10n, state.summary.level) != null) ...[
                 const SizedBox(height: 12),
                 TipsCard(tips: state.tips, level: state.summary.level),
+              ],
+              if (viewModel.savings != null) ...[
+                const SizedBox(height: 12),
+                SavingsHomeCard(viewModel: viewModel.savings!),
               ],
               if (viewModel.coach != null) ...[
                 const SizedBox(height: 12),

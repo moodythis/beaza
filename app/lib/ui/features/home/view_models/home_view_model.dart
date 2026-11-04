@@ -8,6 +8,7 @@ import 'package:beaza/data/services/voice_input.dart';
 import 'package:beaza/domain/use_cases/data_export.dart';
 import 'package:beaza/domain/use_cases/message_intake.dart';
 import 'package:beaza/ui/features/coach/view_models/coach_view_model.dart';
+import 'package:beaza/ui/features/savings/view_models/savings_view_model.dart';
 import 'package:beaza/domain/use_cases/savings_tips.dart';
 import 'package:beaza/domain/use_cases/spending_by_category.dart';
 import 'package:beaza_assistant/beaza_assistant.dart' show DraftTransaction, ExpenseParser;
@@ -47,6 +48,7 @@ class HomeViewModel extends ChangeNotifier {
     this.voice,
     this.receipts,
     this.coach,
+    this.savings,
     this.export,
     DateTime Function()? clock,
     this.arrivalDelay = const Duration(seconds: 3),
@@ -72,6 +74,9 @@ class HomeViewModel extends ChangeNotifier {
 
   /// Speech to text for quick add; null hides the microphone.
   final VoiceInput? voice;
+
+  /// Goal, cooling-off and subscriptions; null hides its card.
+  final SavingsViewModel? savings;
 
   /// The optional AI savings plan; null hides its card.
   final CoachViewModel? coach;
