@@ -650,5 +650,11 @@
   "budgetInvalid": "Enter your income; fixed commitments must be less than it.",
   "budgetByHand": "Set by hand",
   "budgetFromIncome": "Work it out from my income",
-  "budgetNote": "Worked out from your income"
+  "budgetNote": "Worked out from your income",
+  "budgetUsedUp": "This month's money (income minus fixed commitments) was used up before today. Spent today: {spent}",
+  "@budgetUsedUp": {
+    "placeholders": {
+      "spent": { "type": "String" }
+    }
+  }
 }

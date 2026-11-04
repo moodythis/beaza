@@ -384,10 +384,15 @@ class LimitCard extends StatelessWidget {
             ),
             const SizedBox(height: 8),
             Text(
-              l10n.spentOfLimit(
-                spent,
-                l10n.bhd(formatFils(summary.limitFils)),
-              ),
+              // A worked-out limit of 1 fil means the month's free money
+              // was gone before today: say that, not "0.001".
+              fromBudget && summary.baseLimitFils <= 1
+                  ? l10n.budgetUsedUp(spent)
+                  : l10n.spentOfLimit(
+                      spent,
+                      l10n.bhd(formatFils(summary.limitFils)),
+                    ),
+              key: const Key('spentOfLimit'),
             ),
             const SizedBox(height: 4),
             Text(

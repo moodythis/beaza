@@ -67,6 +67,16 @@ void main() {
     expect(await limit([], const Day(2026, 12, 1)), 150000 ~/ 31);
   });
 
+  test('commitments lower the limit, never raise it', () async {
+    final spent = [purchase(9000, bh(1, 23))];
+    const today = Day(2026, 11, 2);
+    final without =
+        await limit(spent, today, const BudgetPlan(incomeFils: 300000));
+    final withFixed = await limit(spent, today,
+        const BudgetPlan(incomeFils: 300000, fixedFils: 105000));
+    expect(withFixed, lessThan(without));
+  });
+
   test('the view model keeps the saved limit in step with the plan', () async {
     final ledger = InMemoryLedgerRepository(
         initial: [purchase(9000, bh(1, 23))]);
