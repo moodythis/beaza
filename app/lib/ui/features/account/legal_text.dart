@@ -27,7 +27,7 @@ class LegalDocument {
 }
 
 const privacyNotice = LegalDocument(
-  version: '2026-11-04',
+  version: '2026-11-04.2',
   titleAr: 'إشعار الخصوصية لتطبيق بيزة',
   titleEn: 'Beaza privacy notice',
   ar: [
@@ -41,7 +41,7 @@ const privacyNotice = LegalDocument(
       'ما لا يغادر هاتفك أبدًا',
       [
         'نص رسائل البنك لا يُحفظ ولا يُرسل إلى أي مكان. يقرؤه التطبيق ويحتفظ فقط بالمبلغ والتاجر والوقت والنوع، ويخزنها في قاعدة بيانات مشفرة على هاتفك.',
-        'بدون حساب، لا يغادر هاتفك أي شيء، إلا ما تختار أن تقوله بصوتك (القسم التالي).',
+        'بدون حساب، لا يغادر هاتفك أي شيء، إلا ما تختار أن تقوله بصوتك، والمجاميع التي تختار إرسالها لخطة التوفير بالذكاء الاصطناعي (القسمان التاليان).',
       ],
     ),
     LegalSection(
@@ -49,6 +49,13 @@ const privacyNotice = LegalDocument(
       [
         'إذا ضغطت على المايكروفون في «إضافة سريعة»، يطلب بيزة صلاحية المايكروفون من أندرويد ولا يستمع إلا أثناء ظهور أنه يستمع على الشاشة. يمرّر أندرويد الصوت إلى خدمة الكلام في هاتفك (غالبًا خدمة Google)، فتحوّله إلى نص وقد تفعل ذلك عبر الإنترنت.',
         'يحتفظ بيزة بالنص فقط، ويمكنك تعديله قبل الحفظ. ولا يحفظ الصوت أبدًا. لا يتحكم بيزة بما تفعله خدمة الكلام بالصوت، فهذا تحكمه شروط الخصوصية الخاصة بها. وإن لم ترغب في استخدامها فاكتب بدلًا من ذلك؛ لا شيء آخر في بيزة يحتاج المايكروفون.',
+      ],
+    ),
+    LegalSection(
+      'خطة التوفير بالذكاء الاصطناعي (اختيارية، بموافقة منفصلة)',
+      [
+        'فقط إذا وافقت في شاشة خطة الذكاء الاصطناعي، يرسل بيزة إلى خادمه هذه المجاميع المحسوبة على هاتفك: مصروفك في آخر 7 أيام والـ7 التي قبلها، وحدك اليومي وعدد الأيام التي تجاوزته فيها، وعدد مشترياتك الصغيرة ومجموعها، ومجموع كل صنف ونسبته. تعرض لك الشاشة القائمة نفسها قبل أن توافق. لا يُرسل اسم محل ولا رسالة بنك ولا رقم حساب أو بطاقة ولا رقم مرجعي ولا تاريخ، ويرفض الخادم أي حقل آخر. لا يلزم حساب، ولا يُربط الطلب بأي حساب.',
+        'يطلب الخادم من نموذج ذكاء اصطناعي (Gemma، تشغّله Cloudflare Workers AI نيابةً عنا) كتابة خطة قصيرة من هذه المجاميع، ويتحقق أن كل رقم في الخطة من الأرقام التي أُعطيت له. تذكر Cloudflare أنها لا تحتفظ بهذه الطلبات بعد الرد ولا تستخدمها لتدريب النماذج، ولا تذكر في أي دولة يعمل النموذج. لا يحفظ بيزة شيئًا عن الطلب سوى عدد الخطط المطلوبة في ذلك اليوم، دون ربطه بك. الأساس القانوني هو موافقتك، ويمكنك سحبها في أي وقت من شاشة الخطة، وسحبها يوقف أي إرسال لاحق.',
       ],
     ),
     LegalSection(
@@ -123,7 +130,7 @@ const privacyNotice = LegalDocument(
       'What never leaves your phone',
       [
         'The text of bank messages is never stored or sent anywhere. The app reads it, keeps only the amount, merchant, time and type, and stores those in an encrypted database on your phone.',
-        'Without an account, nothing leaves your phone, except what you choose to say by voice (next section).',
+        'Without an account, nothing leaves your phone, except what you choose to say by voice and the totals you choose to send for an AI savings plan (next sections).',
       ],
     ),
     LegalSection(
@@ -131,6 +138,13 @@ const privacyNotice = LegalDocument(
       [
         'If you tap the microphone in Quick add, Beaza asks Android for microphone access and listens only while the screen shows that it is listening. Android hands the audio to the speech service on your phone (usually Google\'s), which turns it into text and may do so over the internet.',
         'Beaza keeps only the text, which you can edit before saving. It never saves the audio. Beaza does not control what the speech service does with the audio: that is covered by its own privacy terms. If you would rather not use it, type instead; nothing else in Beaza needs the microphone.',
+      ],
+    ),
+    LegalSection(
+      'AI savings plan (optional, separate consent)',
+      [
+        'Only if you agree on the AI plan screen, Beaza sends these totals, worked out on your phone, to its server: what you spent in the last 7 days and the 7 before, your daily limit and on how many days you passed it, how many small purchases you made and their total, and a total and share per category. The screen shows you the exact list before you agree. No shop name, bank message, account or card number, reference or date is sent, and the server refuses any other field. No account is needed and none is linked to the request.',
+        'The server asks an AI model (Gemma, run by Cloudflare Workers AI, Cloudflare acting for us) to write a short plan from those totals, and checks that every number in the plan is one it was given. Cloudflare states that it does not keep these requests after answering or use them to train models; it does not state in which country the model runs. Beaza stores nothing about the request except how many plans were asked for that day, with no link to you. The legal basis is your consent, which you can withdraw at any time on the plan screen; withdrawing stops any further sending.',
       ],
     ),
     LegalSection(

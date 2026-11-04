@@ -281,5 +281,54 @@
       "amount": { "type": "String" },
       "time": { "type": "String" }
     }
+  },
+  "coachTitle": "خطة توفير بالذكاء الاصطناعي",
+  "coachSubtitle": "اختياري. يرسل مجاميعك بس.",
+  "coachAsk": "اطلب خطة",
+  "coachConsentTitle": "قبل ما يكتب الذكاء الاصطناعي خطتك",
+  "coachConsentBody": "علشان تنكتب الخطة، يرسل بيزة المجاميع اللي تحت من جوالك لسيرفره، والسيرفر يطلب من نموذج ذكاء اصطناعي (Gemma على Cloudflare Workers AI). ما ينرسل اسم محل ولا رسالة بنك ولا رقم حساب ولا تاريخ، والسيرفر يرفض أي شي غيرها. Cloudflare تقول إنها ما تحتفظ بالطلب ولا تستخدمه لتدريب النماذج، وما تذكر في أي دولة يشتغل النموذج. وبيزة نفسها ما تحفظ الطلب. وتقدر توقف هذا في أي وقت.",
+  "coachConsentWhat": "هذا اللي بينرسل:",
+  "coachAgree": "موافق، اطلب الخطة",
+  "coachNotNow": "مو الحين",
+  "coachLoading": "جاري كتابة خطتك…",
+  "coachFromModel": "كتبها الذكاء الاصطناعي من مجاميعك، وكل رقم فيها مفحوص.",
+  "coachFromRules": "الذكاء الاصطناعي ما كان متاح، فهذي خطة مكتوبة بالقواعد من مجاميعك.",
+  "coachWithdraw": "أوقف الإرسال للذكاء الاصطناعي",
+  "coachBusy": "خلصت خطط اليوم. جرّب باكر.",
+  "coachNetwork": "ما فيه اتصال بسيرفر بيزة.",
+  "coachFailed": "ما قدرت أجيب خطة الحين.",
+  "coachSendTotal": "المصروف في آخر 7 أيام: {amount}",
+  "@coachSendTotal": {
+    "placeholders": {
+      "amount": { "type": "String" }
+    }
+  },
+  "coachSendBefore": "الـ7 أيام اللي قبلها: {amount}",
+  "@coachSendBefore": {
+    "placeholders": {
+      "amount": { "type": "String" }
+    }
+  },
+  "coachSendLimit": "الحد اليومي {amount}، وتعدّيته {days} من 7 أيام",
+  "@coachSendLimit": {
+    "placeholders": {
+      "amount": { "type": "String" },
+      "days": { "type": "int" }
+    }
+  },
+  "coachSendSmall": "{count} مصروفات صغيرة: {amount}",
+  "@coachSendSmall": {
+    "placeholders": {
+      "count": { "type": "int" },
+      "amount": { "type": "String" }
+    }
+  },
+  "coachSendCategory": "{category}: {amount} ({percent}٪)",
+  "@coachSendCategory": {
+    "placeholders": {
+      "category": { "type": "String" },
+      "amount": { "type": "String" },
+      "percent": { "type": "int" }
+    }
   }
 }

@@ -12,6 +12,7 @@ import 'package:beaza/ui/core/entry_tile.dart';
 import 'package:beaza/ui/core/formatting.dart';
 import 'package:beaza/ui/core/language_controller.dart';
 import 'package:beaza/ui/features/account/views/account_view.dart';
+import 'package:beaza/ui/features/coach/views/coach_card.dart';
 import 'package:beaza/ui/features/history/view_models/history_view_model.dart';
 import 'package:beaza/ui/features/history/views/history_view.dart';
 import 'package:beaza/ui/features/home/view_models/home_view_model.dart';
@@ -229,6 +230,10 @@ class HomeView extends StatelessWidget {
                   adviceText(l10n, state.summary.level) != null) ...[
                 const SizedBox(height: 12),
                 TipsCard(tips: state.tips, level: state.summary.level),
+              ],
+              if (viewModel.coach != null) ...[
+                const SizedBox(height: 12),
+                CoachCard(viewModel: viewModel.coach!),
               ],
             ],
           );

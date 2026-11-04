@@ -5,6 +5,7 @@ import 'package:beaza/data/repositories/account_repository.dart';
 import 'package:beaza/data/repositories/sync_repository.dart';
 import 'package:beaza/data/services/account_store.dart';
 import 'package:beaza/data/services/alert_notifier.dart';
+import 'package:beaza/data/services/coach_api.dart';
 import 'package:beaza/data/services/device_service.dart';
 import 'package:beaza/data/services/google_auth.dart';
 import 'package:beaza/data/services/key_store.dart';
@@ -19,6 +20,7 @@ import 'package:beaza/domain/use_cases/message_intake.dart';
 import 'package:beaza/l10n/app_localizations.dart';
 import 'package:beaza/ui/core/alert_text.dart';
 import 'package:beaza/ui/core/language_controller.dart';
+import 'package:beaza/ui/features/coach/view_models/coach_view_model.dart';
 import 'package:beaza/ui/features/home/view_models/home_view_model.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
@@ -86,6 +88,12 @@ Future<void> main() async {
       device: device,
       voice: PlatformVoiceInput(),
       receipts: PlatformReceiptScanner(),
+      coach: CoachViewModel(
+        api: HttpCoachApi(),
+        preferences: storage.preferences,
+        ledger: storage.ledger,
+        settings: storage.settings,
+      )..load(),
       export: DataExport(
         ledger: storage.ledger,
         settings: storage.settings,

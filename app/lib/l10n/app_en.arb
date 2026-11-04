@@ -494,5 +494,54 @@
       "amount": { "type": "String" },
       "time": { "type": "String" }
     }
+  },
+  "coachTitle": "AI savings plan",
+  "coachSubtitle": "Optional. Sends only your totals.",
+  "coachAsk": "Get a plan",
+  "coachConsentTitle": "Before the AI writes your plan",
+  "coachConsentBody": "To write a plan, Beaza sends the totals below from this phone to its server, which asks an AI model (Gemma, run by Cloudflare Workers AI). No shop name, bank message, account number or date is sent, and the server refuses anything else. Cloudflare says it does not keep the request or use it to train models; it does not say in which country the model runs. Beaza does not store the request either. You can stop this at any time.",
+  "coachConsentWhat": "This is what will be sent:",
+  "coachAgree": "Agree and get the plan",
+  "coachNotNow": "Not now",
+  "coachLoading": "Writing your plan…",
+  "coachFromModel": "Written by AI from your totals. Every number in it was checked against them.",
+  "coachFromRules": "The AI was not available, so this plan was written by rules from your totals.",
+  "coachWithdraw": "Stop sending to the AI",
+  "coachBusy": "Today's AI plans have run out. Try again tomorrow.",
+  "coachNetwork": "No connection to Beaza's server.",
+  "coachFailed": "Could not get a plan right now.",
+  "coachSendTotal": "Spent in the last 7 days: {amount}",
+  "@coachSendTotal": {
+    "placeholders": {
+      "amount": { "type": "String" }
+    }
+  },
+  "coachSendBefore": "The 7 days before: {amount}",
+  "@coachSendBefore": {
+    "placeholders": {
+      "amount": { "type": "String" }
+    }
+  },
+  "coachSendLimit": "Daily limit {amount}, passed on {days} of 7 days",
+  "@coachSendLimit": {
+    "placeholders": {
+      "amount": { "type": "String" },
+      "days": { "type": "int" }
+    }
+  },
+  "coachSendSmall": "{count} small purchases: {amount}",
+  "@coachSendSmall": {
+    "placeholders": {
+      "count": { "type": "int" },
+      "amount": { "type": "String" }
+    }
+  },
+  "coachSendCategory": "{category}: {amount} ({percent}%)",
+  "@coachSendCategory": {
+    "placeholders": {
+      "category": { "type": "String" },
+      "amount": { "type": "String" },
+      "percent": { "type": "int" }
+    }
   }
 }
