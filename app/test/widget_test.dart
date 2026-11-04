@@ -114,6 +114,8 @@ void main() {
       purchase(3900, bh(9), merchant: 'MYSTERY SHOP'),
     ]);
     expect(find.byKey(const Key('cat_unsorted')), findsOneWidget);
+    await tester.ensureVisible(find.text('MYSTERY SHOP'));
+    await tester.pumpAndSettle();
     await tester.tap(find.text('MYSTERY SHOP'));
     await tester.pumpAndSettle();
     expect(find.text('Choose a category'), findsOneWidget);
