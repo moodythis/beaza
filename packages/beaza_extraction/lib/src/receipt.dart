@@ -2,8 +2,8 @@
 /// to a purchase: total, shop, date. Rules only, so the same text always
 /// gives the same result and nothing leaves the phone.
 ///
-/// Written before any real receipt was collected: the keyword lists are a
-/// first guess and must be checked against real samples (SRS FR-9.x).
+/// The keyword lists began as a first guess and are corrected against real
+/// receipts as they are collected (two so far, see test/receipt_test.dart).
 library;
 
 import 'classifier.dart' show MessageKind;
@@ -23,7 +23,7 @@ class ReceiptReader {
     caseSensitive: false,
     unicode: true,
   );
-  static final RegExp _total = RegExp(r'\btotal\b|المجموع|المبلغ',
+  static final RegExp _total = RegExp(r'\btotal\b|\bamount\b|المجموع|المبلغ',
       caseSensitive: false, unicode: true);
 
   /// Lines whose amount is never the total.
@@ -35,7 +35,21 @@ class ReceiptReader {
 
   /// Lines that are not the shop's name.
   static final RegExp _notShop = RegExp(
-    r'tax\s*invoice|invoice|receipt|welcome|\bvat\b|c\.?\s?r\.?\s*(?:no|#)|\btel\b|phone|mobile|\bdate\b|\btime\b|www|http|فاتورة|ضريبية|اهلا|أهلا|مرحبا|شكرا|سجل\s*تجاري',
+    r'afs\b|credimax|arab\s*financial|benefit\s*-?\s*pay|بنفت|fawri|فوري|fawateer|transaction|approved|successful|completed|payment|تحويل|عملية|ناجحة|tax\s*invoice|invoice|receipt|welcome|\bvat\b|c\.?\s?r\.?\s*(?:no|#)|\btel\b|phone|mobile|\bdate\b|\btime\b|www|http|فاتورة|ضريبية|اهلا|أهلا|مرحبا|شكرا|سجل\s*تجاري',
+    caseSensitive: false,
+    unicode: true,
+  );
+
+  /// A payment screen that says it did not go through: nothing was spent.
+  static final RegExp _failed = RegExp(
+    r'declined|unsuccessful|\bfailed\b|rejected|insufficient|مرفوض|فشل|غير\s*كاف',
+    caseSensitive: false,
+    unicode: true,
+  );
+
+  /// "Merchant Name: KARAK EXPRESS CAFE", "Biller: ZAIN BAHRAIN B.S.C".
+  static final RegExp _shopLabel = RegExp(
+    r'^(?:merchant\s*name|merchant|biller|restaurant|store\s*name|اسم\s*التاجر|التاجر|الجهة)\s*[:：]\s*(\S.{2,})$',
     caseSensitive: false,
     unicode: true,
   );
@@ -65,6 +79,15 @@ class ReceiptReader {
         .toList();
     final flags = <ExtractionFlag>[];
 
+    if (_failed.hasMatch(text)) {
+      return ExtractionResult(
+        status: ExtractionStatus.nonTransaction,
+        kind: MessageKind.declined,
+        currency: _currency(text),
+        templateVersion: kReceiptReaderVersion,
+      );
+    }
+
     // Total: the last "grand total" style line, else the last "total" line,
     // else the largest amount on the receipt (marked as a guess).
     var found = _byKeyword(lines, _grandTotal) ?? _byKeyword(lines, _total);
@@ -91,7 +114,7 @@ class ReceiptReader {
       flags.add(ExtractionFlag.timestampFromReceipt);
     }
 
-    final shop = _shop(lines);
+    final shop = _labelledShop(lines) ?? _shop(lines);
     final info = merchants.normalize(shop);
 
     if (found == null) {
@@ -216,15 +239,33 @@ class ReceiptReader {
   /// (11/03/2026 for 3 November). A date that fits only one way is read that
   /// way; one that fits both ways is read day first, unless that is more than
   /// 60 days old and the other way is not.
+  static const Map<String, int> _months = {
+    'jan': 1, 'feb': 2, 'mar': 3, 'apr': 4, 'may': 5, 'jun': 6,
+    'jul': 7, 'aug': 8, 'sep': 9, 'oct': 10, 'nov': 11, 'dec': 12,
+  };
+
   static DateTime? _dateTime(String text, DateTime now) {
     final ymd = RegExp(r'(?<!\d)(\d{4})[/\-.](\d{1,2})[/\-.](\d{1,2})(?!\d)')
         .firstMatch(text);
     final dmy = RegExp(r'(?<!\d)(\d{1,2})[/\-.](\d{1,2})[/\-.](\d{4}|\d{2})(?!\d)')
         .firstMatch(text);
+    // "03 Nov 2026, 16:30" and "Nov 3, 2026".
+    final named = RegExp(
+            r'(?<!\d)(\d{1,2})\s+(jan|feb|mar|apr|may|jun|jul|aug|sep|oct|nov|dec)[a-z]*\.?,?\s+(\d{4})(?!\d)',
+            caseSensitive: false)
+        .firstMatch(text);
+    final namedFirst = RegExp(
+            r'\b(jan|feb|mar|apr|may|jun|jul|aug|sep|oct|nov|dec)[a-z]*\.?\s+(\d{1,2}),?\s+(\d{4})(?!\d)',
+            caseSensitive: false)
+        .firstMatch(text);
     // (year, month, day) readings, most likely first.
     final readings = <(int, int, int)>[];
     if (ymd != null) {
       readings.add((int.parse(ymd[1]!), int.parse(ymd[2]!), int.parse(ymd[3]!)));
+    } else if (named != null) {
+      readings.add((int.parse(named[3]!), _months[named[2]!.toLowerCase()]!, int.parse(named[1]!)));
+    } else if (namedFirst != null) {
+      readings.add((int.parse(namedFirst[3]!), _months[namedFirst[1]!.toLowerCase()]!, int.parse(namedFirst[2]!)));
     } else if (dmy != null) {
       final a = int.parse(dmy[1]!), b = int.parse(dmy[2]!);
       var y = int.parse(dmy[3]!);
@@ -261,6 +302,14 @@ class ReceiptReader {
       return fits[1];
     }
     return fits.first;
+  }
+
+  String? _labelledShop(List<String> lines) {
+    for (final l in lines) {
+      final m = _shopLabel.firstMatch(l);
+      if (m != null) return m[1]!.replaceAll(RegExp(r'\s+'), ' ').trim();
+    }
+    return null;
   }
 
   String? _shop(List<String> lines) {
