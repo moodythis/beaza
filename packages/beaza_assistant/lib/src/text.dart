@@ -14,8 +14,8 @@ const Map<String, String> _charMap = {
   'ـ': '', // tatweel: "بـ 800"
   '٫': '.', // Arabic decimal separator
   '٬': '',
-  '،': ' ',
-  '؛': ' ',
+  '،': ' | ',
+  '؛': ' | ',
   '؟': ' ',
 };
 
@@ -41,10 +41,16 @@ final RegExp _number = RegExp(r'^\d+(?:\.\d+)?$');
 
 bool isNumberToken(String t) => _number.hasMatch(t);
 
+/// Separates items: a line break, a comma or semicolon (not one inside a
+/// number such as "1,500").
+const String kBreak = '|';
+
 /// Words and numbers. "بـ800فلس" gives ["ب", "800", "فلس"] and "د.ب" gives
-/// "دب", so one word list covers both spellings.
+/// "دب", so one word list covers both spellings. Line breaks, commas and
+/// semicolons become [kBreak].
 List<String> tokenize(String input) {
   var s = normalizeText(input);
+  s = s.replaceAll(RegExp(r'[\n\r;]|(?<!\d),|,(?!\d)'), ' | ');
   s = s.replaceAll(RegExp(r'د\s*\.\s*ب'), ' دب ');
   s = s.replaceAll(RegExp(r'\bb\.\s?d\b\.?'), ' bd ');
   s = s.replaceAllMapped(
@@ -52,7 +58,11 @@ List<String> tokenize(String input) {
   s = s.replaceAllMapped(
       RegExp(r'([^\d\s.,])(\d)'), (m) => '${m[1]} ${m[2]}');
   final out = <String>[];
-  for (var t in s.split(RegExp(r'[\s,;:!?"()\[\]{}/\\|*+=<>«»\-]+'))) {
+  for (var t in s.split(RegExp(r'[\s,;:!?"()\[\]{}/\\*+=<>«»\-]+'))) {
+    if (t == kBreak) {
+      if (out.isNotEmpty && out.last != kBreak) out.add(kBreak);
+      continue;
+    }
     t = t.replaceAll(RegExp(r'^\.+|\.+$'), '');
     if (!isNumberToken(t)) t = t.replaceAll('.', '');
     if (t.isNotEmpty) out.add(t);

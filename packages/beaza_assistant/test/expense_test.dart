@@ -46,6 +46,24 @@ void main() {
     expect(show(parser.parse('coffee 0.800 BD', now)), '800|coffee|food');
   });
 
+  test('words from an earlier sentence do not stick to the next item', () {
+    // What a phone's speech screen gave on 4 Nov 2026, plus a second try.
+    final d = parser.parse(
+        'is charitra beta، change language to arabic، شريت كرك بربيتين', now);
+    expect(show(d), '200|كرك|food');
+  });
+
+  test('one item per line', () {
+    expect(show(parser.parse('شاورما 800 فلس\nكرك 200 فلس', now)),
+        '800|شاورما|food, 200|كرك|food');
+  });
+
+  test('at most three words name an item', () {
+    final d = parser.parse('اليوم رحت السوق وشريت قهوة مثلجة كبيرة بدينار', now);
+    expect(d.single.merchantRaw, 'قهوه مثلجه كبيره');
+    expect(d.single.category, 'food');
+  });
+
   test('nothing to add', () {
     expect(parser.parse('مرحبا', now), isEmpty);
   });

@@ -452,5 +452,6 @@
     "placeholders": {
       "total": { "type": "String" }
     }
-  }
+  },
+  "quickAddSpeechLanguage": "Speech:"
 }

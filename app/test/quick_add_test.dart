@@ -93,6 +93,22 @@ void main() {
     expect(find.text('البراده'), findsOneWidget);
   });
 
+  testWidgets('an English screen still listens in Arabic, unless switched',
+      (tester) async {
+    final voice = FakeVoice('كرك بربيتين');
+    await pump(tester, voice: voice);
+    await tester.tap(find.byKey(const Key('quickAddSpeak')));
+    await tester.pumpAndSettle();
+    await tester.tap(find.byKey(const Key('speechEnglish')));
+    await tester.pumpAndSettle();
+    await tester.tap(find.byKey(const Key('quickAddSpeak')));
+    await tester.pumpAndSettle();
+    expect(voice.languages, ['ar-BH', 'en-US']);
+    // Each recording is its own line, so its own item.
+    expect(find.byKey(const Key('draft_0')), findsOneWidget);
+    expect(find.byKey(const Key('draft_1')), findsOneWidget);
+  });
+
   testWidgets('no speech service on the phone is explained', (tester) async {
     await pump(tester, voice: FakeVoice(null, fail: true));
     await tester.tap(find.byKey(const Key('quickAddSpeak')));

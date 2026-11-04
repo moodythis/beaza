@@ -29,6 +29,11 @@ class _QuickAddSheetState extends State<QuickAddSheet> {
   final TextEditingController _text = TextEditingController();
   bool _listening = false;
 
+  /// Speech is Bahraini Arabic unless the person switches to English; the
+  /// app's own language does not decide it (an English screen made Google
+  /// hear "كرك بربيتين" as "Karak do Rupaiya").
+  bool _arabicSpeech = true;
+
   @override
   void dispose() {
     _text.dispose();
@@ -40,13 +45,14 @@ class _QuickAddSheetState extends State<QuickAddSheet> {
     if (voice == null || _listening) return;
     final l10n = AppLocalizations.of(context);
     final messenger = ScaffoldMessenger.of(context);
-    final language = speechLanguage(Localizations.localeOf(context).languageCode);
+    final language = speechLanguage(_arabicSpeech ? 'ar' : 'en');
     setState(() => _listening = true);
     try {
       final said = await voice.listen(language: language);
       if (said != null && said.trim().isNotEmpty) {
         final before = _text.text.trim();
-        _text.text = before.isEmpty ? said : '$before و $said';
+        // A new line per recording: each one is its own item.
+        _text.text = before.isEmpty ? said : '$before\n$said';
       }
     } on PlatformException {
       messenger.showSnackBar(SnackBar(content: Text(l10n.voiceUnavailable)));
@@ -75,7 +81,7 @@ class _QuickAddSheetState extends State<QuickAddSheet> {
             controller: _text,
             autofocus: widget.viewModel.voice == null,
             minLines: 1,
-            maxLines: 3,
+            maxLines: 4,
             onChanged: (_) => setState(() {}),
             decoration: InputDecoration(
               hintText: l10n.quickAddHint,
@@ -93,7 +99,28 @@ class _QuickAddSheetState extends State<QuickAddSheet> {
             ),
           ),
           if (widget.viewModel.voice != null) ...[
-            const SizedBox(height: 6),
+            const SizedBox(height: 8),
+            Wrap(
+              spacing: 8,
+              crossAxisAlignment: WrapCrossAlignment.center,
+              children: [
+                Text(l10n.quickAddSpeechLanguage,
+                    style: theme.textTheme.bodySmall),
+                ChoiceChip(
+                  key: const Key('speechArabic'),
+                  label: const Text('عربي'),
+                  selected: _arabicSpeech,
+                  onSelected: (_) => setState(() => _arabicSpeech = true),
+                ),
+                ChoiceChip(
+                  key: const Key('speechEnglish'),
+                  label: const Text('English'),
+                  selected: !_arabicSpeech,
+                  onSelected: (_) => setState(() => _arabicSpeech = false),
+                ),
+              ],
+            ),
+            const SizedBox(height: 4),
             Text(l10n.quickAddPrivacy, style: theme.textTheme.bodySmall),
           ],
           const SizedBox(height: 8),

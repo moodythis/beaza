@@ -93,6 +93,13 @@ void main() {
   });
 
   test('tokenize keeps numbers whole and splits joined letters', () {
-    expect(tokenize('بـ800فلس، و2.500 د.ب.'), ['ب', '800', 'فلس', 'و', '2.500', 'دب']);
+    expect(tokenize('بـ800فلس، و2.500 د.ب.'),
+        ['ب', '800', 'فلس', '|', 'و', '2.500', 'دب']);
+  });
+
+  test('line breaks and commas separate items, a thousands comma does not', () {
+    expect(tokenize('كرك\nشاي, قهوه'), ['كرك', '|', 'شاي', '|', 'قهوه']);
+    expect(tokenize('1,500 فلس'), isNot(contains(kBreak)));
+    expect(tokenize('،كرك'), ['كرك']);
   });
 }

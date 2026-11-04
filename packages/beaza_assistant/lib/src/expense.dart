@@ -74,11 +74,18 @@ class ExpenseParser {
     var prevEnd = 0;
     for (var k = 0; k < found.length; k++) {
       final m = found[k];
-      var what = _describe(tokens.sublist(prevEnd, m.start), dropJoinedWa: k > 0);
+      // Only the words since the last break, and at most a few of them.
+      var before = tokens.sublist(prevEnd, m.start);
+      final cut = before.lastIndexOf(kBreak);
+      if (cut >= 0) before = before.sublist(cut + 1);
+      var what = _describe(before, dropJoinedWa: k > 0 || cut >= 0, last: true);
       if (what == null) {
         // "دفعت دينار ونص في البرادة": the shop comes after the amount.
         final nextStart = k + 1 < found.length ? found[k + 1].start : tokens.length;
-        what = _describe(tokens.sublist(m.end, nextStart), dropJoinedWa: true);
+        var after = tokens.sublist(m.end, nextStart);
+        final stop = after.indexOf(kBreak);
+        if (stop >= 0) after = after.sublist(0, stop);
+        what = _describe(after, dropJoinedWa: true, last: false);
       }
       out.add(DraftTransaction(
         amountFils: m.fils,
@@ -92,16 +99,27 @@ class ExpenseParser {
     return out;
   }
 
-  String? _describe(List<String> words, {required bool dropJoinedWa}) {
+  /// At most this many words name an item ("قهوة مثلجة كبيرة").
+  static const int maxWords = 3;
+
+  String? _describe(List<String> words,
+      {required bool dropJoinedWa, required bool last}) {
     final kept = <String>[];
     for (var w in words) {
+      if (w == kBreak) continue;
       if (kept.isEmpty && dropJoinedWa && w.length > 2 && w.startsWith('و')) {
         w = w.substring(1); // "وكرك"
       }
       if (_filler.contains(w)) continue;
       kept.add(w);
     }
-    return kept.isEmpty ? null : kept.join(' ');
+    if (kept.isEmpty) return null;
+    // Before the amount the nearest words are the last ones; after it, the
+    // first ones.
+    final near = kept.length <= maxWords
+        ? kept
+        : (last ? kept.sublist(kept.length - maxWords) : kept.sublist(0, maxWords));
+    return near.join(' ');
   }
 
   /// Local word list first ("كرك", "البراده"), then the shop dictionary.
