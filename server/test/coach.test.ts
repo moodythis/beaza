@@ -90,6 +90,31 @@ describe('POST /v1/coach (AI savings plan)', () => {
     }
   });
 
+  it('does not suggest cutting a small category (20% of 1.8 BHD is pennies)', async () => {
+    const s = new Server();
+    s.ai = new FakeAi(new Error('model off'));
+    const res = await s.call('POST', '/v1/coach', request({
+      language: 'en',
+      week_total_fils: 4000,
+      categories: [{ category: 'food', fils: 1800, percent: 45 }, { category: 'transport', fils: 2200, percent: 55 }],
+    }));
+    assert.equal(res.body.source, 'rules');
+    assert.doesNotMatch(res.body.plan, /Cut food/);
+    assert.doesNotMatch(res.body.plan, /0\.360/);
+  });
+
+  it('says to sort the spending first when most of it is unsorted', async () => {
+    const s = new Server();
+    s.ai = new FakeAi(new Error('model off'));
+    const res = await s.call('POST', '/v1/coach', request({
+      language: 'en',
+      week_total_fils: 200000,
+      categories: [{ category: 'unsorted', fils: 176000, percent: 88 }, { category: 'food', fils: 1800, percent: 1 }],
+    }));
+    assert.match(res.body.plan, /^1\. Most of your spending is not sorted/);
+    assert.ok(res.body.facts.some((l: string) => /not sorted/.test(l)));
+  });
+
   it('reads the chat-completions reply shape too', async () => {
     const s = new Server();
     s.ai = new FakeAi({ choices: [{ message: { content: '1. Spend less on shopping: BHD 2.640 a week.' } }] });

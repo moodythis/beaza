@@ -366,7 +366,7 @@ class BeazaAiAssistant {
 
     final top = s
         .byBucket(week)
-        .where((b) => _discretionary.contains(b.bucket) && b.totalFils >= 5000)
+        .where((b) => _discretionary.contains(b.bucket) && b.totalFils >= 10000)
         .firstOrNull;
     if (top != null) {
       final keep = top.totalFils ~/ 5;

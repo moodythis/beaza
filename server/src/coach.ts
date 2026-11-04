@@ -26,6 +26,10 @@ const BUCKETS = new Set([
   'food', 'groceries', 'shopping', 'transport', 'bills', 'health',
   'entertainment', 'education', 'other', 'transfer', 'unsorted',
 ]);
+/** A category is worth trimming only from 10 BHD a week: below that, 20% is
+ * pennies and the advice would be silly. */
+const TRIM_MIN_FILS = 10000;
+
 const DISCRETIONARY = ['food', 'shopping', 'entertainment'];
 
 const MAX_FILS = 100_000_000; // BHD 100,000
@@ -112,6 +116,12 @@ function name(category: string, ar: boolean): string {
   return ar ? (NAMES_AR[category] ?? category) : category;
 }
 
+/** Most of the week is "unsorted" (and not a trivial amount). */
+function unsortedHeavy(x: CoachInput): boolean {
+  const u = x.categories.find((c) => c.category === 'unsorted');
+  return !!u && u.fils >= 2000 && u.percent >= 40;
+}
+
 /** The facts the model may use, each with its numbers already worked out
  * here in integers (the model does no arithmetic). */
 export function facts(x: CoachInput): { lines: string[]; trim?: { category: string; week: number; month: number } } {
@@ -140,7 +150,12 @@ export function facts(x: CoachInput): { lines: string[]; trim?: { category: stri
   for (const c of x.categories.slice(0, 5)) {
     lines.push(`${name(c.category, ar)}: ${money(c.fils, ar)} (${c.percent}${ar ? '٪' : '%'})`);
   }
-  const top = x.categories.find((c) => DISCRETIONARY.includes(c.category) && c.fils >= 1000);
+  if (unsortedHeavy(x)) {
+    lines.push(ar
+      ? 'أغلب المصروف غير مصنّف: صنّفه أول علشان تعرف وين تروح فلوسك'
+      : 'Most of the spending is not sorted into categories: sort it first to see where the money goes');
+  }
+  const top = x.categories.find((c) => DISCRETIONARY.includes(c.category) && c.fils >= TRIM_MIN_FILS);
   let trim: { category: string; week: number; month: number } | undefined;
   if (top) {
     const week = Math.floor(top.fils / 5);
@@ -156,11 +171,15 @@ const SYSTEM = {
   ar: `أنت مساعد توفير في تطبيق بيزة لطلاب الجامعة في البحرين.
 اكتب خطة توفير قصيرة بلهجة خليجية بسيطة وودّية: 3 أو 4 خطوات مرقّمة، كل خطوة جملة وحدة عملية.
 استخدم فقط الأرقام الموجودة في "الحقائق" وانسخها كما هي. لا تحسب ولا تخترع أي رقم جديد.
+لا تنصح بتخفيف فئة إلا إذا في "الحقائق" سطر "لو قلّ صرف"؛ وإلا لا تقترح تخفيف أي شي، وقل إن صرفه معقول إذا المبالغ صغيرة.
+إذا في سطر "غير مصنّف" خل الخطوة 1 تصنيف المصاريف.
 لا تنصح بقروض أو استثمار أو بنوك أو منتجات مالية، ولا تلوم الشخص. أقل من 120 كلمة.
 ابدأ مباشرة بالخطوة 1، بدون تحية وبدون جملة ختامية.`,
   en: `You are the savings helper in Beaza, an app for university students in Bahrain.
 Write a short, friendly savings plan: 3 or 4 numbered steps, one practical sentence each.
 Use only the numbers in FACTS, copied exactly. Never calculate or invent a number.
+Suggest cutting a category only if FACTS has an "If ... spending drops" line; otherwise suggest no cuts, and say the spending looks reasonable if the amounts are small.
+If FACTS says the spending is not sorted, make step 1 sorting it.
 No loans, investments, banks or financial products, and no blame. Under 120 words.
 Start directly with step 1: no greeting and no closing line.`,
 };
@@ -197,6 +216,11 @@ export function rulePlan(x: CoachInput): string {
   const ar = x.language === 'ar';
   const { trim } = facts(x);
   const steps: string[] = [];
+  if (unsortedHeavy(x)) {
+    steps.push(ar
+      ? 'أغلب مصروفك غير مصنّف: صنّفه من القائمة علشان تعرف وين تروح فلوسك.'
+      : 'Most of your spending is not sorted: give each item a category to see where the money goes.');
+  }
   if (trim) {
     steps.push(ar
       ? `خفّف ${name(trim.category, true)} 20٪ هالأسبوع: توفّر تقريباً ${money(trim.week, true)}، يعني ${money(trim.month, true)} في 4 أسابيع.`
