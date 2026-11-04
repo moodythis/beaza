@@ -7,6 +7,10 @@ import android.content.Context
 import android.content.Intent
 import android.content.IntentFilter
 import android.content.pm.PackageManager
+import android.graphics.Bitmap
+import android.graphics.BitmapFactory
+import android.graphics.Matrix
+import android.media.ExifInterface
 import android.net.Uri
 import android.os.Build
 import android.provider.Settings
@@ -312,20 +316,60 @@ class MainActivity : FlutterActivity(), PermissionRequester {
             result.success(null)
             return
         }
-        try {
-            val image = InputImage.fromFilePath(this, uri)
-            val recognizer = TextRecognition.getClient(TextRecognizerOptions.DEFAULT_OPTIONS)
-            recognizer.process(image)
-                .addOnSuccessListener { text -> result.success(text.text) }
-                .addOnFailureListener { e -> result.error("ocr", e.message, null) }
-                .addOnCompleteListener {
-                    recognizer.close()
-                    file?.delete()
+        Thread {
+            try {
+                val image = InputImage.fromBitmap(loadBitmap(uri), 0)
+                val recognizer = TextRecognition.getClient(TextRecognizerOptions.DEFAULT_OPTIONS)
+                recognizer.process(image)
+                    .addOnSuccessListener { text -> result.success(text.text) }
+                    .addOnFailureListener { e ->
+                        result.error("ocr", "recognize: ${e.javaClass.simpleName}: ${e.message}", null)
+                    }
+                    .addOnCompleteListener {
+                        recognizer.close()
+                        file?.delete()
+                    }
+            } catch (e: Throwable) {
+                file?.delete()
+                runOnUiThread {
+                    result.error("ocr", "load: ${e.javaClass.simpleName}: ${e.message}", null)
                 }
-        } catch (e: Exception) {
-            file?.delete()
-            result.error("ocr", e.message, null)
+            }
+        }.start()
+    }
+
+    /**
+     * The picture as a bitmap of at most about 2400 px on its long side (a
+     * 12 MP photo needs no more to read a receipt and may not fit in memory),
+     * turned upright from its EXIF orientation. Nothing is written to disk.
+     */
+    private fun loadBitmap(uri: Uri): Bitmap {
+        val bounds = BitmapFactory.Options().apply { inJustDecodeBounds = true }
+        (contentResolver.openInputStream(uri) ?: throw IOException("Cannot open the picture")).use {
+            BitmapFactory.decodeStream(it, null, bounds)
         }
+        var sample = 1
+        while (maxOf(bounds.outWidth, bounds.outHeight) / sample > 2400) sample *= 2
+        val opts = BitmapFactory.Options().apply { inSampleSize = sample }
+        val bitmap = (contentResolver.openInputStream(uri) ?: throw IOException("Cannot open the picture")).use {
+            BitmapFactory.decodeStream(it, null, opts)
+        } ?: throw IOException("Not a picture this phone can open")
+        val degrees = try {
+            (contentResolver.openInputStream(uri) ?: throw IOException("x")).use {
+                when (ExifInterface(it).getAttributeInt(
+                    ExifInterface.TAG_ORIENTATION, ExifInterface.ORIENTATION_NORMAL)) {
+                    ExifInterface.ORIENTATION_ROTATE_90 -> 90f
+                    ExifInterface.ORIENTATION_ROTATE_180 -> 180f
+                    ExifInterface.ORIENTATION_ROTATE_270 -> 270f
+                    else -> 0f
+                }
+            }
+        } catch (e: Exception) {
+            0f
+        }
+        if (degrees == 0f) return bitmap
+        val m = Matrix().apply { postRotate(degrees) }
+        return Bitmap.createBitmap(bitmap, 0, 0, bitmap.width, bitmap.height, m, true)
     }
 
     /** Anything left from a scan that was interrupted (the app was closed). */

@@ -115,6 +115,13 @@ class _ReceiptSheetState extends State<ReceiptSheet> {
                     vm.error == 'no_camera' ? l10n.receiptNoCamera : l10n.receiptError,
                     key: const Key('receiptFailed'),
                   ),
+                  if (vm.detail != null && vm.error != 'no_camera')
+                    Padding(
+                      padding: const EdgeInsets.only(top: 8),
+                      child: SelectableText(vm.detail!,
+                          key: const Key('receiptDetail'),
+                          style: theme.textTheme.bodySmall),
+                    ),
                   const SizedBox(height: 12),
                   OutlinedButton(
                     onPressed: vm.startOver,

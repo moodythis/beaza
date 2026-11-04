@@ -43,6 +43,11 @@ class ReceiptViewModel extends ChangeNotifier {
   /// The platform error code when [step] is [ReceiptStep.failed].
   String? get error => _error;
 
+  /// The platform's own words for the failure, shown small so a problem on
+  /// one phone can be told apart from another.
+  String? _detail;
+  String? get detail => _detail;
+
   bool _disposed = false;
 
   Future<void> scan(ReceiptSource source) async {
@@ -59,6 +64,7 @@ class ReceiptViewModel extends ChangeNotifier {
       _set(ReceiptStep.review);
     } on PlatformException catch (e) {
       _error = e.code;
+      _detail = e.message;
       _set(ReceiptStep.failed);
     }
   }
@@ -84,6 +90,7 @@ class ReceiptViewModel extends ChangeNotifier {
     _result = null;
     _duplicate = null;
     _error = null;
+    _detail = null;
     _set(ReceiptStep.choose);
   }
 
