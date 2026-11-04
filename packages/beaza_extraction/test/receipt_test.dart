@@ -101,4 +101,62 @@ BD
     expect(x.amountFils, isNull);
     expect(x.merchantRaw, 'SAMPLE SHOP');
   });
+
+  // The first REAL receipt (4 November 2026, a children's games shop, card
+  // payment). Only the shop name, date, time and amounts are kept here. The
+  // till prints the date month first; the labels and amounts come out of OCR
+  // in two columns.
+  group('a real receipt: month-first date, labels and amounts apart', () {
+    const columns = '''
+KIDS PORT GAMES
+CR: 86184-2
+Garden 55
+Invoice No.
+Date
+11/03/2026 10:59 PM
+#1. Yellow Ticket
+1.000 x 0.300
+0.300
+Subtotal:
+Total:
+Card (11/03/2026)
+Total Paid
+BD 0.300
+BD 0.300
+BD 0.300
+BD 0.300
+''';
+    const rows = '''
+KIDS PORT GAMES
+Date 11/03/2026 10:59 PM
+#1. Yellow Ticket
+1.000 x 0.300 0.300
+Subtotal: BD 0.300
+Total: BD 0.300
+Card (11/03/2026) BD 0.300
+Total Paid BD 0.300
+''';
+    for (final (name, text) in [('columns', columns), ('rows', rows)]) {
+      test(name, () {
+        final x = r.read(text, now: now);
+        expect(x.status, ExtractionStatus.transaction);
+        expect(x.amountFils, 300);
+        expect(x.currency, 'BHD');
+        expect(x.merchantRaw, 'KIDS PORT GAMES');
+        // 3 November 2026, 22:59 in Bahrain.
+        expect(x.timestamp, DateTime.utc(2026, 11, 3, 19, 59));
+        expect(x.flags, isEmpty);
+      });
+    }
+  });
+
+  test('day first stays the default when both readings fit', () {
+    // 05/11/2026 on 6 November: 5 November, not 11 May.
+    final x = r.read('SHOP\n05/11/2026 10:00\nTOTAL 1.500\n',
+        now: DateTime.utc(2026, 11, 6, 9));
+    expect(x.timestamp, DateTime.utc(2026, 11, 5, 7));
+    // Both readings are old: day first.
+    final old = r.read('SHOP\n04/03/2026 10:00\nTOTAL 1.500\n', now: now);
+    expect(old.timestamp, DateTime.utc(2026, 3, 4, 7));
+  });
 }

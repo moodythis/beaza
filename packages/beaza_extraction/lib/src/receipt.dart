@@ -196,23 +196,27 @@ class ReceiptReader {
 
   /// The printed date and time (Bahrain time) as UTC; null when there is no
   /// usable date. A date far from [now] is treated as misread.
+  ///
+  /// Day first is the Gulf habit, but some tills print month first
+  /// (11/03/2026 for 3 November). A date that fits only one way is read that
+  /// way; one that fits both ways is read day first, unless that is more than
+  /// 60 days old and the other way is not.
   static DateTime? _dateTime(String text, DateTime now) {
-    int? y, mo, d;
-    final dmy = RegExp(r'(?<!\d)(\d{1,2})[/\-.](\d{1,2})[/\-.](\d{4}|\d{2})(?!\d)')
-        .firstMatch(text);
     final ymd = RegExp(r'(?<!\d)(\d{4})[/\-.](\d{1,2})[/\-.](\d{1,2})(?!\d)')
         .firstMatch(text);
+    final dmy = RegExp(r'(?<!\d)(\d{1,2})[/\-.](\d{1,2})[/\-.](\d{4}|\d{2})(?!\d)')
+        .firstMatch(text);
+    // (year, month, day) readings, most likely first.
+    final readings = <(int, int, int)>[];
     if (ymd != null) {
-      y = int.parse(ymd[1]!);
-      mo = int.parse(ymd[2]!);
-      d = int.parse(ymd[3]!);
+      readings.add((int.parse(ymd[1]!), int.parse(ymd[2]!), int.parse(ymd[3]!)));
     } else if (dmy != null) {
-      d = int.parse(dmy[1]!);
-      mo = int.parse(dmy[2]!);
-      y = int.parse(dmy[3]!);
+      final a = int.parse(dmy[1]!), b = int.parse(dmy[2]!);
+      var y = int.parse(dmy[3]!);
       if (y < 100) y += 2000;
+      readings.add((y, b, a)); // day first
+      if (a != b) readings.add((y, a, b)); // month first
     }
-    if (y == null || mo! < 1 || mo > 12 || d! < 1 || d > 31) return null;
     var h = 12, mi = 0;
     final time = RegExp(r'(?<!\d)(\d{1,2}):(\d{2})(?::\d{2})?\s*(am|pm|ص|م)?(?![\d])',
             caseSensitive: false, unicode: true)
@@ -228,12 +232,20 @@ class ReceiptReader {
         mi = 0;
       }
     }
-    final at = DateTime.utc(y, mo, d, h, mi).subtract(kBahrainOffset);
-    final diff = at.difference(now.toUtc());
-    if (diff > const Duration(days: 1) || diff < const Duration(days: -400)) {
-      return null;
+    final fits = <DateTime>[];
+    for (final (y, mo, d) in readings) {
+      if (mo < 1 || mo > 12 || d < 1 || d > 31) continue;
+      final at = DateTime.utc(y, mo, d, h, mi).subtract(kBahrainOffset);
+      final diff = at.difference(now.toUtc());
+      if (diff > const Duration(days: 1) || diff < const Duration(days: -400)) continue;
+      fits.add(at);
     }
-    return at;
+    if (fits.isEmpty) return null;
+    if (fits.length == 2 && now.toUtc().difference(fits[0]) > const Duration(days: 60) &&
+        now.toUtc().difference(fits[1]) <= const Duration(days: 60)) {
+      return fits[1];
+    }
+    return fits.first;
   }
 
   String? _shop(List<String> lines) {
