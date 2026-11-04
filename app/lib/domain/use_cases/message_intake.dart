@@ -1,4 +1,5 @@
 import 'package:beaza/data/repositories/ledger_repository.dart';
+import 'package:beaza/data/repositories/preferences_store.dart';
 import 'package:beaza/data/repositories/seen_message_store.dart';
 import 'package:beaza/data/services/sms_source.dart';
 import 'package:beaza_extraction/beaza_extraction.dart';
@@ -23,6 +24,16 @@ class IntakeReport {
 
   /// Bank messages handled in this scan, of any kind.
   int get found => added + notTransactions + notUnderstood;
+}
+
+/// What adding earlier bank messages would bring in, shown before anything
+/// is stored.
+class EarlierPreview {
+  const EarlierPreview({this.purchases = 0, this.spentFils = 0});
+
+  /// Spending transactions found (money out, BHD).
+  final int purchases;
+  final int spentFils;
 }
 
 /// A bank message the pipeline could not read safely, shown to the user on
@@ -56,8 +67,10 @@ class MessageIntake {
     BeazaExtractor? extractor,
     SenderFamilyDetector? senders,
     DateTime Function()? clock,
+    PreferencesStore? preferences,
     this.window = const Duration(days: 30),
   })  : _sms = sms,
+        _prefs = preferences,
         _ledger = ledger,
         _seen = seen,
         _extractor = extractor ?? BeazaExtractor(),
@@ -70,6 +83,80 @@ class MessageIntake {
   final BeazaExtractor _extractor;
   final SenderFamilyDetector _senders;
   final DateTime Function() _clock;
+  final PreferencesStore? _prefs;
+
+  static const _sinceKey = 'intake.since';
+  static const _offerKey = 'intake.offerEarlier';
+
+  /// The oldest message time to read. A person who turns messages on starts
+  /// from that moment, so the list is not filled with weeks of old payments
+  /// they do not remember; earlier ones are added only if they ask
+  /// ([addEarlier]). A phone that already read messages before this rule
+  /// keeps the old window, so nothing changes for it.
+  Future<DateTime> _since(DateTime now) async {
+    final floor = now.subtract(window);
+    final prefs = _prefs;
+    if (prefs == null) return floor;
+    final ms = int.tryParse(await prefs.read(_sinceKey) ?? '');
+    if (ms == null) {
+      await prefs.write(_sinceKey, '${floor.toUtc().millisecondsSinceEpoch}');
+      return floor;
+    }
+    final since = DateTime.fromMillisecondsSinceEpoch(ms, isUtc: true);
+    return since.isAfter(floor) ? since : floor;
+  }
+
+  /// True while the "add earlier messages?" question is waiting for an answer.
+  Future<bool> offersEarlier() async =>
+      await _prefs?.read(_offerKey) == '1';
+
+  /// Answers the question without adding anything.
+  Future<void> declineEarlier() async => _prefs?.write(_offerKey, null);
+
+  /// What the last [days] days before the start would add. Reads the
+  /// messages again; nothing is stored.
+  Future<EarlierPreview> previewEarlier(int days) async {
+    final now = _clock();
+    final since = await _since(now);
+    final from = now.subtract(Duration(days: days));
+    if (!from.isBefore(since)) return const EarlierPreview();
+    final listed = await _sms.listInbox(since: from);
+    final wanted = <InboxMessage>[];
+    for (final m in listed) {
+      if (!m.receivedAt.isBefore(since)) continue;
+      if (_senders.detect(m.sender) == SenderFamily.unknown) continue;
+      if (await _seen.contains(keyFor(m))) continue;
+      wanted.add(m);
+    }
+    if (wanted.isEmpty) return const EarlierPreview();
+    final bodies = await _sms.readBodies([for (final m in wanted) m.id]);
+    var count = 0;
+    var fils = 0;
+    for (final m in wanted) {
+      final text = bodies[m.id];
+      if (text == null) continue;
+      final r = _extractor.process(
+        RawMessage(text: text, sender: m.sender, receivedAt: m.receivedAt),
+      );
+      if (r.status != ExtractionStatus.transaction) continue;
+      if (r.direction != TxDirection.outgoing) continue;
+      if (r.currency != null && r.currency != 'BHD') continue;
+      count++;
+      fils += r.amountFils ?? 0;
+    }
+    return EarlierPreview(purchases: count, spentFils: fils);
+  }
+
+  /// Moves the start back [days] days and reads those messages too.
+  Future<IntakeReport> addEarlier(int days) async {
+    final prefs = _prefs;
+    if (prefs != null) {
+      final from = _clock().subtract(Duration(days: days));
+      await prefs.write(_sinceKey, '${from.toUtc().millisecondsSinceEpoch}');
+      await prefs.write(_offerKey, null);
+    }
+    return scan();
+  }
 
   /// How far back to look. Matches the validator's maximum message age.
   final Duration window;
@@ -78,7 +165,19 @@ class MessageIntake {
 
   Future<bool> hasPermission() => _sms.hasPermission();
 
-  Future<bool> requestPermission() => _sms.requestPermission();
+  /// Asks for the SMS permission. When it is given for the first time,
+  /// reading starts now and the person is asked once whether to add
+  /// earlier messages.
+  Future<bool> requestPermission() async {
+    final ok = await _sms.requestPermission();
+    final prefs = _prefs;
+    if (ok && prefs != null && await prefs.read(_sinceKey) == null) {
+      await prefs.write(
+          _sinceKey, '${_clock().toUtc().millisecondsSinceEpoch}');
+      await prefs.write(_offerKey, '1');
+    }
+    return ok;
+  }
 
   Stream<void> get arrivals => _sms.arrivals;
 
@@ -98,7 +197,7 @@ class MessageIntake {
   /// the inbox for the review screen. Nothing is stored.
   Future<List<UnreadMessage>> unreadable() async {
     final now = _clock();
-    final listed = await _sms.listInbox(since: now.subtract(window));
+    final listed = await _sms.listInbox(since: await _since(now));
     final wanted = <InboxMessage>[];
     for (final m in listed) {
       if (_senders.detect(m.sender) == SenderFamily.unknown) continue;
@@ -144,7 +243,7 @@ class MessageIntake {
 
   Future<IntakeReport> _scan() async {
     final now = _clock();
-    final listed = await _sms.listInbox(since: now.subtract(window));
+    final listed = await _sms.listInbox(since: await _since(now));
     final again = !await _seen.contains(templateMarker);
 
     final wanted = <InboxMessage>[];

@@ -1,6 +1,7 @@
 import 'dart:async';
 
 import 'package:beaza/data/repositories/ledger_repository.dart';
+import 'package:beaza/data/repositories/preferences_store.dart';
 import 'package:beaza/data/repositories/seen_message_store.dart';
 import 'package:beaza/data/services/sms_source.dart';
 import 'package:beaza/domain/use_cases/message_intake.dart';
@@ -223,6 +224,79 @@ void main() {
       await intake.scan();
       final unread = await intake.unreadable();
       expect(unread.where((m) => m.text == personal), isEmpty);
+    });
+  });
+
+  group('reading starts when messages are turned on', () {
+    late MemoryPreferencesStore prefs;
+    late DateTime now;
+    late MessageIntake fresh;
+
+    setUp(() {
+      prefs = MemoryPreferencesStore();
+      now = bh(2, 17); // between the BisB OTP (17:00) and later messages
+      sms.inbox.add(('6', 'BisB', bh(2, 19), bisbCard.replaceAll('0.300', '0.700')));
+      fresh = MessageIntake(
+        sms: sms,
+        ledger: ledger,
+        seen: seen,
+        preferences: prefs,
+        clock: () => now,
+      );
+    });
+
+    test('a new person: only messages after the permission are read',
+        () async {
+      expect(await fresh.requestPermission(), isTrue);
+      expect(await fresh.offersEarlier(), isTrue);
+      now = bh(2, 20);
+      final report = await fresh.scan();
+      expect(report.added, 1);
+      expect((await ledger.entries()).single.result.amountFils, 700);
+      // The bodies of the earlier messages were not even read.
+      expect(sms.bodiesRead, ['6']);
+    });
+
+    test('earlier messages: a preview first, stored only when asked', () async {
+      await fresh.requestPermission();
+      now = bh(2, 20);
+      await fresh.scan();
+
+      final preview = await fresh.previewEarlier(7);
+      expect(preview.purchases, 2);
+      expect(preview.spentFils, 1800);
+      expect(await ledger.entries(), hasLength(1)); // nothing stored yet
+
+      final report = await fresh.addEarlier(7);
+      expect(report.added, 2);
+      expect((await ledger.entries()).map((e) => e.result.amountFils),
+          unorderedEquals([300, 1500, 700]));
+      expect(await fresh.offersEarlier(), isFalse);
+      // Still never older than the window.
+      expect(sms.bodiesRead, isNot(contains('5')));
+    });
+
+    test('saying no keeps the start and stops asking', () async {
+      await fresh.requestPermission();
+      await fresh.declineEarlier();
+      expect(await fresh.offersEarlier(), isFalse);
+      now = bh(2, 20);
+      expect((await fresh.scan()).added, 1);
+    });
+
+    test('a phone that already read messages keeps the old window', () async {
+      // Permission given before this version: no start saved, no question.
+      now = bh(2, 20);
+      final report = await fresh.scan();
+      expect(report.added, 3);
+      expect(await fresh.offersEarlier(), isFalse);
+    });
+
+    test('asking again later does not move the start', () async {
+      await fresh.requestPermission();
+      now = bh(2, 20);
+      await fresh.requestPermission();
+      expect((await fresh.scan()).added, 1);
     });
   });
 }

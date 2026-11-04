@@ -264,6 +264,50 @@ void main() {
     expect(find.text('BHD 9.700'), findsOneWidget);
   });
 
+  testWidgets('turning messages on starts from now; earlier ones only if asked',
+      (tester) async {
+    tester.view.physicalSize = const Size(800, 2400);
+    tester.view.devicePixelRatio = 1.0;
+    addTearDown(tester.view.reset);
+    final sms = fixtures.FakeSms([('1', 'BisB', bh(16, 32), fixtures.bisbCard)])
+      ..granted = false;
+    final ledger = InMemoryLedgerRepository();
+    final vm = HomeViewModel(
+      ledger: ledger,
+      settings: InMemorySettingsRepository(
+          const GuardrailSettings(dailyLimitFils: 10000)),
+      intake: MessageIntake(
+        sms: sms,
+        ledger: ledger,
+        seen: MemorySeenMessageStore(),
+        preferences: MemoryPreferencesStore(),
+        clock: () => bh(20),
+      ),
+      clock: () => bh(20),
+    );
+    await vm.load();
+    await vm.checkMessages();
+    await tester.pumpWidget(BeazaApp(homeViewModel: vm, locale: const Locale('en')));
+    await tester.pumpAndSettle();
+
+    sms.granted = true;
+    await tester.tap(find.byKey(const Key('smsAllow')));
+    await tester.pumpAndSettle();
+    // The 16:32 message is from before: not added, and the question shows.
+    expect(find.text('Sample Bakery - Mal Bah'), findsNothing);
+    expect(find.byKey(const Key('earlierCard')), findsOneWidget);
+
+    await tester.tap(find.byKey(const Key('earlier7')));
+    await tester.pumpAndSettle();
+    expect(find.textContaining('Found 1 purchases'), findsOneWidget);
+    expect(await ledger.entries(), isEmpty); // the preview stores nothing
+    await tester.tap(find.byKey(const Key('earlierAdd')));
+    await tester.pumpAndSettle();
+
+    expect(find.byKey(const Key('earlierCard')), findsNothing);
+    expect(find.text('Sample Bakery - Mal Bah'), findsOneWidget);
+  });
+
   testWidgets('no SMS card when there is no SMS support', (tester) async {
     await pumpHome(tester);
     expect(find.byKey(const Key('smsCard')), findsNothing);

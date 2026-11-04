@@ -68,6 +68,7 @@ MessageIntake buildIntake(Storage storage) => MessageIntake(
       sms: PlatformSmsSource(),
       ledger: storage.ledger,
       seen: storage.seenMessages,
+      preferences: storage.preferences,
     );
 
 Future<void> main() async {

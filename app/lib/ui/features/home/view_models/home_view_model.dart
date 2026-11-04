@@ -132,6 +132,29 @@ class HomeViewModel extends ChangeNotifier {
   int _notUnderstood = 0;
   int get notUnderstood => _notUnderstood;
 
+  bool _offerEarlier = false;
+
+  /// Messages were just turned on: ask once whether to add earlier ones.
+  bool get offerEarlier => _offerEarlier;
+
+  /// What adding the last [days] days would bring in; nothing is stored.
+  Future<EarlierPreview> previewEarlier(int days) =>
+      _intake?.previewEarlier(days) ?? Future.value(const EarlierPreview());
+
+  Future<void> addEarlier(int days) async {
+    final intake = _intake;
+    if (intake == null) return;
+    _offerEarlier = false;
+    _notUnderstood = (await intake.addEarlier(days)).notUnderstood;
+    _notify();
+  }
+
+  Future<void> declineEarlier() async {
+    _offerEarlier = false;
+    await _intake?.declineEarlier();
+    _notify();
+  }
+
   bool _batteryRestricted = false;
 
   /// True when battery saving may stop Beaza while it is closed, so bank
@@ -213,6 +236,7 @@ class HomeViewModel extends ChangeNotifier {
       _smsAllowed = await intake.hasPermission();
       if (_smsAllowed == true) {
         _notUnderstood = (await intake.scan()).notUnderstood;
+        _offerEarlier = await intake.offersEarlier();
       }
     } on Exception {
       // Reading SMS is a convenience: a failure must not break the screen.

@@ -666,5 +666,15 @@
   "entryDeleteBody": "It is taken out of your totals. If it came from a bank message, the message is not read again.",
   "entryEditTitle": "Edit transaction",
   "@historyUnsortedOnly": {"placeholders": {"count": {"type": "int"}}},
-  "sortUnsorted": "Sort the ones without a category"
+  "sortUnsorted": "Sort the ones without a category",
+  "earlierExplain": "Beaza records bank messages from now on. Do you want to add earlier ones too?",
+  "earlierDays": "Last {days} days",
+  "earlierNo": "No, start from now",
+  "earlierTitle": "Add earlier messages?",
+  "earlierFound": "Found {count} purchases in the last {days} days, totalling {total}. They will be added to your list.",
+  "earlierNone": "No earlier purchases found in the last {days} days.",
+  "earlierAdd": "Add them",
+  "@earlierDays": {"placeholders": {"days": {"type": "int"}}},
+  "@earlierFound": {"placeholders": {"count": {"type": "int"}, "total": {"type": "String"}, "days": {"type": "int"}}},
+  "@earlierNone": {"placeholders": {"days": {"type": "int"}}}
 }

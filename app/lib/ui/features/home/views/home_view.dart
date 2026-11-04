@@ -161,6 +161,13 @@ class HomeView extends StatelessWidget {
                   onAllow: viewModel.enableMessages,
                 ),
               ],
+              if (viewModel.offerEarlier) ...[
+                const SizedBox(height: 12),
+                EarlierCard(
+                  onDays: (days) => _addEarlier(context, days),
+                  onNo: viewModel.declineEarlier,
+                ),
+              ],
               if (viewModel.batteryRestricted &&
                   viewModel.smsAllowed == true) ...[
                 const SizedBox(height: 12),
@@ -267,6 +274,35 @@ class HomeView extends StatelessWidget {
     );
     if (picked == null || picked == current) return;
     await viewModel.setCategory(entry, picked);
+  }
+
+  Future<void> _addEarlier(BuildContext context, int days) async {
+    final l10n = AppLocalizations.of(context);
+    final preview = await viewModel.previewEarlier(days);
+    if (!context.mounted) return;
+    final add = await showDialog<bool>(
+      context: context,
+      builder: (d) => AlertDialog(
+        title: Text(l10n.earlierTitle),
+        content: Text(preview.purchases == 0
+            ? l10n.earlierNone(days)
+            : l10n.earlierFound(preview.purchases,
+                l10n.bhd(formatFils(preview.spentFils)), days)),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(d).pop(false),
+            child: Text(l10n.cancel),
+          ),
+          if (preview.purchases > 0)
+            FilledButton(
+              key: const Key('earlierAdd'),
+              onPressed: () => Navigator.of(d).pop(true),
+              child: Text(l10n.earlierAdd),
+            ),
+        ],
+      ),
+    );
+    if (add == true) await viewModel.addEarlier(days);
   }
 
   Future<void> _openHistory(BuildContext context, {bool unsortedOnly = false}) =>
@@ -721,6 +757,54 @@ class CategoryCard extends StatelessWidget {
                   label: Text(l10n.sortUnsorted),
                 ),
               ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+/// Shown once, right after messages are turned on: reading starts now, and
+/// earlier messages come in only if the person asks (with a preview).
+class EarlierCard extends StatelessWidget {
+  const EarlierCard({super.key, required this.onDays, required this.onNo});
+
+  final ValueChanged<int> onDays;
+  final VoidCallback onNo;
+
+  @override
+  Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context);
+    return Card(
+      key: const Key('earlierCard'),
+      child: Padding(
+        padding: const EdgeInsets.all(16),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            Text(l10n.earlierExplain),
+            const SizedBox(height: 12),
+            Wrap(
+              spacing: 8,
+              runSpacing: 8,
+              children: [
+                OutlinedButton(
+                  key: const Key('earlier7'),
+                  onPressed: () => onDays(7),
+                  child: Text(l10n.earlierDays(7)),
+                ),
+                OutlinedButton(
+                  key: const Key('earlier30'),
+                  onPressed: () => onDays(30),
+                  child: Text(l10n.earlierDays(30)),
+                ),
+                TextButton(
+                  key: const Key('earlierNo'),
+                  onPressed: onNo,
+                  child: Text(l10n.earlierNo),
+                ),
+              ],
+            ),
           ],
         ),
       ),
