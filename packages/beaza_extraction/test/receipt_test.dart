@@ -922,7 +922,7 @@ Refunded to Card:       BD 8.900
     });
 
     test('"no refund" on an ordinary receipt does not make it a refund', () {
-      final x = r.read('SAMPLE SHOP\\nGoods sold are not returnable. No refund.\\nTOTAL 1.500\\n', now: now);
+      final x = r.read('SAMPLE SHOP\nGoods sold are not returnable. No refund.\nTOTAL 1.500\n', now: now);
       expect(x.status, ExtractionStatus.transaction);
       expect(x.amountFils, 1500);
     });
