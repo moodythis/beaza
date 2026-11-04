@@ -20,6 +20,8 @@ import {
 import type { Bundle } from './validate.ts';
 import { legalPage, PRIVACY_VERSION, TERMS_VERSION } from './legal.ts';
 import { fetchGoogleKeys, verifyGoogleIdToken } from './google.ts';
+import { coach } from './coach.ts';
+import type { AiLike } from './coach.ts';
 import type { GoogleIdentity, GoogleKeys } from './google.ts';
 
 const MINUTE = 60_000;
@@ -38,6 +40,8 @@ export type Options = {
   log?: (line: string) => void;
   /** Google's public keys; tests pass their own. */
   googleKeys?: GoogleKeys;
+  /** Daily cap on savings plans; tests set a small one. */
+  coachCap?: number;
 };
 
 type Ctx = {
@@ -48,6 +52,8 @@ type Ctx = {
   pepper: () => Promise<Uint8Array>;
   /** Who a Google ID token belongs to (throws if it is not valid). */
   google: (token: unknown) => Promise<GoogleIdentity>;
+  ai?: AiLike;
+  coachCap?: number;
 };
 
 type UserRow = {
@@ -92,6 +98,8 @@ export async function handle(
           (options.now ?? Date.now)(),
           options.googleKeys ?? fetchGoogleKeys,
         ),
+      ai: env.AI,
+      coachCap: options.coachCap,
     };
     response = json(200, await dispatch(route, url, ctx));
   } catch (error) {
@@ -140,6 +148,9 @@ async function dispatch(route: string, url: URL, ctx: Ctx): Promise<Record<strin
       return accountInfo(ctx);
     case 'POST /v1/account/delete':
       return deleteAccount(ctx);
+    case 'POST /v1/coach':
+      // No account needed: the request holds only totals, no identity.
+      return coach(await readJson(ctx.request), ctx.db, ctx.ai, ctx.now, ctx.coachCap);
     default:
       throw new HttpError(404, 'not_found');
   }

@@ -35,7 +35,7 @@ export class TestD1 implements D1Like {
   db = new DatabaseSync(':memory:');
 
   constructor() {
-    for (const file of ['0001_init.sql', '0002_consent.sql', '0003_google.sql', '0004_devices.sql']) {
+    for (const file of ['0001_init.sql', '0002_consent.sql', '0003_google.sql', '0004_devices.sql', '0005_coach.sql']) {
       this.db.exec(readFileSync(new URL(`../migrations/${file}`, import.meta.url), 'utf8'));
     }
   }
@@ -71,6 +71,9 @@ export class Server {
   /** Set to turn on Google sign-in (see test/google.test.ts). */
   googleClientId?: string;
   googleKeys?: () => Promise<JsonWebKey[]>;
+  /** Pretend Workers AI (see test/coach.test.ts). */
+  ai?: import('../src/coach.ts').AiLike;
+  coachCap?: number;
 
   advance(ms: number) {
     this.time += ms;
@@ -94,8 +97,8 @@ export class Server {
     });
     const response = await handle(
       request,
-      { DB: this.d1, GOOGLE_CLIENT_ID: this.googleClientId },
-      { now: () => this.time, log: () => {}, googleKeys: this.googleKeys },
+      { DB: this.d1, GOOGLE_CLIENT_ID: this.googleClientId, AI: this.ai },
+      { now: () => this.time, log: () => {}, googleKeys: this.googleKeys, coachCap: this.coachCap },
     );
     return { status: response.status, body: await response.json(), headers: response.headers };
   }

@@ -23,4 +23,6 @@ export type Env = {
   /** The Web OAuth client id that Google ID tokens must be issued for.
    * Unset turns Google sign-in off (503 google_disabled). */
   GOOGLE_CLIENT_ID?: string;
+  /** Workers AI binding for the savings plan. Unset turns it off (503). */
+  AI?: import('./coach.ts').AiLike;
 };
