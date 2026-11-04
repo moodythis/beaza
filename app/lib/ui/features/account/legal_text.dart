@@ -27,7 +27,7 @@ class LegalDocument {
 }
 
 const privacyNotice = LegalDocument(
-  version: '2026-11-03',
+  version: '2026-11-04',
   titleAr: 'إشعار الخصوصية لتطبيق بيزة',
   titleEn: 'Beaza privacy notice',
   ar: [
@@ -41,7 +41,14 @@ const privacyNotice = LegalDocument(
       'ما لا يغادر هاتفك أبدًا',
       [
         'نص رسائل البنك لا يُحفظ ولا يُرسل إلى أي مكان. يقرؤه التطبيق ويحتفظ فقط بالمبلغ والتاجر والوقت والنوع، ويخزنها في قاعدة بيانات مشفرة على هاتفك.',
-        'بدون حساب، لا يغادر هاتفك أي شيء.',
+        'بدون حساب، لا يغادر هاتفك أي شيء، إلا ما تختار أن تقوله بصوتك (القسم التالي).',
+      ],
+    ),
+    LegalSection(
+      'إضافة مصروف بالصوت (اختياري)',
+      [
+        'إذا ضغطت على المايكروفون في «إضافة سريعة»، يطلب بيزة صلاحية المايكروفون من أندرويد ولا يستمع إلا أثناء ظهور أنه يستمع على الشاشة. يمرّر أندرويد الصوت إلى خدمة الكلام في هاتفك (غالبًا خدمة Google)، فتحوّله إلى نص وقد تفعل ذلك عبر الإنترنت.',
+        'يحتفظ بيزة بالنص فقط، ويمكنك تعديله قبل الحفظ. ولا يحفظ الصوت أبدًا. لا يتحكم بيزة بما تفعله خدمة الكلام بالصوت، فهذا تحكمه شروط الخصوصية الخاصة بها. وإن لم ترغب في استخدامها فاكتب بدلًا من ذلك؛ لا شيء آخر في بيزة يحتاج المايكروفون.',
       ],
     ),
     LegalSection(
@@ -116,7 +123,14 @@ const privacyNotice = LegalDocument(
       'What never leaves your phone',
       [
         'The text of bank messages is never stored or sent anywhere. The app reads it, keeps only the amount, merchant, time and type, and stores those in an encrypted database on your phone.',
-        'Without an account, nothing leaves your phone at all.',
+        'Without an account, nothing leaves your phone, except what you choose to say by voice (next section).',
+      ],
+    ),
+    LegalSection(
+      'Adding an expense by voice (optional)',
+      [
+        'If you tap the microphone in Quick add, Beaza asks Android for microphone access and listens only while the screen shows that it is listening. Android hands the audio to the speech service on your phone (usually Google\'s), which turns it into text and may do so over the internet.',
+        'Beaza keeps only the text, which you can edit before saving. It never saves the audio. Beaza does not control what the speech service does with the audio: that is covered by its own privacy terms. If you would rather not use it, type instead; nothing else in Beaza needs the microphone.',
       ],
     ),
     LegalSection(
