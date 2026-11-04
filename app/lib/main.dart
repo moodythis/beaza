@@ -2,6 +2,7 @@ import 'dart:async';
 
 import 'package:beaza/app.dart';
 import 'package:beaza/data/repositories/account_repository.dart';
+import 'package:beaza/data/repositories/rewards_repository.dart';
 import 'package:beaza/data/repositories/savings_repository.dart';
 import 'package:beaza/data/repositories/sync_repository.dart';
 import 'package:beaza/data/services/account_store.dart';
@@ -93,6 +94,8 @@ Future<void> main() async {
       savings: SavingsViewModel(
         repo: SavingsRepository(storage.preferences),
         ledger: storage.ledger,
+        rewards: RewardsRepository(storage.preferences),
+        settings: storage.settings,
       )..load(),
       coach: CoachViewModel(
         api: HttpCoachApi(),

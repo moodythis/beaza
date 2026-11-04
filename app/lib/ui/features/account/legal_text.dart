@@ -27,7 +27,7 @@ class LegalDocument {
 }
 
 const privacyNotice = LegalDocument(
-  version: '2026-11-04.2',
+  version: '2026-11-04.3',
   titleAr: 'إشعار الخصوصية لتطبيق بيزة',
   titleEn: 'Beaza privacy notice',
   ar: [
@@ -52,6 +52,12 @@ const privacyNotice = LegalDocument(
       ],
     ),
     LegalSection(
+      'النقاط والعروض التجريبية',
+      [
+        'تُحسب النقاط على هاتفك من بياناتك أنت (الأيام التي بقيت فيها تحت حدك، والمشتريات التي تركتها بعد الانتظار). المحلات والعروض والأكواد وهمية لهذا النموذج التجريبي؛ لا يشارك أي محل أو بنك أو علامة تجارية حقيقية، ولا تُشارك أي بيانات مع أحد.',
+      ],
+    ),
+    LegalSection(
       'خطة التوفير بالذكاء الاصطناعي (اختيارية، بموافقة منفصلة)',
       [
         'فقط إذا وافقت في شاشة خطة الذكاء الاصطناعي، يرسل بيزة إلى خادمه هذه المجاميع المحسوبة على هاتفك: مصروفك في آخر 7 أيام والـ7 التي قبلها، وحدك اليومي وعدد الأيام التي تجاوزته فيها، وعدد مشترياتك الصغيرة ومجموعها، ومجموع كل صنف ونسبته. تعرض لك الشاشة القائمة نفسها قبل أن توافق. لا يُرسل اسم محل ولا رسالة بنك ولا رقم حساب أو بطاقة ولا رقم مرجعي ولا تاريخ، ويرفض الخادم أي حقل آخر. لا يلزم حساب، ولا يُربط الطلب بأي حساب.',
@@ -73,7 +79,7 @@ const privacyNotice = LegalDocument(
       'لماذا، وعلى أي أساس',
       [
         'فقط لمزامنة بياناتك بين هواتفك. الأساس القانوني هو موافقتك (المادة 6(1)(أ) من اللائحة الأوروبية GDPR، والقانون البحريني رقم 30 لسنة 2018).',
-        'لا إعلانات، ولا تحليلات، ولا بيع أو مشاركة للبيانات، ولا تنميط، ولا قرارات آلية بشأنك.',
+        'لا إعلانات، ولا تحليلات، ولا بيع أو مشاركة للبيانات، ولا تنميط، ولا قرارات آلية بشأنك. استثناء واحد على هاتفك فقط: إذا شغّلت «العروض حسب صرفي» في العروض التجريبية (أدناه)، تُعرض العروض الوهمية لأكثر أصنافك صرفًا أولًا. ولا يغادر هاتفك شيء من ذلك.',
       ],
     ),
     LegalSection(
@@ -141,6 +147,12 @@ const privacyNotice = LegalDocument(
       ],
     ),
     LegalSection(
+      'Demo points and offers',
+      [
+        'Points are counted on your phone from your own data (days within your limit and purchases skipped after waiting). The partners, offers and codes are invented for this prototype; no real shop, bank or brand takes part, and no data is shared with anyone.',
+      ],
+    ),
+    LegalSection(
       'AI savings plan (optional, separate consent)',
       [
         'Only if you agree on the AI plan screen, Beaza sends these totals, worked out on your phone, to its server: what you spent in the last 7 days and the 7 before, your daily limit and on how many days you passed it, how many small purchases you made and their total, and a total and share per category. The screen shows you the exact list before you agree. No shop name, bank message, account or card number, reference or date is sent, and the server refuses any other field. No account is needed and none is linked to the request.',
@@ -162,7 +174,7 @@ const privacyNotice = LegalDocument(
       'Why, and on what basis',
       [
         'Only to keep your data in step between your own phones. The legal basis is your consent (GDPR Art. 6(1)(a); Bahrain Law No. 30 of 2018).',
-        'No advertising, no analytics, no selling or sharing of data, no profiling and no automated decisions about you.',
+        'No advertising, no analytics, no selling or sharing of data, no profiling and no automated decisions about you. One exception, on your phone only: if you turn on "offers by my spending" in the demo offers (below), invented offers for your biggest categories are shown first. Nothing about it leaves your phone.',
       ],
     ),
     LegalSection(

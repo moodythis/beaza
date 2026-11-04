@@ -411,5 +411,19 @@
     "placeholders": {
       "date": { "type": "String" }
     }
-  }
+  },
+  "rewardsPass": "بطاقة بيزة للتوفير",
+  "rewardsDemo": "تجريبي: المحلات والعروض وهمية لهذا النموذج.",
+  "rewardsDemoTag": "تجريبي",
+  "rewardsPoints": "نقطة",
+  "rewardsHow": "10 نقاط عن كل يوم من آخر 30 بقيت فيه تحت حدك، و20 عن كل شي تركته بعد الانتظار.",
+  "offersPersonal": "العروض حسب صرفي",
+  "offersPersonalHow": "يقدّم عروض أكثر أصنافك صرفاً. يتم على الجوال بس، وما ينرسل شي.",
+  "rewardsCost": "{points} نقطة",
+  "@rewardsCost": {
+    "placeholders": {
+      "points": { "type": "int" }
+    }
+  },
+  "rewardsCodeDemo": "كود تجريبي: ما يقبله أي محل حقيقي."
 }

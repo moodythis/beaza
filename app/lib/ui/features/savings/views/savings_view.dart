@@ -1,4 +1,5 @@
 import 'package:beaza/l10n/app_localizations.dart';
+import 'package:beaza/ui/core/category_style.dart';
 import 'package:beaza/ui/core/formatting.dart';
 import 'package:beaza/ui/features/savings/view_models/savings_view_model.dart';
 import 'package:beaza_extraction/beaza_extraction.dart' show Day;
@@ -25,6 +26,10 @@ class SavingsView extends StatelessWidget {
             HoldsCard(viewModel: viewModel),
             const SizedBox(height: 12),
             SubscriptionsCard(viewModel: viewModel),
+            if (viewModel.rewards != null) ...[
+              const SizedBox(height: 12),
+              RewardsCard(viewModel: viewModel),
+            ],
           ],
         ),
       ),
@@ -363,6 +368,116 @@ class SavingsHomeCard extends StatelessWidget {
           ),
         );
       },
+    );
+  }
+}
+
+
+/// DEMO points and offers: invented partners, clearly labelled.
+class RewardsCard extends StatelessWidget {
+  const RewardsCard({super.key, required this.viewModel});
+
+  final SavingsViewModel viewModel;
+
+  @override
+  Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context);
+    final theme = Theme.of(context);
+    final ar = Localizations.localeOf(context).languageCode == 'ar';
+    final balance = viewModel.pointsBalance;
+    return Card(
+      key: const Key('rewardsCard'),
+      clipBehavior: Clip.antiAlias,
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          Container(
+            padding: const EdgeInsets.all(16),
+            decoration: BoxDecoration(
+              gradient: LinearGradient(colors: [
+                theme.colorScheme.primary.withValues(alpha: 0.35),
+                theme.colorScheme.tertiary.withValues(alpha: 0.20),
+              ]),
+            ),
+            child: Row(
+              children: [
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(l10n.rewardsPass, style: theme.textTheme.titleMedium),
+                      Text(l10n.rewardsDemo, style: theme.textTheme.bodySmall),
+                    ],
+                  ),
+                ),
+                Column(
+                  crossAxisAlignment: CrossAxisAlignment.end,
+                  children: [
+                    Text('$balance',
+                        key: const Key('pointsBalance'),
+                        style: theme.textTheme.headlineMedium?.copyWith(
+                            color: theme.colorScheme.tertiary,
+                            fontWeight: FontWeight.w800)),
+                    Text(l10n.rewardsPoints, style: theme.textTheme.bodySmall),
+                  ],
+                ),
+              ],
+            ),
+          ),
+          Padding(
+            padding: const EdgeInsets.fromLTRB(16, 8, 16, 0),
+            child: Text(l10n.rewardsHow, style: theme.textTheme.bodySmall),
+          ),
+          SwitchListTile(
+            key: const Key('offersPersonal'),
+            value: viewModel.personalOffers,
+            onChanged: (on) => viewModel.rewards!.setPersonal(on),
+            title: Text(l10n.offersPersonal),
+            subtitle: Text(l10n.offersPersonalHow),
+          ),
+          for (final o in viewModel.offers)
+            ListTile(
+              key: Key('offer_${o.id}'),
+              leading: Icon(categoryIcon(o.category)),
+              title: Text('${ar ? o.partnerAr : o.partnerEn} · ${l10n.rewardsDemoTag}'),
+              subtitle: Text(ar ? o.offerAr : o.offerEn),
+              trailing: FilledButton.tonal(
+                key: Key('redeem_${o.id}'),
+                onPressed: balance < o.cost
+                    ? null
+                    : () async {
+                        final code = await viewModel.redeem(o);
+                        if (code == null || !context.mounted) return;
+                        await showDialog<void>(
+                          context: context,
+                          builder: (context) => AlertDialog(
+                            title: Text(ar ? o.partnerAr : o.partnerEn),
+                            content: Column(
+                              mainAxisSize: MainAxisSize.min,
+                              children: [
+                                SelectableText(code,
+                                    key: const Key('redeemCode'),
+                                    style: theme.textTheme.headlineSmall),
+                                const SizedBox(height: 8),
+                                Text(l10n.rewardsCodeDemo,
+                                    style: theme.textTheme.bodySmall),
+                              ],
+                            ),
+                            actions: [
+                              TextButton(
+                                onPressed: () => Navigator.of(context).pop(),
+                                child: Text(l10n.receiptSave),
+                              ),
+                            ],
+                          ),
+                        );
+                      },
+                child: Text(l10n.rewardsCost(o.cost)),
+              ),
+            ),
+          const SizedBox(height: 8),
+        ],
+      ),
     );
   }
 }

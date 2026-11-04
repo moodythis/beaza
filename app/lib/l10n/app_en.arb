@@ -624,5 +624,19 @@
     "placeholders": {
       "date": { "type": "String" }
     }
-  }
+  },
+  "rewardsPass": "Beaza Saver Pass",
+  "rewardsDemo": "Demo: the partners and offers are invented for this prototype.",
+  "rewardsDemoTag": "demo",
+  "rewardsPoints": "points",
+  "rewardsHow": "10 points for each day of the last 30 within your limit, 20 for each purchase you skipped after waiting.",
+  "offersPersonal": "Offers by my spending",
+  "offersPersonalHow": "Puts offers for your biggest categories first. Worked out on this phone; nothing is sent.",
+  "rewardsCost": "{points} pts",
+  "@rewardsCost": {
+    "placeholders": {
+      "points": { "type": "int" }
+    }
+  },
+  "rewardsCodeDemo": "Demo code: no real shop accepts it."
 }
