@@ -41,6 +41,10 @@ Future<void> pumpHome(
     clock: () => bh(12),
   );
   await vm.load();
+  // A tall screen, so the whole home list is built and can be found.
+  tester.view.physicalSize = const Size(800, 2400);
+  tester.view.devicePixelRatio = 1.0;
+  addTearDown(tester.view.reset);
   await tester.pumpWidget(BeazaApp(homeViewModel: vm, locale: locale));
   await tester.pumpAndSettle();
 }
