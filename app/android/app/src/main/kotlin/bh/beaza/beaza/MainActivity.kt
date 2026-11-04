@@ -139,8 +139,8 @@ class MainActivity : FlutterActivity(), PermissionRequester {
     /**
      * Opens the phone's own speech screen and answers with what was said, or
      * null if cancelled. Beaza never records audio itself (no microphone
-     * permission). Offline recognition is asked for; whether the phone's
-     * speech service honours it depends on the phone.
+     * permission). The phone's speech service may use the internet; the
+     * quick-add screen says so.
      */
     override fun listen(language: String, result: MethodChannel.Result) {
         if (pendingListen != null) {
@@ -150,7 +150,9 @@ class MainActivity : FlutterActivity(), PermissionRequester {
         val intent = Intent(RecognizerIntent.ACTION_RECOGNIZE_SPEECH).apply {
             putExtra(RecognizerIntent.EXTRA_LANGUAGE_MODEL, RecognizerIntent.LANGUAGE_MODEL_FREE_FORM)
             putExtra(RecognizerIntent.EXTRA_LANGUAGE, language)
-            putExtra(RecognizerIntent.EXTRA_PREFER_OFFLINE, true)
+            // No EXTRA_PREFER_OFFLINE: on a real phone (4 Nov 2026) asking
+            // for offline made Google's screen answer "Voice search isn't
+            // available" when no offline language pack was installed.
             putExtra(RecognizerIntent.EXTRA_MAX_RESULTS, 1)
         }
         pendingListen = result
