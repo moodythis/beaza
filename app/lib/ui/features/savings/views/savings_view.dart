@@ -1,4 +1,3 @@
-import 'package:beaza/data/repositories/savings_repository.dart';
 import 'package:beaza/l10n/app_localizations.dart';
 import 'package:beaza/ui/core/formatting.dart';
 import 'package:beaza/ui/features/savings/view_models/savings_view_model.dart';
