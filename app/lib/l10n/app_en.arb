@@ -656,5 +656,15 @@
     "placeholders": {
       "spent": { "type": "String" }
     }
-  }
+  },
+  "historyUnsortedOnly": "Not sorted ({count})",
+  "historyAllSorted": "Everything is sorted",
+  "entryChangeCategory": "Change category",
+  "entryEdit": "Edit amount or shop",
+  "entryDelete": "Delete",
+  "entryDeleteTitle": "Delete this transaction?",
+  "entryDeleteBody": "It is taken out of your totals. If it came from a bank message, the message is not read again.",
+  "entryEditTitle": "Edit transaction",
+  "@historyUnsortedOnly": {"placeholders": {"count": {"type": "int"}}},
+  "sortUnsorted": "Sort the ones without a category"
 }

@@ -40,6 +40,14 @@ abstract class LedgerRepository extends ChangeNotifier {
     bool sameShop = true,
   });
 
+  /// Deletes one transaction the person chose. A message it came from is
+  /// not read into the list again.
+  Future<void> remove(LedgerEntry entry);
+
+  /// Corrects the amount and shop of one transaction.
+  Future<void> edit(LedgerEntry entry,
+      {required int amountFils, String? merchant});
+
   /// How many transactions read from messages are copies of an earlier one
   /// (same fields, made at least [duplicateGap] later). Copies like this
   /// came from reading the same bank message twice.
@@ -136,6 +144,33 @@ class InMemoryLedgerRepository extends LedgerRepository {
         _results[j] = _results[j].withMerchant(category: category);
       }
     }
+    notifyListeners();
+  }
+
+  bool _same(LedgerEntry entry) {
+    final i = entry.index;
+    return i >= 0 &&
+        i < _results.length &&
+        _results[i].amountFils == entry.result.amountFils &&
+        _results[i].timestamp == entry.result.timestamp;
+  }
+
+  @override
+  Future<void> remove(LedgerEntry entry) async {
+    if (!_same(entry)) return;
+    _results.removeAt(entry.index);
+    notifyListeners();
+  }
+
+  @override
+  Future<void> edit(LedgerEntry entry,
+      {required int amountFils, String? merchant}) async {
+    if (amountFils <= 0) {
+      throw ArgumentError.value(amountFils, 'amountFils', 'must be positive');
+    }
+    if (!_same(entry)) return;
+    _results[entry.index] =
+        _results[entry.index].edited(amountFils: amountFils, merchant: merchant);
     notifyListeners();
   }
 

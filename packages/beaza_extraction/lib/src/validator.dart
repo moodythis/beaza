@@ -99,6 +99,30 @@ class ExtractionResult {
   final List<ValidationIssue> issues;
   final List<ExtractionFlag> flags;
 
+  /// A copy the person corrected: a new amount and shop name. The clean
+  /// name is dropped so the typed name is what shows.
+  ExtractionResult edited({required int amountFils, String? merchant}) =>
+      ExtractionResult(
+        status: status,
+        kind: kind,
+        amountFils: amountFils,
+        currency: currency,
+        type: type,
+        direction: direction,
+        merchantRaw: merchant,
+        merchantNorm: null,
+        category: category,
+        channel: channel,
+        last4: last4,
+        counterpartyLast4: counterpartyLast4,
+        reference: reference,
+        timestamp: timestamp,
+        confidence: confidence,
+        templateVersion: templateVersion,
+        issues: issues,
+        flags: flags,
+      );
+
   /// A copy with the display name and category filled in (FR-3.9).
   ExtractionResult withMerchant({String? merchantNorm, String? category}) =>
       ExtractionResult(

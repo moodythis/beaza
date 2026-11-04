@@ -1,5 +1,6 @@
 import 'package:beaza/domain/use_cases/spending_by_category.dart';
 import 'package:beaza/l10n/app_localizations.dart';
+import 'package:beaza/ui/core/amount_dialog.dart';
 import 'package:beaza/ui/core/category_picker.dart';
 import 'package:beaza/ui/core/entry_text.dart';
 import 'package:beaza/ui/core/entry_tile.dart';
@@ -28,12 +29,36 @@ class HistoryView extends StatelessWidget {
           if (!viewModel.loaded) {
             return const Center(child: CircularProgressIndicator());
           }
+          final filter = Align(
+            alignment: AlignmentDirectional.centerStart,
+            child: FilterChip(
+              key: const Key('unsortedOnly'),
+              avatar: const Icon(Icons.help_outline, size: 18),
+              label: Text(l10n.historyUnsortedOnly(viewModel.unsortedCount)),
+              selected: viewModel.unsortedOnly,
+              onSelected: viewModel.showUnsortedOnly,
+            ),
+          );
           if (viewModel.days.isEmpty) {
-            return Center(child: Text(l10n.historyEmpty));
+            return ListView(
+              padding: const EdgeInsets.fromLTRB(16, 8, 16, 32),
+              children: [
+                if (viewModel.unsortedOnly || viewModel.unsortedCount > 0)
+                  filter,
+                const SizedBox(height: 32),
+                Center(
+                  child: Text(viewModel.unsortedOnly
+                      ? l10n.historyAllSorted
+                      : l10n.historyEmpty),
+                ),
+              ],
+            );
           }
           return ListView(
             padding: const EdgeInsets.fromLTRB(16, 8, 16, 32),
             children: [
+              if (viewModel.unsortedOnly || viewModel.unsortedCount > 0)
+                filter,
               for (final d in viewModel.days) ...[
                 Padding(
                   padding: const EdgeInsets.only(top: 16, bottom: 4),
@@ -59,9 +84,11 @@ class HistoryView extends StatelessWidget {
                 for (final e in d.entries)
                   EntryTile(
                     entry: e,
-                    onTap: e.role == EntryRole.spending
+                    // Sorting is the common job, so the unsorted list goes
+                    // straight to the categories.
+                    onTap: viewModel.unsortedOnly
                         ? () => _choose(context, e)
-                        : null,
+                        : () => _actions(context, e),
                   ),
               ],
             ],
@@ -69,6 +96,95 @@ class HistoryView extends StatelessWidget {
         },
       ),
     );
+  }
+
+  Future<void> _actions(BuildContext context, LedgerEntry entry) async {
+    final l10n = AppLocalizations.of(context);
+    final action = await showModalBottomSheet<String>(
+      context: context,
+      showDragHandle: true,
+      builder: (sheet) => SafeArea(
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            ListTile(
+              title: Text(entryTitle(l10n, entry.result),
+                  style: Theme.of(sheet).textTheme.titleMedium),
+              trailing: Text(l10n.bhd(formatFils(entry.result.amountFils ?? 0))),
+            ),
+            if (entry.role == EntryRole.spending)
+              ListTile(
+                key: const Key('entryCategory'),
+                leading: const Icon(Icons.category_outlined),
+                title: Text(l10n.entryChangeCategory),
+                onTap: () => Navigator.of(sheet).pop('category'),
+              ),
+            ListTile(
+              key: const Key('entryEdit'),
+              leading: const Icon(Icons.edit_outlined),
+              title: Text(l10n.entryEdit),
+              onTap: () => Navigator.of(sheet).pop('edit'),
+            ),
+            ListTile(
+              key: const Key('entryDelete'),
+              leading: Icon(Icons.delete_outline,
+                  color: Theme.of(sheet).colorScheme.error),
+              title: Text(l10n.entryDelete,
+                  style: TextStyle(color: Theme.of(sheet).colorScheme.error)),
+              onTap: () => Navigator.of(sheet).pop('delete'),
+            ),
+          ],
+        ),
+      ),
+    );
+    if (!context.mounted) return;
+    switch (action) {
+      case 'category':
+        await _choose(context, entry);
+      case 'edit':
+        await _edit(context, entry);
+      case 'delete':
+        await _delete(context, entry);
+    }
+  }
+
+  Future<void> _edit(BuildContext context, LedgerEntry entry) async {
+    final l10n = AppLocalizations.of(context);
+    final r = entry.result;
+    final shop = (r.merchantNorm ?? r.merchantRaw)?.trim();
+    final input = await showAmountDialog(
+      context,
+      title: l10n.entryEditTitle,
+      withMerchant: true,
+      initialFils: r.amountFils,
+      initialMerchant: shop,
+    );
+    if (input == null) return;
+    await viewModel.edit(entry,
+        amountFils: input.fils, merchant: input.merchant);
+  }
+
+  Future<void> _delete(BuildContext context, LedgerEntry entry) async {
+    final l10n = AppLocalizations.of(context);
+    final ok = await showDialog<bool>(
+      context: context,
+      builder: (d) => AlertDialog(
+        title: Text(l10n.entryDeleteTitle),
+        content: Text(l10n.entryDeleteBody),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(d).pop(false),
+            child: Text(l10n.cancel),
+          ),
+          FilledButton(
+            key: const Key('confirmDelete'),
+            onPressed: () => Navigator.of(d).pop(true),
+            child: Text(l10n.entryDelete),
+          ),
+        ],
+      ),
+    );
+    if (ok == true) await viewModel.remove(entry);
   }
 
   Future<void> _choose(BuildContext context, LedgerEntry entry) async {

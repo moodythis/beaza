@@ -438,5 +438,14 @@
   "budgetByHand": "أحدده بنفسي",
   "budgetFromIncome": "احسبه من دخلي",
   "budgetNote": "محسوب من دخلك",
-  "budgetUsedUp": "فلوس الشهر المتاحة (الدخل ناقص الالتزامات) خلصت قبل اليوم. مصروف اليوم: {spent}"
+  "budgetUsedUp": "فلوس الشهر المتاحة (الدخل ناقص الالتزامات) خلصت قبل اليوم. مصروف اليوم: {spent}",
+  "historyUnsortedOnly": "بدون تصنيف ({count})",
+  "historyAllSorted": "كل شي مصنّف",
+  "entryChangeCategory": "تغيير التصنيف",
+  "entryEdit": "تعديل المبلغ أو المحل",
+  "entryDelete": "حذف",
+  "entryDeleteTitle": "تحذف هالمعاملة؟",
+  "entryDeleteBody": "تنشال من مجاميعك. إذا كانت من رسالة بنك، الرسالة ما تنقرا مرة ثانية.",
+  "entryEditTitle": "تعديل المعاملة",
+  "sortUnsorted": "صنّف اللي بدون تصنيف"
 }

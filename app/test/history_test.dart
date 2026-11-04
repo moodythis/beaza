@@ -88,8 +88,11 @@ void main() {
     expect(find.byKey(const Key('day_2026-11-01')), findsOneWidget);
     expect(find.text('Spent BHD 2.050'), findsOneWidget);
 
-    // Tap the older purchase: the list says it applies to the whole shop.
+    // Tap the older purchase, then "Change category": the list says it
+    // applies to the whole shop.
     await tester.tap(find.text('Waleed Al Kabah').last);
+    await tester.pumpAndSettle();
+    await tester.tap(find.byKey(const Key('entryCategory')));
     await tester.pumpAndSettle();
     expect(find.text('Applies to every purchase from Waleed Al Kabah'),
         findsOneWidget);
@@ -102,5 +105,65 @@ void main() {
 
     final cats = (await ledger.entries()).map((e) => e.result.category);
     expect(cats, ['health', 'health']);
+  });
+
+  test('the unsorted filter shows only purchases without a category',
+      () async {
+    final ledger = InMemoryLedgerRepository(initial: [
+      spend(3900, bh(1, 14), shop: 'Abed Bakery', category: 'food'),
+      spend(1000, bh(1, 9), shop: 'ZZ UNKNOWN 123'),
+      received(9000, bh(2, 12)),
+    ]);
+    final vm = HistoryViewModel(ledger: ledger, unsortedOnly: true);
+    await vm.load();
+    expect(vm.unsortedCount, 1);
+    expect(vm.days.single.entries.single.result.amountFils, 1000);
+    await vm.setCategory(vm.days.single.entries.single, 'shopping');
+    await Future<void>.delayed(Duration.zero);
+    await vm.load();
+    expect(vm.unsortedCount, 0);
+    expect(vm.days, isEmpty);
+    await vm.showUnsortedOnly(false);
+    expect(vm.days.expand((d) => d.entries), hasLength(3));
+  });
+
+  testWidgets('a transaction can be edited and deleted from the history',
+      (tester) async {
+    final ledger = InMemoryLedgerRepository(initial: [
+      spend(2050, bh(2, 9), shop: 'Waleed Al Kabah', ref: 'a'),
+      spend(3000, bh(2, 10), shop: 'Jasmis', ref: 'b'),
+    ]);
+    final vm = HomeViewModel(
+      ledger: ledger,
+      settings: InMemorySettingsRepository(
+          const GuardrailSettings(dailyLimitFils: 10000)),
+      clock: () => bh(2, 12),
+    );
+    await vm.load();
+    await tester.pumpWidget(BeazaApp(homeViewModel: vm, locale: const Locale('en')));
+    await tester.pumpAndSettle();
+    await tester.tap(find.byKey(const Key('historyButton')));
+    await tester.pumpAndSettle();
+
+    await tester.tap(find.text('Jasmis'));
+    await tester.pumpAndSettle();
+    await tester.tap(find.byKey(const Key('entryEdit')));
+    await tester.pumpAndSettle();
+    await tester.enterText(find.byKey(const Key('amountField')), '2.500');
+    await tester.enterText(find.byKey(const Key('merchantField')), 'Jasmis Riffa');
+    await tester.tap(find.byKey(const Key('saveAmount')));
+    await tester.pumpAndSettle();
+    expect(find.text('Jasmis Riffa'), findsOneWidget);
+    expect((await ledger.entries()).map((e) => e.result.amountFils),
+        [2050, 2500]);
+
+    await tester.tap(find.text('Waleed Al Kabah'));
+    await tester.pumpAndSettle();
+    await tester.tap(find.byKey(const Key('entryDelete')));
+    await tester.pumpAndSettle();
+    await tester.tap(find.byKey(const Key('confirmDelete')));
+    await tester.pumpAndSettle();
+    expect(find.text('Waleed Al Kabah'), findsNothing);
+    expect((await ledger.entries()).single.result.merchantRaw, 'Jasmis Riffa');
   });
 }

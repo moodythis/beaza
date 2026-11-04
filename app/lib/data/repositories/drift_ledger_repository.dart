@@ -205,6 +205,49 @@ class DriftLedgerRepository extends LedgerRepository implements Syncable {
     return copies;
   }
 
+  /// The live row a screen's entry stands for, or null when the list has
+  /// changed since the screen read it.
+  Future<LedgerRow?> _rowOf(LedgerEntry entry) async {
+    final rows = await _liveRows();
+    final i = entry.index;
+    if (i < 0 || i >= rows.length) return null;
+    final row = rows[i];
+    if (row.amountFils != entry.result.amountFils ||
+        row.timestampMs !=
+            entry.result.timestamp?.toUtc().millisecondsSinceEpoch) {
+      return null;
+    }
+    return row;
+  }
+
+  @override
+  Future<void> remove(LedgerEntry entry) async {
+    final row = await _rowOf(entry);
+    if (row != null) await delete(row.id);
+  }
+
+  @override
+  Future<void> edit(LedgerEntry entry,
+      {required int amountFils, String? merchant}) async {
+    if (amountFils <= 0) {
+      throw ArgumentError.value(amountFils, 'amountFils', 'must be positive');
+    }
+    final row = await _rowOf(entry);
+    if (row == null) return;
+    final now = _clock().toUtc().millisecondsSinceEpoch;
+    await (_db.update(_db.ledgerRows)..where((r) => r.id.equals(row.id))).write(
+      LedgerRowsCompanion(
+        amountFils: Value(amountFils),
+        merchantRaw: Value(merchant),
+        merchantNorm: const Value(null),
+        updatedAtMs: Value(now),
+        deviceId: Value(_deviceId),
+        pendingSync: const Value(true),
+      ),
+    );
+    notifyListeners();
+  }
+
   /// Marks a transaction as deleted. The row stays as a tombstone.
   Future<void> delete(String id) async {
     final now = _clock().toUtc().millisecondsSinceEpoch;

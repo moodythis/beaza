@@ -16,6 +16,7 @@ Future<AmountInput?> showAmountDialog(
   required String title,
   bool withMerchant = false,
   int? initialFils,
+  String? initialMerchant,
 }) =>
     showDialog<AmountInput>(
       context: context,
@@ -23,6 +24,7 @@ Future<AmountInput?> showAmountDialog(
         title: title,
         withMerchant: withMerchant,
         initialFils: initialFils,
+        initialMerchant: initialMerchant,
       ),
     );
 
@@ -32,11 +34,13 @@ class AmountDialog extends StatefulWidget {
     required this.title,
     this.withMerchant = false,
     this.initialFils,
+    this.initialMerchant,
   });
 
   final String title;
   final bool withMerchant;
   final int? initialFils;
+  final String? initialMerchant;
 
   @override
   State<AmountDialog> createState() => _AmountDialogState();
@@ -48,7 +52,8 @@ class _AmountDialogState extends State<AmountDialog> {
         ? ''
         : formatFils(widget.initialFils!, group: false),
   );
-  final TextEditingController _merchant = TextEditingController();
+  late final TextEditingController _merchant =
+      TextEditingController(text: widget.initialMerchant ?? '');
   bool _invalid = false;
 
   @override

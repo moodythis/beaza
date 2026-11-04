@@ -70,13 +70,7 @@ class HomeView extends StatelessWidget {
             key: const Key('historyButton'),
             tooltip: l10n.historyButton,
             icon: const Icon(Icons.history),
-            onPressed: () => Navigator.of(context).push(
-              MaterialPageRoute<void>(
-                builder: (_) => HistoryView(
-                  viewModel: HistoryViewModel(ledger: viewModel.ledger)..load(),
-                ),
-              ),
-            ),
+            onPressed: () => _openHistory(context),
           ),
           if (account != null)
             ListenableBuilder(
@@ -175,7 +169,10 @@ class HomeView extends StatelessWidget {
               const SizedBox(height: 12),
               MicroCard(today: state.summary.micro, week: state.weekMicro),
               const SizedBox(height: 12),
-              CategoryCard(totals: state.weekByCategory),
+              CategoryCard(
+                totals: state.weekByCategory,
+                onSortUnsorted: () => _openHistory(context, unsortedOnly: true),
+              ),
               if (viewModel.duplicates > 0)
                 Card(
                   key: const Key('duplicatesCard'),
@@ -271,6 +268,17 @@ class HomeView extends StatelessWidget {
     if (picked == null || picked == current) return;
     await viewModel.setCategory(entry, picked);
   }
+
+  Future<void> _openHistory(BuildContext context, {bool unsortedOnly = false}) =>
+      Navigator.of(context).push(
+        MaterialPageRoute<void>(
+          builder: (_) => HistoryView(
+            viewModel: HistoryViewModel(
+                ledger: viewModel.ledger, unsortedOnly: unsortedOnly)
+              ..load(),
+          ),
+        ),
+      );
 
   Future<void> _editBudget(BuildContext context) async {
     final choice = await showBudgetDialog(context, current: viewModel.budget);
@@ -627,9 +635,12 @@ class TipsCard extends StatelessWidget {
 
 /// "Where did my money go?": the last 7 days by category.
 class CategoryCard extends StatelessWidget {
-  const CategoryCard({super.key, required this.totals});
+  const CategoryCard({super.key, required this.totals, this.onSortUnsorted});
 
   final List<CategoryTotal> totals;
+
+  /// Opens the purchases without a category; null hides the button.
+  final VoidCallback? onSortUnsorted;
 
   @override
   Widget build(BuildContext context) {
@@ -699,6 +710,17 @@ class CategoryCard extends StatelessWidget {
                 ],
               ),
             ],
+            if (onSortUnsorted != null &&
+                totals.any((t) => t.bucket == kUnsortedBucket))
+              Padding(
+                padding: const EdgeInsets.only(top: 8),
+                child: TextButton.icon(
+                  key: const Key('sortUnsorted'),
+                  onPressed: onSortUnsorted,
+                  icon: const Icon(Icons.sell_outlined),
+                  label: Text(l10n.sortUnsorted),
+                ),
+              ),
           ],
         ),
       ),

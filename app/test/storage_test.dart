@@ -167,6 +167,40 @@ void main() {
       expect(row.deletedAtMs, bh(2, 12).millisecondsSinceEpoch);
     });
 
+    test('remove and edit work on the row the screen showed', () async {
+      final msg = ExtractionResult(
+        status: ExtractionStatus.transaction,
+        amountFils: 2500,
+        currency: 'BHD',
+        direction: TxDirection.outgoing,
+        merchantRaw: 'SHOP X',
+        timestamp: bh(2, 8),
+      );
+      await ledger.addExtracted(msg, messageKey: 'sms:7');
+      await ledger.addManual(amountFils: 1000, merchant: 'Old', at: bh(2, 9));
+
+      var es = await ledger.entries();
+      await ledger.edit(es[1], amountFils: 1500, merchant: 'New name');
+      es = await ledger.entries();
+      expect(es[1].result.amountFils, 1500);
+      expect(es[1].result.merchantRaw, 'New name');
+      expect(es[1].result.merchantNorm, isNull);
+
+      await ledger.remove(es[0]);
+      expect((await ledger.entries()).single.result.amountFils, 1500);
+      // The same bank message read again does not bring it back.
+      await ledger.addExtracted(msg, messageKey: 'sms:7');
+      expect((await ledger.entries()).single.result.amountFils, 1500);
+    });
+
+    test('a stale entry (list changed) is not edited or removed', () async {
+      await ledger.addManual(amountFils: 1000, at: bh(2, 9));
+      final stale = (await ledger.entries()).single;
+      await ledger.edit(stale, amountFils: 3000);
+      await ledger.remove(stale); // amount changed: no longer the same row
+      expect((await ledger.entries()).single.result.amountFils, 3000);
+    });
+
     test('an extracted transaction keeps its fields but no message text',
         () async {
       await ledger.addExtracted(ExtractionResult(
