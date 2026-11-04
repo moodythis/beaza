@@ -43,6 +43,11 @@ android {
     buildTypes {
         release {
             signingConfig = signingConfigs.getByName("beazaTest")
+            // R8 renamed ML Kit's internal classes and broke the receipt
+            // reader on a real phone (NullPointerException inside ML Kit).
+            // The app is small, so it is not shrunk or renamed.
+            isMinifyEnabled = false
+            isShrinkResources = false
         }
     }
 }

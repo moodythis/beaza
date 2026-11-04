@@ -163,7 +163,7 @@ jobs:
       # INTERNET permission (the template adds it only to debug builds).
       # The permission list below is printed so every run documents it.
       - name: Build APK (arm64)
-        run: flutter build apk --release --target-platform android-arm64
+        run: flutter build apk --release --no-shrink --target-platform android-arm64
       - name: List APK permissions
         run: |
           AAPT="$(ls -d "$ANDROID_HOME"/build-tools/*/ | sort -V | tail -1)aapt"
