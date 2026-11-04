@@ -927,4 +927,13 @@ Refunded to Card:       BD 8.900
       expect(x.amountFils, 1500);
     });
   });
+
+  test('a bank transfer screen is marked as a transfer; a shop or bill payment is not', () {
+    final t = r.read('BenefitPay\nTransaction Approved\nFAWRI+ Payment\nBHD 4.500\nPaid to: SOMEONE\n', now: now);
+    expect(t.type, TxnType.transferOut);
+    final shop = r.read('KARAK SHOP\nTOTAL 0.600\n', now: now);
+    expect(shop.type, TxnType.purchase);
+    final bill = r.read('BenefitPay\nFawateer Payment\nBHD 11.550\nBiller: ZAIN BAHRAIN B.S.C\nFrom Card/IBAN: **** 5517\n', now: now);
+    expect(bill.type, TxnType.purchase);
+  });
 }

@@ -164,6 +164,7 @@ class _ReceiptSheetState extends State<ReceiptSheet> {
         l10n.receiptRefund
       else if (r.amountFils == null)
         l10n.receiptNoAmount,
+      if (r.type == TxnType.transferOut) l10n.receiptTransfer,
       if (r.flags.contains(ExtractionFlag.totalGuessed)) l10n.receiptTotalGuessed,
       if (r.flags.contains(ExtractionFlag.currencyAssumed)) l10n.receiptCurrencyAssumed,
       if (foreign) l10n.receiptForeign(r.currency!),

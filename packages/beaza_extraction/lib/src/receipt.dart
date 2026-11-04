@@ -47,6 +47,14 @@ class ReceiptReader {
     unicode: true,
   );
 
+  /// A bank transfer screen (not a shop payment): Fawri+, "Transfer", "Paid
+  /// to", a beneficiary. A bill screen mentions none of these.
+  static final RegExp _transfer = RegExp(
+    r'fawri|فوري|\btransfer\b|تحويل|beneficiary|paid\s+to\b|المستلم|المستفيد',
+    caseSensitive: false,
+    unicode: true,
+  );
+
   /// A refund or return slip. Specific on purpose: "no refund" is printed on
   /// many ordinary receipts.
   static final RegExp _refund = RegExp(
@@ -158,7 +166,7 @@ class ReceiptReader {
       kind: MessageKind.transaction,
       amountFils: found.$1,
       currency: currency ?? 'BHD',
-      type: TxnType.purchase,
+      type: _transfer.hasMatch(text) ? TxnType.transferOut : TxnType.purchase,
       direction: TxDirection.outgoing,
       merchantRaw: shop,
       merchantNorm: info?.name,
