@@ -1,8 +1,8 @@
-// AI savings plan (SRS FR-8.8). The phone sends totals it computed and a
-// code for each shop where most was spent (salted SHA-256 made on the
-// phone, which keeps the names and puts them back into the plan): no message
-// text, no account digits, no transfer recipients, no dates. Anything else
-// in the request is refused. The model writes a short plan from those
+// AI savings plan (SRS FR-8.8). The phone sends totals it computed, shop
+// names, and this week's purchases (weekday, hour, amount, category, shop).
+// Nothing that identifies the person: no message text, no account, card or
+// phone digits, no CPR, no references, no calendar dates, no transfer
+// recipients. Anything else in the request is refused. The model writes a short plan from those
 // numbers; every number in its reply must be one it was given, otherwise a
 // plan written by rules is returned instead. Nothing is stored except a
 // per-day request count, and the request body is never logged.
@@ -10,7 +10,12 @@ import type { D1Like } from './d1.ts';
 import { HttpError, isObject } from './validate.ts';
 
 /** The version of the AI consent text the phone must have shown. */
-export const COACH_CONSENT_VERSION = '2026-11-05.3';
+export const COACH_CONSENT_VERSION = '2026-11-05.4';
+
+/** At most this many recent purchases (phone: kCoachMaxRecent). */
+export const COACH_MAX_RECENT = 40;
+
+const WEEKDAYS = ['mon', 'tue', 'wed', 'thu', 'fri', 'sat', 'sun'];
 
 /** At most this many shops (phone: kCoachMaxShops). */
 export const COACH_MAX_SHOPS = 5;
@@ -49,6 +54,7 @@ export type CoachInput = {
   smallFils: number;
   categories: { category: string; fils: number; percent: number }[];
   shops: { name: string; fils: number; count: number }[];
+  recent: { weekday: string; hour: number; fils: number; category: string; shop?: string }[];
   lateCount: number;
   lateFils: number;
   weekendFils: number;
@@ -59,18 +65,18 @@ export type CoachInput = {
 const KEYS = [
   'consent', 'language', 'week_total_fils', 'previous_week_total_fils',
   'daily_limit_fils', 'days_over_limit', 'small_purchases_count',
-  'small_purchases_fils', 'categories', 'shops', 'late_night_count',
+  'small_purchases_fils', 'categories', 'shops', 'recent', 'late_night_count',
   'late_night_fils', 'weekend_fils', 'month_left_fils', 'days_left_in_month',
 ];
 
 /** A shop name may carry no digit of any script (no card, phone, branch or
  * reference number can ride along), and nothing that looks like an email
  * or a phone number. */
-function shopName(v: unknown): string {
-  if (typeof v !== 'string') throw new HttpError(400, 'bad_shops');
+function shopName(v: unknown, code = 'bad_shops'): string {
+  if (typeof v !== 'string') throw new HttpError(400, code);
   const s = v.trim();
   if (s.length < 2 || s.length > 40 || /[0-9\u0660-\u0669\u06F0-\u06F9@+]/.test(s) || /[\u0000-\u001F]/.test(s)) {
-    throw new HttpError(400, 'bad_shops');
+    throw new HttpError(400, code);
   }
   return s;
 }
@@ -126,8 +132,27 @@ export function checkCoachInput(body: Record<string, unknown>): CoachInput {
       count: int(x.count, 10_000, 'bad_shops'),
     };
   });
+  const recentList = body.recent ?? [];
+  if (!Array.isArray(recentList) || recentList.length > COACH_MAX_RECENT) {
+    throw new HttpError(400, 'bad_recent');
+  }
+  const recent = recentList.map((x) => {
+    if (!isObject(x) || Object.keys(x).some((k) => !['weekday', 'hour', 'fils', 'category', 'shop'].includes(k))) {
+      throw new HttpError(400, 'bad_recent');
+    }
+    if (typeof x.weekday !== 'string' || !WEEKDAYS.includes(x.weekday)) throw new HttpError(400, 'bad_recent');
+    if (typeof x.category !== 'string' || !BUCKETS.has(x.category)) throw new HttpError(400, 'bad_recent');
+    return {
+      weekday: x.weekday,
+      hour: int(x.hour, 23, 'bad_recent'),
+      fils: int(x.fils, MAX_FILS, 'bad_recent'),
+      category: x.category,
+      ...(x.shop === undefined ? {} : { shop: shopName(x.shop, 'bad_recent') }),
+    };
+  });
   return {
     language: body.language,
+    recent,
     weekTotalFils: int(body.week_total_fils, MAX_FILS, 'bad_number'),
     previousWeekTotalFils: int(body.previous_week_total_fils, MAX_FILS, 'bad_number'),
     dailyLimitFils: int(body.daily_limit_fils, MAX_FILS, 'bad_number'),
@@ -161,6 +186,11 @@ const NAMES_AR: Record<string, string> = {
   transport: 'المواصلات', bills: 'الفواتير', health: 'الصحة',
   entertainment: 'الترفيه', education: 'الدراسة', other: 'أشياء ثانية',
   transfer: 'التحويلات', unsorted: 'غير مصنّف',
+};
+
+const DAYS_AR: Record<string, string> = {
+  mon: 'الاثنين', tue: 'الثلاثاء', wed: 'الأربعاء', thu: 'الخميس',
+  fri: 'الجمعة', sat: 'السبت', sun: 'الأحد',
 };
 
 function name(category: string, ar: boolean): string {
@@ -223,6 +253,14 @@ export function facts(x: CoachInput): { lines: string[]; trim?: { category: stri
       ? `محل ${sh.name}: ${money(sh.fils, true)} (${sh.count} مرات)`
       : `Shop ${sh.name}: ${money(sh.fils, false)} (${sh.count} times)`);
   }
+  if (x.recent.length > 0) {
+    lines.push(ar ? 'مشتريات هالأسبوع (الأحدث أولاً):' : "This week's purchases (newest first):");
+    for (const p of x.recent) {
+      const hh = String(p.hour).padStart(2, '0');
+      const day = ar ? DAYS_AR[p.weekday] : p.weekday.charAt(0).toUpperCase() + p.weekday.slice(1);
+      lines.push(`  ${day} ${hh}:00 · ${name(p.category, ar)} · ${p.shop ?? '-'} · ${money(p.fils, ar)}`);
+    }
+  }
   if (unsortedHeavy(x)) {
     lines.push(ar
       ? 'أغلب المصروف غير مصنّف: صنّفه أول علشان تعرف وين تروح فلوسك'
@@ -246,7 +284,7 @@ const SYSTEM = {
 استخدم فقط الأرقام الموجودة في "الحقائق" وانسخها كما هي. لا تحسب ولا تخترع أي رقم جديد.
 لا تنصح بتخفيف فئة إلا إذا في "الحقائق" سطر "لو قلّ صرف"؛ وإلا لا تقترح تخفيف أي شي، وقل إن صرفه معقول إذا المبالغ صغيرة.
 إذا في سطر "غير مصنّف" خل الخطوة 1 تصنيف المصاريف.
-المحلات مكتوبة برموز مثل SHOP-ABCDEFGH. تقدر تذكر الرمز إذا يفيد النصيحة (مثل محل تتكرر فيه المشتريات)، وانسخه حرفياً بدون تغيير، ولا تحاول تخمن اسم المحل.
+تقدر تذكر أسماء المحلات وأوقات المشتريات من الحقائق إذا تفيد النصيحة (مثل محل يتكرر كل يوم، أو طلبات آخر الليل). انسخ الأسماء كما هي.
 لا تنصح بقروض أو استثمار أو بنوك أو منتجات مالية، ولا تلوم الشخص. أقل من 120 كلمة.
 ابدأ مباشرة بالخطوة 1، بدون تحية وبدون جملة ختامية.`,
   en: `You are the savings helper in Beaza, an app for university students in Bahrain.
@@ -254,7 +292,7 @@ Write a short, friendly savings plan: 3 or 4 numbered steps, one practical sente
 Use only the numbers in FACTS, copied exactly. Never calculate or invent a number.
 Suggest cutting a category only if FACTS has an "If ... spending drops" line; otherwise suggest no cuts, and say the spending looks reasonable if the amounts are small.
 If FACTS says the spending is not sorted, make step 1 sorting it.
-Shops are given as codes like SHOP-ABCDEFGH. You may mention a code when it helps (for example a shop visited many times); copy it exactly and never guess the shop's name.
+You may name shops and purchase times from FACTS when it helps (for example the same shop every day, or late-night orders); copy names exactly.
 No loans, investments, banks or financial products, and no blame. Under 120 words.
 Start directly with step 1: no greeting and no closing line.`,
 };

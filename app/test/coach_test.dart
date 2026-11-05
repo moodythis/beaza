@@ -41,18 +41,6 @@ List<ExtractionResult> sample() => [
       tx(12000, bh(3, 10), category: 'food'), // the week before
     ];
 
-/// Answers with the first shop code it was sent, as a model would.
-class _CodeEcho implements CoachApi {
-  final List<Map<String, Object>> sent = [];
-
-  @override
-  Future<CoachPlan> plan(Map<String, Object> request) async {
-    sent.add(request);
-    final code = ((request['shops'] as List).first as Map)['name'];
-    return CoachPlan(text: '1. Fewer visits to $code.', fromModel: true);
-  }
-}
-
 class FakeCoach implements CoachApi {
   final List<Map<String, Object>> sent = [];
   CoachException? fail;
@@ -90,7 +78,7 @@ void main() {
       expect(r.keys.toSet(), {
         'consent', 'language', 'week_total_fils', 'previous_week_total_fils',
         'daily_limit_fils', 'days_over_limit', 'small_purchases_count',
-        'small_purchases_fils', 'categories', 'shops',
+        'small_purchases_fils', 'categories', 'shops', 'recent',
         'late_night_count', 'late_night_fils', 'weekend_fils',
       });
       expect(r['week_total_fils'], 19150);
@@ -170,35 +158,30 @@ void main() {
       expect(jsonEncode(withPlan), isNot(contains('300000')));
     });
 
-    test('shop names leave as salted SHA-256 codes and come back on the phone',
-        () async {
-      final ledger = InMemoryLedgerRepository(initial: sample());
+    test('this week\'s purchases one by one: weekday, hour, amount, '
+        'category, shop; no transfers, newest first', () async {
+      final sent = ExtractionResult(
+        status: ExtractionStatus.transaction,
+        amountFils: 20000,
+        currency: 'BHD',
+        type: TxnType.transferOut,
+        direction: TxDirection.outgoing,
+        merchantRaw: 'AHMED ALI 33445566',
+        timestamp: bh(12),
+      );
+      final ledger = InMemoryLedgerRepository(initial: [...sample(), sent]);
       final r = coachRequest(await ledger.entries(),
           const GuardrailSettings(dailyLimitFils: 10000), const Day(2026, 11, 14), 'en');
-      final salt = List<int>.filled(16, 7);
-      final a = pseudonymizeShops(r, salt);
-      final json = jsonEncode(a.request);
-      for (final name in ['REDTAG', 'COSTA', 'Waleed']) {
-        expect(json, isNot(contains(name)), reason: name);
+      // 14 Nov 2026 is a Saturday, 12 Nov a Thursday, 10 Nov a Tuesday.
+      expect(r['recent'], [
+        {'weekday': 'sat', 'hour': 9, 'fils': 3900, 'category': 'food', 'shop': 'COSTA COFFEE SEEF'},
+        {'weekday': 'thu', 'hour': 20, 'fils': 13200, 'category': 'shopping', 'shop': 'REDTAG MANAMA'},
+        {'weekday': 'tue', 'hour': 16, 'fils': 2050, 'category': 'unsorted', 'shop': 'Waleed Al Kabah MANAMA'},
+      ]);
+      final json = jsonEncode(r);
+      for (final secret in ['AHMED', '33445566', '4810', 'NBB']) {
+        expect(json, isNot(contains(secret)), reason: secret);
       }
-      final codes = (a.request['shops'] as List)
-          .map((x) => (x as Map)['name'] as String)
-          .toList();
-      expect(codes, hasLength(3));
-      for (final c in codes) {
-        expect(c, matches(RegExp(r'^SHOP-[A-P]{8}$')));
-      }
-      expect(a.names[codes.first], 'REDTAG MANAMA');
-      // Same salt, same code; a new salt gives a new code.
-      expect(pseudonymizeShops(r, salt).names.keys.first, codes.first);
-      expect(pseudonymizeShops(r, List<int>.filled(16, 8)).names.keys.first,
-          isNot(codes.first));
-      // The amounts and counts are unchanged.
-      expect((a.request['shops'] as List).first, {
-        'name': codes.first, 'fils': 13200, 'count': 1,
-      });
-      expect(restoreShopNames('1. Go to ${codes.first.toLowerCase()} less.', a.names),
-          '1. Go to REDTAG MANAMA less.');
     });
 
     test('coachShopName', () {
@@ -207,23 +190,6 @@ void main() {
       expect(coachShopName(' - Jasmis 22 - '), 'Jasmis');
       expect(coachShopName('A' * 60)!.length, 40);
     });
-  });
-
-  test('the server sees codes; the plan on the phone shows the names', () async {
-    final api = _CodeEcho();
-    final vm = CoachViewModel(
-      api: api,
-      preferences: MemoryPreferencesStore(),
-      ledger: InMemoryLedgerRepository(initial: sample()),
-      settings: InMemorySettingsRepository(
-          const GuardrailSettings(dailyLimitFils: 10000)),
-      clock: () => now,
-    );
-    await vm.load();
-    await vm.agree();
-    await vm.requestPlan('en');
-    expect(jsonEncode(api.sent.single), isNot(contains('REDTAG')));
-    expect(vm.plan!.text, '1. Fewer visits to REDTAG MANAMA.');
   });
 
   group('consent', () {

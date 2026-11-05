@@ -190,15 +190,37 @@ describe('POST /v1/coach (AI savings plan)', () => {
     }
   });
 
-  it('accepts shop codes made on the phone', async () => {
+  it("this week's purchases become facts the model may quote", async () => {
     const s = new Server();
-    s.ai = new FakeAi({ response: '1. Fewer visits to SHOP-KDPAGHBE.' });
+    s.ai = new FakeAi({ response: '1. Skip the Thu 23:00 TALABAT order: BHD 3.500.' });
     const res = await s.call('POST', '/v1/coach', request({
       language: 'en',
-      shops: [{ name: 'SHOP-KDPAGHBE', fils: 9200, count: 4 }],
+      recent: [
+        { weekday: 'thu', hour: 23, fils: 3500, category: 'food', shop: 'TALABAT' },
+        { weekday: 'wed', hour: 8, fils: 900, category: 'food' },
+      ],
     }));
     assert.equal(res.status, 200);
     assert.equal(res.body.source, 'model');
+    assert.ok(res.body.facts.includes('  Thu 23:00 · food · TALABAT · BHD 3.500'));
+    assert.ok(res.body.facts.includes('  Wed 08:00 · food · - · BHD 0.900'));
+  });
+
+  it('refuses purchases with a date, digits in the shop, or a bad hour', async () => {
+    const s = new Server();
+    s.ai = new FakeAi({ response: '1. ok' });
+    const bad = [
+      [{ weekday: 'thu', hour: 23, fils: 1, category: 'food', date: '2026-11-05' }],
+      [{ weekday: 'thu', hour: 23, fils: 1, category: 'food', shop: 'CPR 880101234' }],
+      [{ weekday: 'thu', hour: 24, fils: 1, category: 'food' }],
+      [{ weekday: 'someday', hour: 1, fils: 1, category: 'food' }],
+      Array.from({ length: 41 }, () => ({ weekday: 'mon', hour: 1, fils: 1, category: 'food' })),
+    ];
+    for (const recent of bad) {
+      const res = await s.call('POST', '/v1/coach', request({ recent }));
+      assert.equal(res.status, 400, JSON.stringify(recent).slice(0, 80));
+      assert.equal(res.body.error, 'bad_recent');
+    }
   });
 
   it('reads the chat-completions reply shape too', async () => {

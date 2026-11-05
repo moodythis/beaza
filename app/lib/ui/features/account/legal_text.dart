@@ -27,7 +27,7 @@ class LegalDocument {
 }
 
 const privacyNotice = LegalDocument(
-  version: '2026-11-05.3',
+  version: '2026-11-05.4',
   titleAr: 'إشعار الخصوصية لتطبيق بيزة',
   titleEn: 'Beaza privacy notice',
   ar: [
@@ -41,7 +41,7 @@ const privacyNotice = LegalDocument(
       'ما لا يغادر هاتفك أبدًا',
       [
         'نص رسائل البنك لا يُحفظ ولا يُرسل إلى أي مكان. يقرؤه التطبيق ويحتفظ فقط بالمبلغ والتاجر والوقت والنوع، ويخزنها في قاعدة بيانات مشفرة على هاتفك.',
-        'بدون حساب، لا يغادر هاتفك أي شيء، إلا ما تختار أن تقوله بصوتك، والمجاميع ورموز المحلات التي تختار إرسالها لخطة التوفير بالذكاء الاصطناعي (القسمان التاليان).',
+        'بدون حساب، لا يغادر هاتفك أي شيء، إلا ما تختار أن تقوله بصوتك، وتفاصيل الصرف التي تختار إرسالها لخطة التوفير بالذكاء الاصطناعي (القسمان التاليان).',
       ],
     ),
     LegalSection(
@@ -60,8 +60,8 @@ const privacyNotice = LegalDocument(
     LegalSection(
       'خطة التوفير بالذكاء الاصطناعي (اختيارية، بموافقة منفصلة)',
       [
-        'فقط إذا وافقت في شاشة خطة الذكاء الاصطناعي، يرسل بيزة إلى خادمه هذه المجاميع المحسوبة على هاتفك: مصروفك في آخر 7 أيام والـ7 التي قبلها، وحدك اليومي وعدد الأيام التي تجاوزته فيها، وعدد مشترياتك الصغيرة ومجموعها، ومجموع كل صنف ونسبته، ولما يصل إلى 5 محلات صرفت فيها أكثر في آخر 7 أيام: ما صرفته فيها وعدد المرات، وكل محل برمز بدل اسمه (يُصنع الرمز على هاتفك بـ SHA-256 وقيمة عشوائية تُستخدم مرة واحدة ولا تُرسل، ويعيد هاتفك الأسماء إلى الخطة؛ ولا تُرسل التحويلات إلى أشخاص)، وعدد مشترياتك في آخر الليل (من 10 مساءً إلى 3 فجرًا) ومجموعها، وما صرفته يومي الجمعة والسبت، وإذا كان حدك محسوبًا من دخلك: المبلغ الباقي للشهر وعدد الأيام الباقية (ولا يُرسل الدخل نفسه أبدًا). تعرض لك الشاشة القائمة نفسها قبل أن توافق. لا يُرسل نص رسالة بنك ولا رقم حساب أو بطاقة ولا رقم مرجعي ولا اسم مستلم تحويل ولا تاريخ، ويرفض الخادم أي حقل آخر. لا يلزم حساب، ولا يُربط الطلب بأي حساب.',
-        'يطلب الخادم من نموذج ذكاء اصطناعي (Gemma، تشغّله Cloudflare Workers AI نيابةً عنا) كتابة خطة قصيرة من هذه المجاميع ورموز المحلات، ويتحقق أن كل رقم في الخطة من الأرقام التي أُعطيت له. تذكر Cloudflare أنها لا تحتفظ بهذه الطلبات بعد الرد ولا تستخدمها لتدريب النماذج، ولا تذكر في أي دولة يعمل النموذج. لا يحفظ بيزة شيئًا عن الطلب سوى عدد الخطط المطلوبة في ذلك اليوم، دون ربطه بك. الأساس القانوني هو موافقتك، ويمكنك سحبها في أي وقت من شاشة الخطة، وسحبها يوقف أي إرسال لاحق.',
+        'فقط إذا وافقت في شاشة خطة الذكاء الاصطناعي، يرسل بيزة إلى خادمه هذه المجاميع المحسوبة على هاتفك: مصروفك في آخر 7 أيام والـ7 التي قبلها، وحدك اليومي وعدد الأيام التي تجاوزته فيها، وعدد مشترياتك الصغيرة ومجموعها، ومجموع كل صنف ونسبته، وأسماء ما يصل إلى 5 محلات صرفت فيها أكثر في آخر 7 أيام مع ما صرفته فيها وعدد المرات، وكل عملية شراء في آخر 7 أيام (حتى 40) مع يوم الأسبوع والساعة والمبلغ والصنف واسم المحل، وعدد مشترياتك في آخر الليل (من 10 مساءً إلى 3 فجرًا) ومجموعها، وما صرفته يومي الجمعة والسبت، وإذا كان حدك محسوبًا من دخلك: المبلغ الباقي للشهر وعدد الأيام الباقية (ولا يُرسل الدخل نفسه أبدًا). تعرض لك الشاشة القائمة نفسها قبل أن توافق. لا يُرسل أي شيء يعرّف بك: لا نص رسالة بنك ولا رقم حساب أو بطاقة ولا رقم هاتف ولا رقم شخصي (CPR) ولا رقم مرجعي ولا تاريخ ولا اسم شخص حوّلت له (تُحذف الأرقام من أسماء المحلات ولا تُرسل التحويلات)، ويرفض الخادم أي حقل آخر. لا يلزم حساب، ولا يُربط الطلب بأي حساب.',
+        'يطلب الخادم من نموذج ذكاء اصطناعي (Gemma، تشغّله Cloudflare Workers AI نيابةً عنا) كتابة خطة قصيرة من هذه المعلومات، ويتحقق أن كل رقم في الخطة من الأرقام التي أُعطيت له. تذكر Cloudflare أنها لا تحتفظ بهذه الطلبات بعد الرد ولا تستخدمها لتدريب النماذج، ولا تذكر في أي دولة يعمل النموذج. لا يحفظ بيزة شيئًا عن الطلب سوى عدد الخطط المطلوبة في ذلك اليوم، دون ربطه بك. الأساس القانوني هو موافقتك، ويمكنك سحبها في أي وقت من شاشة الخطة، وسحبها يوقف أي إرسال لاحق.',
       ],
     ),
     LegalSection(
@@ -136,7 +136,7 @@ const privacyNotice = LegalDocument(
       'What never leaves your phone',
       [
         'The text of bank messages is never stored or sent anywhere. The app reads it, keeps only the amount, merchant, time and type, and stores those in an encrypted database on your phone.',
-        'Without an account, nothing leaves your phone, except what you choose to say by voice and the totals and shop codes you choose to send for an AI savings plan (next sections).',
+        'Without an account, nothing leaves your phone, except what you choose to say by voice and the spending details you choose to send for an AI savings plan (next sections).',
       ],
     ),
     LegalSection(
@@ -155,8 +155,8 @@ const privacyNotice = LegalDocument(
     LegalSection(
       'AI savings plan (optional, separate consent)',
       [
-        'Only if you agree on the AI plan screen, Beaza sends these totals, worked out on your phone, to its server: what you spent in the last 7 days and the 7 before, your daily limit and on how many days you passed it, how many small purchases you made and their total, a total and share per category, and, for up to 5 shops where you spent most in the last 7 days, what you spent there and how many times, each shop under a code instead of its name (the code is made on your phone with SHA-256 and a random value used once and never sent, and your phone puts the names back into the plan; transfers to people are left out), how many purchases you made late at night (10 pm to 3 am) and their total, what you spent on Friday and Saturday, and, if your limit is worked out from your income, the money left for the month and the days left (never the income itself). The screen shows you the exact list before you agree. No bank message, account or card number, reference, transfer recipient or date is sent, and the server refuses any other field. No account is needed and none is linked to the request.',
-        'The server asks an AI model (Gemma, run by Cloudflare Workers AI, Cloudflare acting for us) to write a short plan from those totals and shop codes, and checks that every number in the plan is one it was given. Cloudflare states that it does not keep these requests after answering or use them to train models; it does not state in which country the model runs. Beaza stores nothing about the request except how many plans were asked for that day, with no link to you. The legal basis is your consent, which you can withdraw at any time on the plan screen; withdrawing stops any further sending.',
+        'Only if you agree on the AI plan screen, Beaza sends these totals, worked out on your phone, to its server: what you spent in the last 7 days and the 7 before, your daily limit and on how many days you passed it, how many small purchases you made and their total, a total and share per category, the names of up to 5 shops where you spent most in the last 7 days with what you spent there and how many times, each purchase of the last 7 days (up to 40) with its weekday, hour, amount, category and shop name, how many purchases you made late at night (10 pm to 3 am) and their total, what you spent on Friday and Saturday, and, if your limit is worked out from your income, the money left for the month and the days left (never the income itself). The screen shows you the exact list before you agree. Nothing that identifies you is sent: no bank message, account or card number, phone number, CPR, reference, calendar date or name of a person you transferred to (digits are removed from shop names and transfers are left out), and the server refuses any other field. No account is needed and none is linked to the request.',
+        'The server asks an AI model (Gemma, run by Cloudflare Workers AI, Cloudflare acting for us) to write a short plan from this information, and checks that every number in the plan is one it was given. Cloudflare states that it does not keep these requests after answering or use them to train models; it does not state in which country the model runs. Beaza stores nothing about the request except how many plans were asked for that day, with no link to you. The legal basis is your consent, which you can withdraw at any time on the plan screen; withdrawing stops any further sending.',
       ],
     ),
     LegalSection(

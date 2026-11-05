@@ -3,6 +3,7 @@ import 'package:beaza/ui/core/category_style.dart';
 import 'package:beaza/ui/core/formatting.dart';
 import 'package:beaza/ui/features/coach/view_models/coach_view_model.dart';
 import 'package:flutter/material.dart';
+import 'package:intl/intl.dart';
 
 /// "AI savings plan": asks for the separate consent the first time, showing
 /// exactly what will be sent, then shows the plan.
@@ -100,6 +101,16 @@ List<String> requestLines(AppLocalizations l10n, Map<String, Object> r) {
   for (final x in ((r['shops'] as List?) ?? const []).cast<Map<String, Object>>()) {
     lines.add(l10n.coachSendShop(
         x['name'] as String, money(x['fils']), x['count'] as int));
+  }
+  final locale = l10n.localeName;
+  const days = ['mon', 'tue', 'wed', 'thu', 'fri', 'sat', 'sun'];
+  for (final x in ((r['recent'] as List?) ?? const []).cast<Map<String, Object>>()) {
+    // 2 Nov 2026 is a Monday.
+    final day = DateFormat.E(locale)
+        .format(DateTime(2026, 11, 2 + days.indexOf(x['weekday'] as String)));
+    final hour = (x['hour'] as int).toString().padLeft(2, '0');
+    lines.add(l10n.coachSendRecent(day, '$hour:00', money(x['fils']),
+        categoryName(l10n, x['category'] as String), (x['shop'] as String?) ?? '-'));
   }
   return lines;
 }
