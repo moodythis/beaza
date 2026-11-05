@@ -3,7 +3,7 @@ import 'dart:async';
 import 'package:beaza/data/repositories/ledger_repository.dart';
 import 'package:beaza/data/repositories/preferences_store.dart';
 import 'package:beaza/data/repositories/settings_repository.dart';
-import 'package:beaza/domain/use_cases/daily_budget.dart' as budget;
+import 'package:beaza/domain/use_cases/daily_budget.dart' as daily;
 import 'package:beaza/domain/use_cases/daily_budget.dart' show BudgetPlan, PurchaseCheck, safeDailyLimitFils;
 import 'package:beaza/data/services/device_service.dart';
 import 'package:beaza/data/services/receipt_scanner.dart';
@@ -306,7 +306,7 @@ class HomeViewModel extends ChangeNotifier {
   /// the limit from tomorrow with and without it. Nothing is saved.
   Future<PurchaseCheck> checkPurchase(int itemFils) async {
     final summary = _state?.summary;
-    return budget.checkPurchase(
+    return daily.checkPurchase(
       itemFils: itemFils,
       dailyLimitFils: summary?.limitFils ?? 0,
       spentTodayFils: summary?.spentFils ?? 0,
