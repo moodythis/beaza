@@ -936,4 +936,29 @@ Refunded to Card:       BD 8.900
     final bill = r.read('BenefitPay\nFawateer Payment\nBHD 11.550\nBiller: ZAIN BAHRAIN B.S.C\nFrom Card/IBAN: **** 5517\n', now: now);
     expect(bill.type, TxnType.purchase);
   });
+
+  group('numbered item lines are never the shop', () {
+    const reader = ReceiptReader();
+    final now = DateTime.utc(2026, 11, 5, 12);
+    for (final top in ['1. Smulifrise', 'Smulifrise .1', '#2 Snacks', 'Snacks 2.', '3) Water']) {
+      test(top, () {
+        final r = reader.read('$top\nSnacks .2\nTOTAL BD 1.100', now: now);
+        expect(r.merchantRaw, isNull, reason: top);
+        expect(r.amountFils, 1100);
+      });
+    }
+
+    test('a header above numbered items is still the shop', () {
+      final r = reader.read(
+          'KIDS PORT GAMES\n1. Smulifrise 0.500\n2. Snacks 0.600\nTOTAL BD 1.100',
+          now: now);
+      expect(r.merchantRaw, 'KIDS PORT GAMES');
+    });
+
+    test('7-Eleven keeps its name', () {
+      final r = reader.read('7-Eleven\nTOTAL BD 1.100', now: now);
+      expect(r.merchantRaw, '7-Eleven');
+    });
+  });
 }
+

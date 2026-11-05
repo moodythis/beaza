@@ -125,7 +125,32 @@ void main() {
       await vm.scan(ReceiptSource.gallery);
       expect(vm.fromAi, isFalse);
       expect(vm.aiFailed, isTrue);
+      expect(vm.aiDetail, contains('offline'));
       expect(vm.step, ReceiptStep.review);
+
+      // Try again with the same photo: now it works.
+      ai.fail = false;
+      await vm.retryAi();
+      expect(vm.fromAi, isTrue);
+      expect(vm.aiFailed, isFalse);
+      expect(vm.result!.amountFils, 1100);
+      expect(ai.sentImages, ['AAAA', 'AAAA', 'AAAA']);
+    });
+
+    test('the AI answers but cannot read it: shown as a failure', () async {
+      final consent = MediaAiConsent(MemoryPreferencesStore());
+      await consent.turnOn();
+      final vm = ReceiptViewModel(
+        scanner: ImageScanner('SHOP\nTOTAL 3.300'),
+        ledger: InMemoryLedgerRepository(),
+        clock: () => now,
+        ai: FakeMediaAi(), // receipt stays null
+        consent: consent,
+      );
+      await vm.scan(ReceiptSource.camera);
+      expect(vm.aiTried, isTrue);
+      expect(vm.aiFailed, isTrue);
+      expect(vm.result!.amountFils, 3300);
     });
 
     test('a declined screen read by AI is not a purchase', () {

@@ -17,6 +17,7 @@ import 'package:flutter/services.dart';
 Future<void> showQuickAdd(BuildContext context, HomeViewModel viewModel) =>
     showModalBottomSheet<void>(
       context: context,
+      useSafeArea: true,
       isScrollControlled: true,
       showDragHandle: true,
       builder: (_) => QuickAddSheet(viewModel: viewModel),

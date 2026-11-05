@@ -39,8 +39,59 @@ class ReceiptViewModel extends ChangeNotifier {
 
   bool _aiFailed = false;
 
-  /// The AI could not be reached, so the phone's own reading is shown.
+  /// The AI was asked but gave nothing usable, so the phone's own reading
+  /// is shown; [retryAi] asks again.
   bool get aiFailed => _aiFailed;
+
+  String? _aiDetail;
+
+  /// Why the AI failed, in the server's or the network's words.
+  String? get aiDetail => _aiDetail;
+
+  bool _aiTried = false;
+
+  /// The photo went to the AI (the switch was on).
+  bool get aiTried => _aiTried;
+
+  bool _aiBusy = false;
+  bool get aiBusy => _aiBusy;
+
+  // Kept only while the review is open, for a retry; never stored.
+  String? _jpeg;
+  String _language = 'ar';
+  ExtractionResult? _local;
+
+  /// Sends the same photo to the AI again.
+  Future<void> retryAi() async {
+    final jpeg = _jpeg;
+    final local = _local;
+    if (ai == null || jpeg == null || local == null || _aiBusy) return;
+    _aiBusy = true;
+    if (!_disposed) notifyListeners();
+    await _askAi(jpeg, local, _clock());
+    _aiBusy = false;
+    _duplicate = likelySamePayment(await _ledger.entries(), _result!);
+    if (!_disposed) notifyListeners();
+  }
+
+  Future<void> _askAi(String jpeg, ExtractionResult local, DateTime now) async {
+    _aiTried = true;
+    try {
+      final a = await ai!.readReceipt(jpeg, _language);
+      if (a != null) {
+        _result = resultFromAi(a, local, now);
+        _fromAi = true;
+        _aiFailed = false;
+        _aiDetail = null;
+      } else {
+        _aiFailed = true;
+        _aiDetail = 'no_amount';
+      }
+    } on Object catch (e) {
+      _aiFailed = true; // the phone's own reading stays
+      _aiDetail = e.toString();
+    }
+  }
 
   ReceiptStep _step = ReceiptStep.choose;
   ReceiptStep get step => _step;
@@ -71,6 +122,9 @@ class ReceiptViewModel extends ChangeNotifier {
     _set(ReceiptStep.scanning);
     _fromAi = false;
     _aiFailed = false;
+    _aiTried = false;
+    _aiDetail = null;
+    _jpeg = null;
     try {
       final useAi = ai != null && (await consent?.isOn() ?? false);
       final String text;
@@ -92,20 +146,15 @@ class ReceiptViewModel extends ChangeNotifier {
         text = t;
       }
       final now = _clock();
-      var r = reader.read(text, now: now);
-      if (useAi && jpeg != null) {
-        try {
-          final a = await ai!.readReceipt(jpeg, language);
-          if (a != null) {
-            r = resultFromAi(a, r, now);
-            _fromAi = true;
-          }
-        } on Object {
-          _aiFailed = true; // the phone's own reading stays
-        }
-      }
+      final r = reader.read(text, now: now);
       _result = r;
-      _duplicate = likelySamePayment(await _ledger.entries(), r);
+      _local = r;
+      _language = language;
+      if (useAi && jpeg != null) {
+        _jpeg = jpeg;
+        await _askAi(jpeg, r, now);
+      }
+      _duplicate = likelySamePayment(await _ledger.entries(), _result!);
       _set(ReceiptStep.review);
     } on PlatformException catch (e) {
       _error = e.code;
@@ -121,6 +170,7 @@ class ReceiptViewModel extends ChangeNotifier {
     String? merchant,
     String? category,
   }) async {
+    _jpeg = null; // the photo goes once the person decided
     _set(ReceiptStep.saving);
     await _ledger.addManual(
       amountFils: amountFils,
@@ -133,6 +183,12 @@ class ReceiptViewModel extends ChangeNotifier {
 
   void startOver() {
     _result = null;
+    _jpeg = null;
+    _local = null;
+    _fromAi = false;
+    _aiFailed = false;
+    _aiTried = false;
+    _aiDetail = null;
     _duplicate = null;
     _error = null;
     _detail = null;

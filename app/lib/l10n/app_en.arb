@@ -753,11 +753,13 @@
   "mediaAiConsent": "A receipt photo (made smaller) or a voice recording of up to 60 seconds will be sent to Beaza's server, which asks AI models on Cloudflare Workers AI to read it (Gemma for photos and words, Whisper for speech). A photo shows whatever is on the receipt, such as the last digits of a card, so cover what you do not want to send. Cloudflare says it does not keep these requests or train on them. Beaza does not store the photo, the recording or the text, and you check what was read before saving. You can turn this off at any time.",
   "mediaAiAgree": "Agree",
   "receiptFromAi": "Read by AI from the photo. Check it before adding.",
-  "receiptAiFailed": "The AI could not be reached, so this was read on the phone.",
+  "receiptAiFailed": "The AI could not read this photo, so it was read on the phone. Check it, or try the AI again.",
   "aiHeardNothing": "Nothing was heard. Try again.",
   "aiFailed": "The AI could not be reached right now. Try again or type it.",
   "aiRecording": "Recording… tap to finish",
   "aiVoicePrivacy": "Your voice is sent to Beaza's server for the AI and is not kept.",
   "aiUnderstand": "Understand with AI",
-  "aiDraftsNote": "Understood by AI. Check the amounts before adding."
+  "aiDraftsNote": "Understood by AI. Check the amounts before adding.",
+  "receiptAiRetry": "Try the AI again",
+  "receiptReadOnPhone": "Read on the phone (AI reading is off)."
 }

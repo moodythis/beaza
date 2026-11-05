@@ -41,6 +41,17 @@ class AiReceipt {
   }
 }
 
+/// The AI was reached but could not read it; [reason] is the server's
+/// code (model_error, empty_reply, no_amount) and [detail] its words.
+class MediaAiException implements Exception {
+  const MediaAiException(this.reason, [this.detail]);
+  final String reason;
+  final String? detail;
+
+  @override
+  String toString() => detail == null ? reason : '$reason: $detail';
+}
+
 /// One cash expense the AI understood.
 class AiDraft {
   const AiDraft({required this.item, required this.fils, this.category});
@@ -100,9 +111,14 @@ class HttpMediaAiApi implements MediaAiApi {
       ];
 
   @override
-  Future<AiReceipt?> readReceipt(String jpegBase64, String language) async =>
-      AiReceipt.fromJson(
-          (await _post('/v1/receipt', {'language': language, 'image': jpegBase64}))['receipt']);
+  Future<AiReceipt?> readReceipt(String jpegBase64, String language) async {
+    final j = await _post('/v1/receipt', {'language': language, 'image': jpegBase64});
+    final r = AiReceipt.fromJson(j['receipt']);
+    if (r == null && j['reason'] is String) {
+      throw MediaAiException(j['reason'] as String, j['detail'] as String?);
+    }
+    return r;
+  }
 
   @override
   Future<({String text, List<AiDraft> drafts})> readVoice(

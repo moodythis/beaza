@@ -342,9 +342,18 @@ class ReceiptReader {
     return null;
   }
 
+  /// A numbered item line: "1. Snacks", "#2 Juice", "3) Water", or, when
+  /// the OCR read a right-to-left line backwards, "Snacks .1" / "Snacks 1.".
+  /// Never a shop name ("7-Eleven" keeps its dash and is not matched).
+  static final RegExp _numberedItem = RegExp(
+      r'^\s*#?\s*\d{1,3}\s*[.)]\s*\S|^\s*#\d{1,3}\b|\s\.\d{1,3}\s*$|\s\d{1,3}\.\s*$');
+
   bool _shopLine(String l) {
     final letters = RegExp(r'[A-Za-z؀-ۿ]').allMatches(l).length;
-    return letters >= 3 && !_notShop.hasMatch(l) && !_amount.hasMatch(l);
+    return letters >= 3 &&
+        !_notShop.hasMatch(l) &&
+        !_amount.hasMatch(l) &&
+        !_numberedItem.hasMatch(l);
   }
 
   /// The shop's name. Thermal receipts print it just above the "CR: ..."
@@ -368,4 +377,4 @@ class ReceiptReader {
 }
 
 /// Stored as the result's template version, so receipts can be told apart.
-const String kReceiptReaderVersion = 'receipt-2026-11-04';
+const String kReceiptReaderVersion = 'receipt-2026-11-05';

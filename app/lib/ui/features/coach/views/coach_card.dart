@@ -19,6 +19,7 @@ class CoachCard extends StatelessWidget {
       if (!context.mounted) return;
       final ok = await showModalBottomSheet<bool>(
         context: context,
+        useSafeArea: true,
         isScrollControlled: true,
         showDragHandle: true,
         builder: (_) => _ConsentSheet(request: preview),
@@ -30,6 +31,7 @@ class CoachCard extends StatelessWidget {
     viewModel.requestPlan(language);
     await showModalBottomSheet<void>(
       context: context,
+      useSafeArea: true,
       isScrollControlled: true,
       showDragHandle: true,
       builder: (_) => _PlanSheet(viewModel: viewModel),

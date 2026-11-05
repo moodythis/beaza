@@ -15,6 +15,7 @@ Future<void> showReceiptSheet(BuildContext context, ReceiptViewModel viewModel) 
       context: context,
       isScrollControlled: true,
       showDragHandle: true,
+      useSafeArea: true,
       builder: (_) => ReceiptSheet(viewModel: viewModel),
     );
 
@@ -93,8 +94,14 @@ class _ReceiptSheetState extends State<ReceiptSheet> {
     final l10n = AppLocalizations.of(context);
     final theme = Theme.of(context);
     return Padding(
+      // Above the keyboard and above Android's navigation bar.
       padding: EdgeInsets.fromLTRB(
-          16, 0, 16, 16 + MediaQuery.viewInsetsOf(context).bottom),
+          16,
+          0,
+          16,
+          16 +
+              MediaQuery.viewInsetsOf(context).bottom +
+              MediaQuery.viewPaddingOf(context).bottom),
       child: SingleChildScrollView(
         child: Column(
           mainAxisSize: MainAxisSize.min,
@@ -167,6 +174,7 @@ class _ReceiptSheetState extends State<ReceiptSheet> {
     final notes = <String>[
       if (vm.fromAi) l10n.receiptFromAi,
       if (vm.aiFailed) l10n.receiptAiFailed,
+      if (!vm.aiTried && vm.ai != null) l10n.receiptReadOnPhone,
       if (r.kind == MessageKind.declined)
         l10n.receiptDeclined
       else if (r.kind == MessageKind.refund)
@@ -198,6 +206,11 @@ class _ReceiptSheetState extends State<ReceiptSheet> {
             ),
           ),
         ),
+      if (vm.aiBusy)
+        const Padding(
+          padding: EdgeInsets.only(bottom: 8),
+          child: LinearProgressIndicator(key: Key('receiptAiBusy')),
+        ),
       for (final n in notes)
         Padding(
           padding: const EdgeInsets.only(bottom: 6),
@@ -210,6 +223,23 @@ class _ReceiptSheetState extends State<ReceiptSheet> {
             ],
           ),
         ),
+      if (vm.aiFailed) ...[
+        if (vm.aiDetail != null)
+          SelectableText(vm.aiDetail!,
+              key: const Key('receiptAiDetail'),
+              maxLines: 3,
+              style: theme.textTheme.bodySmall
+                  ?.copyWith(color: theme.colorScheme.onSurfaceVariant)),
+        Align(
+          alignment: AlignmentDirectional.centerStart,
+          child: TextButton.icon(
+            key: const Key('receiptAiRetry'),
+            onPressed: vm.aiBusy ? null : vm.retryAi,
+            icon: const Icon(Icons.refresh),
+            label: Text(l10n.receiptAiRetry),
+          ),
+        ),
+      ],
       const SizedBox(height: 8),
       TextField(
         key: const Key('receiptAmount'),
@@ -250,6 +280,11 @@ class _ReceiptSheetState extends State<ReceiptSheet> {
           Expanded(
             child: OutlinedButton(
               key: const Key('receiptSkip'),
+              // Readable on the dark theme too.
+              style: OutlinedButton.styleFrom(
+                foregroundColor: theme.colorScheme.onSurface,
+                side: BorderSide(color: theme.colorScheme.outline),
+              ),
               onPressed: () => Navigator.of(context).pop(),
               child: Text(l10n.receiptSkip),
             ),
@@ -258,6 +293,10 @@ class _ReceiptSheetState extends State<ReceiptSheet> {
           Expanded(
             child: FilledButton(
               key: const Key('receiptSave'),
+              style: FilledButton.styleFrom(
+                backgroundColor: theme.colorScheme.primary,
+                foregroundColor: theme.colorScheme.onPrimary,
+              ),
               onPressed: foreign ? null : _save,
               child: Text(dup != null ? l10n.receiptAddAnyway : l10n.receiptSave),
             ),

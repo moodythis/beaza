@@ -14,6 +14,7 @@ Future<String?> pickCategory(
   final l10n = AppLocalizations.of(context);
   return showModalBottomSheet<String>(
     context: context,
+    useSafeArea: true,
     showDragHandle: true,
     isScrollControlled: true,
     builder: (context) => SafeArea(

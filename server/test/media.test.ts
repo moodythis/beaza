@@ -43,6 +43,11 @@ describe('AI reading of receipt photos and voice', () => {
       assert.equal(res.status, 200);
       assert.equal(res.body.receipt, null);
     }
+    // The reason comes back, so the phone can show why.
+    s.ai = new FakeAi(new Error('5006: bad input'));
+    const res = await s.call('POST', '/v1/receipt', { consent: MEDIA_CONSENT_VERSION, language: 'en', image: JPEG });
+    assert.equal(res.body.reason, 'model_error');
+    assert.match(res.body.detail, /5006/);
   });
 
   it('voice: Whisper writes it down, then the drafts come from the text', async () => {

@@ -167,6 +167,7 @@ class HistoryView extends StatelessWidget {
     final l10n = AppLocalizations.of(context);
     final action = await showModalBottomSheet<String>(
       context: context,
+      useSafeArea: true,
       showDragHandle: true,
       builder: (sheet) => SafeArea(
         child: Column(

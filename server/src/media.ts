@@ -120,10 +120,14 @@ export async function readReceipt(
       chat_template_kwargs: { enable_thinking: false },
     });
     reply = textOf(result);
-  } catch {
-    reply = null;
+  } catch (e) {
+    // Why, so a failure on a real phone can be told apart (no image in it).
+    return { receipt: null, reason: 'model_error', detail: String(e).slice(0, 200) };
   }
-  return { receipt: reply ? cleanReceipt(jsonIn(reply)) : null };
+  if (!reply) return { receipt: null, reason: 'empty_reply' };
+  const receipt = cleanReceipt(jsonIn(reply));
+  if (!receipt) return { receipt: null, reason: 'no_amount', detail: reply.slice(0, 200) };
+  return { receipt };
 }
 
 export type AiDraft = { item: string; fils: number; category?: string };
