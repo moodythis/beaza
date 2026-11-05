@@ -19,11 +19,17 @@ describe('Gemini first, Workers AI behind it', () => {
       messages: [{ role: 'system', content: 'rules' }, { role: 'user', content: 'FACTS' }],
       max_tokens: 300,
       temperature: 0,
-    }) as any;
+    }, 'gemini-2.5-flash') as any;
     assert.deepEqual(b.systemInstruction, { parts: [{ text: 'rules' }] });
     assert.deepEqual(b.contents, [{ role: 'user', parts: [{ text: 'FACTS' }] }]);
     assert.equal(b.generationConfig.maxOutputTokens, 300);
     assert.equal(b.generationConfig.temperature, 0);
+    assert.deepEqual(b.generationConfig.thinkingConfig, { thinkingBudget: 0 });
+  });
+
+  it('newer models get a thinking level, no temperature, and room for thinking', () => {
+    const b = geminiBody({ messages: [{ role: 'user', content: 'FACTS' }], max_tokens: 300, temperature: 0 }) as any;
+    assert.deepEqual(b.generationConfig, { maxOutputTokens: 2048, thinkingConfig: { thinkingLevel: 'low' } });
   });
 
   it('a photo becomes inline data; a recording asks for the words', () => {

@@ -1,20 +1,28 @@
-// Google Gemini as the AI (Cloudflare Workers AI only where a binding is
-// still given, as in the tests).
+// Google Gemini, the only AI the server uses.
 // The key is a Worker secret (GEMINI_API_KEY), never in the app or the
-// code. Gemini gets the same inputs the Workers AI models would get, put
-// into its own request shape; when it fails (no key, quota, network) the
-// same call goes to Workers AI unchanged.
+// code. Callers build Workers AI-style inputs; this file puts them into
+// Gemini's request shape. When it fails the callers fall back to rules.
 import type { AiLike } from './coach.ts';
 
-export const GEMINI_DEFAULT_MODEL = 'gemini-2.5-flash';
+export const GEMINI_DEFAULT_MODEL = 'gemini-3.8-flash';
 
 type FetchLike = (url: string, init: { method: string; headers: Record<string, string>; body: string }) =>
   Promise<{ ok: boolean; status: number; json(): Promise<unknown> }>;
 
 type Part = { text: string } | { inline_data: { mime_type: string; data: string } };
 
+/** Gemini 2.x takes a thinking budget and a temperature; from 3.x on the
+ * docs say to send a thinking level instead and drop temperature, and the
+ * thinking counts toward the output tokens, so the cap is raised. */
+export function generationConfig(model: string, temperature: number, maxTokens: number): Record<string, unknown> {
+  if (/^gemini-2\./.test(model)) {
+    return { temperature, maxOutputTokens: maxTokens, thinkingConfig: { thinkingBudget: 0 } };
+  }
+  return { maxOutputTokens: Math.max(maxTokens * 4, 2048), thinkingConfig: { thinkingLevel: 'low' } };
+}
+
 /** Our Workers AI-style input as a Gemini generateContent body. */
-export function geminiBody(input: Record<string, unknown>): Record<string, unknown> {
+export function geminiBody(input: Record<string, unknown>, model: string = GEMINI_DEFAULT_MODEL): Record<string, unknown> {
   // Speech to text (the Whisper call): the recording plus an instruction.
   if (typeof input.audio === 'string') {
     const lang = input.language === 'ar' ? 'Arabic (Gulf dialect)' : 'English';
@@ -26,7 +34,7 @@ export function geminiBody(input: Record<string, unknown>): Record<string, unkno
           { inline_data: { mime_type: 'audio/mp4', data: input.audio } },
         ],
       }],
-      generationConfig: { temperature: 0, maxOutputTokens: 400, thinkingConfig: { thinkingBudget: 0 } },
+      generationConfig: generationConfig(model, 0, 400),
     };
   }
   const messages = Array.isArray(input.messages) ? input.messages as { role: string; content: unknown }[] : [];
@@ -38,11 +46,11 @@ export function geminiBody(input: Record<string, unknown>): Record<string, unkno
   return {
     ...(system ? { systemInstruction: { parts: [{ text: system }] } } : {}),
     contents,
-    generationConfig: {
-      temperature: typeof input.temperature === 'number' ? input.temperature : 0.4,
-      maxOutputTokens: typeof input.max_tokens === 'number' ? input.max_tokens : 400,
-      thinkingConfig: { thinkingBudget: 0 },
-    },
+    generationConfig: generationConfig(
+      model,
+      typeof input.temperature === 'number' ? input.temperature : 0.4,
+      typeof input.max_tokens === 'number' ? input.max_tokens : 400,
+    ),
   };
 }
 
@@ -88,7 +96,7 @@ export class GeminiAi implements AiLike {
       {
         method: 'POST',
         headers: { 'content-type': 'application/json', 'x-goog-api-key': this.key },
-        body: JSON.stringify(geminiBody(i)),
+        body: JSON.stringify(geminiBody(i, this.model)),
       },
     );
     if (!res.ok) {
