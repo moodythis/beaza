@@ -9,7 +9,7 @@ import { CATEGORIES } from './categorize.ts';
 import { HttpError } from './validate.ts';
 
 /** The version of the photo and voice consent the phone must have shown. */
-export const MEDIA_CONSENT_VERSION = '2026-11-05';
+export const MEDIA_CONSENT_VERSION = '2026-11-05.2';
 
 export const WHISPER_MODEL = '@cf/openai/whisper-large-v3-turbo';
 

@@ -5,7 +5,7 @@ import 'package:beaza/domain/use_cases/spending_by_category.dart';
 import 'package:beaza_extraction/beaza_extraction.dart';
 
 /// The version of the AI consent text (server: COACH_CONSENT_VERSION).
-const String kCoachConsentVersion = '2026-11-05.4';
+const String kCoachConsentVersion = '2026-11-05.5';
 
 /// Everything the AI savings plan sends, worked out on the phone in integer
 /// fils: totals of the last 7 days and the 7 before, the daily limit, how

@@ -10,7 +10,7 @@ import type { AiLike } from './coach.ts';
 import { HttpError, isObject } from './validate.ts';
 
 /** The version of the sorting consent the phone must have shown. */
-export const CATEGORIZE_CONSENT_VERSION = '2026-11-05';
+export const CATEGORIZE_CONSENT_VERSION = '2026-11-05.2';
 
 /** At most this many names in one request. */
 export const CATEGORIZE_MAX_NAMES = 30;

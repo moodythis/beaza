@@ -1,0 +1,65 @@
+import assert from 'node:assert/strict';
+import { describe, it } from 'node:test';
+import { firstOf, GeminiAi, geminiBody, geminiText } from '../src/gemini.ts';
+
+function fakeFetch(status: number, body: unknown) {
+  const calls: { url: string; init: any }[] = [];
+  const f = async (url: string, init: any) => {
+    calls.push({ url, init });
+    return { ok: status === 200, status, json: async () => body };
+  };
+  return { f, calls };
+}
+
+const reply = (text: string) => ({ candidates: [{ content: { parts: [{ text }] } }] });
+
+describe('Gemini first, Workers AI behind it', () => {
+  it('chat messages become systemInstruction and contents', () => {
+    const b = geminiBody({
+      messages: [{ role: 'system', content: 'rules' }, { role: 'user', content: 'FACTS' }],
+      max_tokens: 300,
+      temperature: 0,
+    }) as any;
+    assert.deepEqual(b.systemInstruction, { parts: [{ text: 'rules' }] });
+    assert.deepEqual(b.contents, [{ role: 'user', parts: [{ text: 'FACTS' }] }]);
+    assert.equal(b.generationConfig.maxOutputTokens, 300);
+    assert.equal(b.generationConfig.temperature, 0);
+  });
+
+  it('a photo becomes inline data; a recording asks for the words', () => {
+    const img = geminiBody({
+      messages: [{ role: 'user', content: [
+        { type: 'text', text: 'read' },
+        { type: 'image_url', image_url: { url: 'data:image/jpeg;base64,QUJD' } },
+      ] }],
+    }) as any;
+    assert.deepEqual(img.contents[0].parts[1], { inline_data: { mime_type: 'image/jpeg', data: 'QUJD' } });
+    const voice = geminiBody({ audio: 'QUJD', language: 'ar' }) as any;
+    assert.deepEqual(voice.contents[0].parts[1], { inline_data: { mime_type: 'audio/mp4', data: 'QUJD' } });
+    assert.match(voice.contents[0].parts[0].text, /Arabic/);
+  });
+
+  it('the key goes in a header, never the URL; answers keep the callers\' shapes', async () => {
+    const { f, calls } = fakeFetch(200, reply('1. ok'));
+    const g = new GeminiAi('SECRET', 'gemini-2.5-flash', f);
+    assert.deepEqual(await g.run('@cf/x', { messages: [{ role: 'user', content: 'hi' }] }), { response: '1. ok' });
+    assert.equal(calls[0].url.includes('SECRET'), false);
+    assert.equal(calls[0].init.headers['x-goog-api-key'], 'SECRET');
+    assert.match(calls[0].url, /models\/gemini-2\.5-flash:generateContent$/);
+    assert.deepEqual(await g.run('@cf/whisper', { audio: 'QUJD', language: 'ar' }), { text: '1. ok' });
+  });
+
+  it('quota or errors fall back to Workers AI with the same call', async () => {
+    const { f } = fakeFetch(429, { error: { message: 'quota' } });
+    const workers = { calls: [] as unknown[], async run(model: string, input: unknown) { this.calls.push([model, input]); return { response: 'from workers' }; } };
+    const ai = firstOf(new GeminiAi('K', undefined, f), workers)!;
+    assert.deepEqual(await ai.run('@cf/google/gemma', { messages: [] }), { response: 'from workers' });
+    assert.equal(workers.calls.length, 1);
+  });
+
+  it('no key: Workers AI only', () => {
+    const workers = { async run() { return {}; } };
+    assert.equal(firstOf(undefined, workers), workers);
+    assert.equal(geminiText({ candidates: [] }), null);
+  });
+});

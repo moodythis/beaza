@@ -27,7 +27,7 @@ class LegalDocument {
 }
 
 const privacyNotice = LegalDocument(
-  version: '2026-11-05.6',
+  version: '2026-11-05.7',
   titleAr: 'إشعار الخصوصية لتطبيق بيزة',
   titleEn: 'Beaza privacy notice',
   ar: [
@@ -61,7 +61,7 @@ const privacyNotice = LegalDocument(
       'خطة التوفير بالذكاء الاصطناعي (اختيارية، بموافقة منفصلة)',
       [
         'فقط إذا وافقت في شاشة خطة الذكاء الاصطناعي، يرسل بيزة إلى خادمه هذه المجاميع المحسوبة على هاتفك: مصروفك في آخر 7 أيام والـ7 التي قبلها، وحدك اليومي وعدد الأيام التي تجاوزته فيها، وعدد مشترياتك الصغيرة ومجموعها، ومجموع كل صنف ونسبته، وأسماء ما يصل إلى 5 محلات صرفت فيها أكثر في آخر 7 أيام مع ما صرفته فيها وعدد المرات، وكل عملية شراء في آخر 7 أيام (حتى 40) مع يوم الأسبوع والساعة والمبلغ والصنف واسم المحل، وعدد مشترياتك في آخر الليل (من 10 مساءً إلى 3 فجرًا) ومجموعها، وما صرفته يومي الجمعة والسبت، وإذا كان حدك محسوبًا من دخلك: المبلغ الباقي للشهر وعدد الأيام الباقية (ولا يُرسل الدخل نفسه أبدًا). تعرض لك الشاشة القائمة نفسها قبل أن توافق. لا يُرسل أي شيء يعرّف بك: لا نص رسالة بنك ولا رقم حساب أو بطاقة ولا رقم هاتف ولا رقم شخصي (CPR) ولا رقم مرجعي ولا تاريخ ولا اسم شخص حوّلت له (تُحذف الأرقام من أسماء المحلات ولا تُرسل التحويلات)، ويرفض الخادم أي حقل آخر. لا يلزم حساب، ولا يُربط الطلب بأي حساب.',
-        'يطلب الخادم من نموذج ذكاء اصطناعي (Gemma، تشغّله Cloudflare Workers AI نيابةً عنا) كتابة خطة قصيرة من هذه المعلومات، ويتحقق أن كل رقم في الخطة من الأرقام التي أُعطيت له. تذكر Cloudflare أنها لا تحتفظ بهذه الطلبات بعد الرد ولا تستخدمها لتدريب النماذج، ولا تذكر في أي دولة يعمل النموذج. لا يحفظ بيزة شيئًا عن الطلب سوى عدد الخطط المطلوبة في ذلك اليوم، دون ربطه بك. الأساس القانوني هو موافقتك، ويمكنك سحبها في أي وقت من شاشة الخطة، وسحبها يوقف أي إرسال لاحق.',
+        'يطلب الخادم من نموذج ذكاء اصطناعي (انظر «نماذج الذكاء الاصطناعي») كتابة خطة قصيرة من هذه المعلومات، ويتحقق أن كل رقم في الخطة من الأرقام التي أُعطيت له. ما قد يفعله مزوّد الذكاء الاصطناعي بالطلب مبيّن في «نماذج الذكاء الاصطناعي». لا يحفظ بيزة شيئًا عن الطلب سوى عدد الخطط المطلوبة في ذلك اليوم، دون ربطه بك. الأساس القانوني هو موافقتك، ويمكنك سحبها في أي وقت من شاشة الخطة، وسحبها يوقف أي إرسال لاحق.',
       ],
     ),
     LegalSection(
@@ -73,7 +73,13 @@ const privacyNotice = LegalDocument(
     LegalSection(
       'قراءة صور الإيصالات والصوت بالذكاء الاصطناعي (اختيارية، بموافقة منفصلة)',
       [
-        'فقط إذا شغّلتها من شاشة الإيصال أو الإضافة السريعة: تُرسل صورة الإيصال (بعد تصغيرها على هاتفك) أو تسجيل صوتي حتى 60 ثانية إلى خادم بيزة، الذي يطلب من نماذج ذكاء اصطناعي على Cloudflare Workers AI قراءتها (Gemma للصور ولفهم الكلام، وWhisper لتحويل الصوت إلى نص). قد تُظهر الصورة كل ما في الإيصال، مثل آخر أرقام البطاقة، فقص أو غطِّ ما لا تريد إرساله. تذكر Cloudflare أنها لا تحتفظ بهذه الطلبات ولا تستخدمها للتدريب. لا يحفظ بيزة الصورة ولا التسجيل ولا النص: ترى ما قُرئ وتعدّله قبل الحفظ. بدون هذا الخيار، تُقرأ الصور على هاتفك ويذهب الكلام إلى خدمة الكلام في هاتفك. ويمكنك إيقافها في أي وقت من المكان نفسه.',
+        'فقط إذا شغّلتها من شاشة الإيصال أو الإضافة السريعة: تُرسل صورة الإيصال (بعد تصغيرها على هاتفك) أو تسجيل صوتي حتى 60 ثانية إلى خادم بيزة، الذي يطلب من نموذج ذكاء اصطناعي قراءتها (انظر «نماذج الذكاء الاصطناعي»). قد تُظهر الصورة كل ما في الإيصال، مثل آخر أرقام البطاقة، فقص أو غطِّ ما لا تريد إرساله. لا يحفظ بيزة الصورة ولا التسجيل ولا النص: ترى ما قُرئ وتعدّله قبل الحفظ. بدون هذا الخيار، تُقرأ الصور على هاتفك ويذهب الكلام إلى خدمة الكلام في هاتفك. ويمكنك إيقافها في أي وقت من المكان نفسه.',
+      ],
+    ),
+    LegalSection(
+      'نماذج الذكاء الاصطناعي',
+      [
+        'يرسل خادم بيزة كل طلب ذكاء اصطناعي (خطة التوفير، التصنيف، صور الإيصالات، الصوت) أولًا إلى نموذج Gemini من Google عبر خدمتها المجانية. في الخدمة المجانية قد تحتفظ Google بما يُرسل وبالرد، وتستخدمهما لتحسين منتجاتها ونماذجها، وقد يقرؤهما موظفون لديها؛ وتذكر Google أنها تفصلهما أولًا عن حساب بيزة. إذا لم يرد Gemini (مثلًا عند انتهاء الحصة المجانية اليومية)، يذهب الطلب نفسه إلى Cloudflare Workers AI (Gemma، وWhisper للكلام) نيابةً عنا، وتذكر أنها لا تحتفظ بالطلبات ولا تدرّب عليها. لا يُرسل مع طلب الذكاء الاصطناعي أي حساب أو اسم أو رقم هاتف. وبسبب شروط Google المجانية، لا ترسل ما لا تريد أن يقرأه شخص، وغطِّ أرقام البطاقة في صورة الإيصال.',
       ],
     ),
     LegalSection(
@@ -168,7 +174,7 @@ const privacyNotice = LegalDocument(
       'AI savings plan (optional, separate consent)',
       [
         'Only if you agree on the AI plan screen, Beaza sends these totals, worked out on your phone, to its server: what you spent in the last 7 days and the 7 before, your daily limit and on how many days you passed it, how many small purchases you made and their total, a total and share per category, the names of up to 5 shops where you spent most in the last 7 days with what you spent there and how many times, each purchase of the last 7 days (up to 40) with its weekday, hour, amount, category and shop name, how many purchases you made late at night (10 pm to 3 am) and their total, what you spent on Friday and Saturday, and, if your limit is worked out from your income, the money left for the month and the days left (never the income itself). The screen shows you the exact list before you agree. Nothing that identifies you is sent: no bank message, account or card number, phone number, CPR, reference, calendar date or name of a person you transferred to (digits are removed from shop names and transfers are left out), and the server refuses any other field. No account is needed and none is linked to the request.',
-        'The server asks an AI model (Gemma, run by Cloudflare Workers AI, Cloudflare acting for us) to write a short plan from this information, and checks that every number in the plan is one it was given. Cloudflare states that it does not keep these requests after answering or use them to train models; it does not state in which country the model runs. Beaza stores nothing about the request except how many plans were asked for that day, with no link to you. The legal basis is your consent, which you can withdraw at any time on the plan screen; withdrawing stops any further sending.',
+        'The server asks an AI model (see "Which AI models") to write a short plan from this information, and checks that every number in the plan is one it was given. What the AI provider may do with the request is set out under "Which AI models". Beaza stores nothing about the request except how many plans were asked for that day, with no link to you. The legal basis is your consent, which you can withdraw at any time on the plan screen; withdrawing stops any further sending.',
       ],
     ),
     LegalSection(
@@ -180,7 +186,13 @@ const privacyNotice = LegalDocument(
     LegalSection(
       'Receipt photos and voice read with AI (optional, separate consent)',
       [
-        'Only if you turn it on in the receipt or quick add screen: a receipt photo (made smaller on your phone) or a voice recording of up to 60 seconds is sent to Beaza\'s server, which asks AI models on Cloudflare Workers AI to read it (Gemma for photos and for understanding the words, Whisper to turn speech into text). A photo can show whatever is on the receipt, such as the last digits of a card, so crop or cover anything you do not want to send. Cloudflare states that it does not keep these requests or use them to train models. Beaza does not store the photo, the recording or the text: you see what was read and change it before anything is saved. Without this, photos are read on your phone and speech goes to your phone\'s own speech service. You can turn it off at any time in the same place.',
+        'Only if you turn it on in the receipt or quick add screen: a receipt photo (made smaller on your phone) or a voice recording of up to 60 seconds is sent to Beaza\'s server, which asks an AI model to read it (see "Which AI models"). A photo can show whatever is on the receipt, such as the last digits of a card, so crop or cover anything you do not want to send. Beaza does not store the photo, the recording or the text: you see what was read and change it before anything is saved. Without this, photos are read on your phone and speech goes to your phone\'s own speech service. You can turn it off at any time in the same place.',
+      ],
+    ),
+    LegalSection(
+      'Which AI models',
+      [
+        'Beaza\'s server first sends each AI request (savings plan, sorting, receipt photos, voice) to Google\'s Gemini model through Google\'s free tier. On the free tier, Google may keep what is sent and the answer, use them to improve its products and models, and people at Google may read them; Google says it first separates them from Beaza\'s account. If Gemini does not answer (for example when the free daily allowance is used up), the same request goes to Cloudflare Workers AI (Gemma, and Whisper for speech), acting for us, which states that it does not keep requests or train models on them. No account, name or phone number is sent with an AI request. Because of Google\'s free-tier terms, send nothing you would not want a person to read, and cover card digits on a receipt photo.',
       ],
     ),
     LegalSection(

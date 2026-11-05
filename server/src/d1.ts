@@ -25,4 +25,9 @@ export type Env = {
   GOOGLE_CLIENT_ID?: string;
   /** Workers AI binding for the savings plan. Unset turns it off (503). */
   AI?: import('./coach.ts').AiLike;
+  /** Google Gemini key (a Worker secret). Set: Gemini answers first and
+   * Workers AI only when Gemini fails. Never in the app or the code. */
+  GEMINI_API_KEY?: string;
+  /** Gemini model id; default gemini-2.5-flash. */
+  GEMINI_MODEL?: string;
 };

@@ -22,6 +22,7 @@ import { legalPage, PRIVACY_VERSION, TERMS_VERSION } from './legal.ts';
 import { fetchGoogleKeys, verifyGoogleIdToken } from './google.ts';
 import { coach } from './coach.ts';
 import { categorize } from './categorize.ts';
+import { firstOf, GeminiAi } from './gemini.ts';
 import { readExpenses, readReceipt, readVoice } from './media.ts';
 import type { AiLike } from './coach.ts';
 import type { GoogleIdentity, GoogleKeys } from './google.ts';
@@ -100,7 +101,10 @@ export async function handle(
           (options.now ?? Date.now)(),
           options.googleKeys ?? fetchGoogleKeys,
         ),
-      ai: env.AI,
+      ai: firstOf(
+        env.GEMINI_API_KEY ? new GeminiAi(env.GEMINI_API_KEY, env.GEMINI_MODEL || undefined) : undefined,
+        env.AI,
+      ),
       coachCap: options.coachCap,
     };
     response = json(200, await dispatch(route, url, ctx));

@@ -10,7 +10,7 @@ import type { D1Like } from './d1.ts';
 import { HttpError, isObject } from './validate.ts';
 
 /** The version of the AI consent text the phone must have shown. */
-export const COACH_CONSENT_VERSION = '2026-11-05.4';
+export const COACH_CONSENT_VERSION = '2026-11-05.5';
 
 /** At most this many recent purchases (phone: kCoachMaxRecent). */
 export const COACH_MAX_RECENT = 40;
