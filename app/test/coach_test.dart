@@ -69,14 +69,15 @@ Future<(CoachViewModel, FakeCoach, MemoryPreferencesStore)> make() async {
 
 void main() {
   group('what is sent', () {
-    test('only totals, no shop, text, digits, reference or date', () async {
+    test('totals and top shop names; no text, digits, reference or date',
+        () async {
       final ledger = InMemoryLedgerRepository(initial: sample());
       final r = coachRequest(await ledger.entries(),
           const GuardrailSettings(dailyLimitFils: 10000), const Day(2026, 11, 14), 'ar');
       expect(r.keys.toSet(), {
         'consent', 'language', 'week_total_fils', 'previous_week_total_fils',
         'daily_limit_fils', 'days_over_limit', 'small_purchases_count',
-        'small_purchases_fils', 'categories',
+        'small_purchases_fils', 'categories', 'shops',
       });
       expect(r['week_total_fils'], 19150);
       expect(r['previous_week_total_fils'], 12000);
@@ -88,10 +89,52 @@ void main() {
         {'category': 'food', 'fils': 3900, 'percent': 20},
         {'category': 'unsorted', 'fils': 2050, 'percent': 11},
       ]);
+      expect(r['shops'], [
+        {'name': 'REDTAG MANAMA', 'fils': 13200, 'count': 1},
+        {'name': 'COSTA COFFEE SEEF', 'fils': 3900, 'count': 1},
+        {'name': 'Waleed Al Kabah MANAMA', 'fils': 2050, 'count': 1},
+      ]);
       final json = jsonEncode(r);
-      for (final secret in ['COSTA', 'REDTAG', 'Waleed', '4810', 'NBB', 'timestamp']) {
+      for (final secret in ['4810', 'NBB', 'REF', 'timestamp']) {
         expect(json, isNot(contains(secret)), reason: secret);
       }
+    });
+
+    test('shop names lose every digit; transfers to people are left out; '
+        'at most 5 shops, grouped by name', () async {
+      final sent = ExtractionResult(
+        status: ExtractionStatus.transaction,
+        amountFils: 20000,
+        currency: 'BHD',
+        type: TxnType.transferOut,
+        direction: TxDirection.outgoing,
+        merchantRaw: 'AHMED ALI',
+        timestamp: bh(12),
+      );
+      final ledger = InMemoryLedgerRepository(initial: [
+        sent,
+        tx(1000, bh(9), shop: 'TALABAT 1234 *5678'),
+        tx(1500, bh(10), shop: 'talabat'),
+        tx(900, bh(11), shop: 'كافيه ٤٥٦ السيف'),
+        for (var i = 0; i < 6; i++) tx(500 + i, bh(13, 8 + i), shop: 'SHOP ${'ABCDEF'[i]}'),
+      ]);
+      final r = coachRequest(await ledger.entries(),
+          const GuardrailSettings(dailyLimitFils: 10000), const Day(2026, 11, 14), 'en');
+      final shops = (r['shops'] as List).cast<Map<String, Object>>();
+      expect(shops, hasLength(kCoachMaxShops));
+      expect(shops.first, {'name': 'TALABAT', 'fils': 2500, 'count': 2});
+      expect(shops[1]['name'], 'كافيه السيف');
+      final json = jsonEncode(r);
+      expect(json, isNot(contains('AHMED')));
+      expect(RegExp(r'[0-9\u0660-\u0669]').hasMatch(
+          shops.map((x) => x['name']).join()), isFalse);
+    });
+
+    test('coachShopName', () {
+      expect(coachShopName(null), isNull);
+      expect(coachShopName('1234'), isNull);
+      expect(coachShopName(' - Jasmis 22 - '), 'Jasmis');
+      expect(coachShopName('A' * 60)!.length, 40);
     });
   });
 

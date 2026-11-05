@@ -88,6 +88,10 @@ List<String> requestLines(AppLocalizations l10n, Map<String, Object> r) {
     lines.add(l10n.coachSendCategory(categoryName(l10n, c['category'] as String),
         money(c['fils']), c['percent'] as int));
   }
+  for (final x in ((r['shops'] as List?) ?? const []).cast<Map<String, Object>>()) {
+    lines.add(l10n.coachSendShop(
+        x['name'] as String, money(x['fils']), x['count'] as int));
+  }
   return lines;
 }
 

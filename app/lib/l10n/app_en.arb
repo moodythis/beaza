@@ -499,10 +499,10 @@
     }
   },
   "coachTitle": "AI savings plan",
-  "coachSubtitle": "Optional. Sends only your totals.",
+  "coachSubtitle": "Optional. Sends your totals and top shop names.",
   "coachAsk": "Get a plan",
   "coachConsentTitle": "Before the AI writes your plan",
-  "coachConsentBody": "To write a plan, Beaza sends the totals below from this phone to its server, which asks an AI model (Gemma, run by Cloudflare Workers AI). No shop name, bank message, account number or date is sent, and the server refuses anything else. Cloudflare says it does not keep the request or use it to train models; it does not say in which country the model runs. Beaza does not store the request either. You can stop this at any time.",
+  "coachConsentBody": "To write a plan, Beaza sends the totals below from this phone to its server, with the names of the shops where you spent most in the last 7 days (digits removed), which asks an AI model (Gemma, run by Cloudflare Workers AI). No bank message, account or card number, transfer recipient or date is sent, and the server refuses anything else. Cloudflare says it does not keep the request or use it to train models; it does not say in which country the model runs. Beaza does not store the request either. You can stop this at any time.",
   "coachConsentWhat": "This is what will be sent:",
   "coachAgree": "Agree and get the plan",
   "coachNotNow": "Not now",
@@ -698,5 +698,7 @@
   "@buyOverToday": {"placeholders": {"left": {"type": "String"}}},
   "@buyTomorrow": {"placeholders": {"withIt": {"type": "String"}, "without": {"type": "String"}}},
   "@buyBeyondMonth": {"placeholders": {"left": {"type": "String"}}},
-  "@buyDays": {"placeholders": {"days": {"type": "int"}}}
+  "@buyDays": {"placeholders": {"days": {"type": "int"}}},
+  "coachSendShop": "Shop {name}: {amount} ({count} times)",
+  "@coachSendShop": {"placeholders": {"name": {"type": "String"}, "amount": {"type": "String"}, "count": {"type": "int"}}}
 }

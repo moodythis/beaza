@@ -1,6 +1,7 @@
-// AI savings plan (SRS FR-8.8). The phone sends only totals it computed:
-// no shop names, no message text, no account digits, no dates. Anything
-// else in the request is refused. The model writes a short plan from those
+// AI savings plan (SRS FR-8.8). The phone sends totals it computed and the
+// names of the shops where most was spent (digits removed): no message
+// text, no account digits, no transfer recipients, no dates. Anything else
+// in the request is refused. The model writes a short plan from those
 // numbers; every number in its reply must be one it was given, otherwise a
 // plan written by rules is returned instead. Nothing is stored except a
 // per-day request count, and the request body is never logged.
@@ -8,7 +9,10 @@ import type { D1Like } from './d1.ts';
 import { HttpError, isObject } from './validate.ts';
 
 /** The version of the AI consent text the phone must have shown. */
-export const COACH_CONSENT_VERSION = '2026-11-04';
+export const COACH_CONSENT_VERSION = '2026-11-05';
+
+/** At most this many shops (phone: kCoachMaxShops). */
+export const COACH_MAX_SHOPS = 5;
 
 /** Workers AI model: multilingual, "zero data retention" in Cloudflare's
  * model catalog (checked 4 Nov 2026). */
@@ -43,13 +47,26 @@ export type CoachInput = {
   smallCount: number;
   smallFils: number;
   categories: { category: string; fils: number; percent: number }[];
+  shops: { name: string; fils: number; count: number }[];
 };
 
 const KEYS = [
   'consent', 'language', 'week_total_fils', 'previous_week_total_fils',
   'daily_limit_fils', 'days_over_limit', 'small_purchases_count',
-  'small_purchases_fils', 'categories',
+  'small_purchases_fils', 'categories', 'shops',
 ];
+
+/** A shop name may carry no digit of any script (no card, phone, branch or
+ * reference number can ride along), and nothing that looks like an email
+ * or a phone number. */
+function shopName(v: unknown): string {
+  if (typeof v !== 'string') throw new HttpError(400, 'bad_shops');
+  const s = v.trim();
+  if (s.length < 2 || s.length > 40 || /[0-9\u0660-\u0669\u06F0-\u06F9@+]/.test(s) || /[\u0000-\u001F]/.test(s)) {
+    throw new HttpError(400, 'bad_shops');
+  }
+  return s;
+}
 
 function int(v: unknown, max: number, code: string): number {
   if (typeof v !== 'number' || !Number.isInteger(v) || v < 0 || v > max) {
@@ -88,6 +105,20 @@ export function checkCoachInput(body: Record<string, unknown>): CoachInput {
       percent: int(c.percent, 100, 'bad_categories'),
     };
   });
+  const shopList = body.shops ?? [];
+  if (!Array.isArray(shopList) || shopList.length > COACH_MAX_SHOPS) {
+    throw new HttpError(400, 'bad_shops');
+  }
+  const shops = shopList.map((x) => {
+    if (!isObject(x) || Object.keys(x).some((k) => !['name', 'fils', 'count'].includes(k))) {
+      throw new HttpError(400, 'bad_shops');
+    }
+    return {
+      name: shopName(x.name),
+      fils: int(x.fils, MAX_FILS, 'bad_shops'),
+      count: int(x.count, 10_000, 'bad_shops'),
+    };
+  });
   return {
     language: body.language,
     weekTotalFils: int(body.week_total_fils, MAX_FILS, 'bad_number'),
@@ -97,6 +128,7 @@ export function checkCoachInput(body: Record<string, unknown>): CoachInput {
     smallCount: int(body.small_purchases_count, 10_000, 'bad_number'),
     smallFils: int(body.small_purchases_fils, MAX_FILS, 'bad_number'),
     categories: categories.sort((a, b) => b.fils - a.fils),
+    shops: shops.sort((a, b) => b.fils - a.fils),
   };
 }
 
@@ -150,6 +182,11 @@ export function facts(x: CoachInput): { lines: string[]; trim?: { category: stri
   for (const c of x.categories.slice(0, 5)) {
     lines.push(`${name(c.category, ar)}: ${money(c.fils, ar)} (${c.percent}${ar ? '٪' : '%'})`);
   }
+  for (const sh of x.shops) {
+    lines.push(ar
+      ? `محل ${sh.name}: ${money(sh.fils, true)} (${sh.count} مرات)`
+      : `Shop ${sh.name}: ${money(sh.fils, false)} (${sh.count} times)`);
+  }
   if (unsortedHeavy(x)) {
     lines.push(ar
       ? 'أغلب المصروف غير مصنّف: صنّفه أول علشان تعرف وين تروح فلوسك'
@@ -173,6 +210,7 @@ const SYSTEM = {
 استخدم فقط الأرقام الموجودة في "الحقائق" وانسخها كما هي. لا تحسب ولا تخترع أي رقم جديد.
 لا تنصح بتخفيف فئة إلا إذا في "الحقائق" سطر "لو قلّ صرف"؛ وإلا لا تقترح تخفيف أي شي، وقل إن صرفه معقول إذا المبالغ صغيرة.
 إذا في سطر "غير مصنّف" خل الخطوة 1 تصنيف المصاريف.
+تقدر تذكر أسماء المحلات من سطور "محل" إذا تفيد النصيحة (مثل محل تتكرر فيه المشتريات)، وانسخ الاسم كما هو.
 لا تنصح بقروض أو استثمار أو بنوك أو منتجات مالية، ولا تلوم الشخص. أقل من 120 كلمة.
 ابدأ مباشرة بالخطوة 1، بدون تحية وبدون جملة ختامية.`,
   en: `You are the savings helper in Beaza, an app for university students in Bahrain.
@@ -180,6 +218,7 @@ Write a short, friendly savings plan: 3 or 4 numbered steps, one practical sente
 Use only the numbers in FACTS, copied exactly. Never calculate or invent a number.
 Suggest cutting a category only if FACTS has an "If ... spending drops" line; otherwise suggest no cuts, and say the spending looks reasonable if the amounts are small.
 If FACTS says the spending is not sorted, make step 1 sorting it.
+You may name shops from the "Shop" lines when it helps (for example a shop visited many times); copy the name exactly.
 No loans, investments, banks or financial products, and no blame. Under 120 words.
 Start directly with step 1: no greeting and no closing line.`,
 };
@@ -225,6 +264,12 @@ export function rulePlan(x: CoachInput): string {
     steps.push(ar
       ? `خفّف ${name(trim.category, true)} 20٪ هالأسبوع: توفّر تقريباً ${money(trim.week, true)}، يعني ${money(trim.month, true)} في 4 أسابيع.`
       : `Cut ${trim.category} by 20% this week: about ${money(trim.week, false)} kept, ${money(trim.month, false)} in 4 weeks.`);
+  }
+  const often = x.shops.find((sh) => sh.count >= 4);
+  if (often) {
+    steps.push(ar
+      ? `رحت ${often.name} ${often.count} مرات هالأسبوع بمجموع ${money(often.fils, true)}: جرّب تقللها مرتين.`
+      : `You went to ${often.name} ${often.count} times this week, ${money(often.fils, false)} in all: try two fewer visits.`);
   }
   if (x.smallCount >= 5) {
     steps.push(ar

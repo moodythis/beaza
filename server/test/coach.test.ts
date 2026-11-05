@@ -115,6 +115,55 @@ describe('POST /v1/coach (AI savings plan)', () => {
     assert.ok(res.body.facts.some((l: string) => /not sorted/.test(l)));
   });
 
+  it('takes up to 5 shop names and gives them to the model as facts', async () => {
+    const s = new Server();
+    const ai = new FakeAi({ response: '1. Fewer visits to TALABAT.' });
+    s.ai = ai;
+    const res = await s.call('POST', '/v1/coach', request({
+      language: 'en',
+      shops: [{ name: 'TALABAT', fils: 9200, count: 4 }, { name: 'COSTA COFFEE', fils: 5400, count: 3 }],
+    }));
+    assert.equal(res.status, 200);
+    assert.equal(res.body.source, 'model');
+    assert.ok(res.body.facts.includes('Shop TALABAT: BHD 9.200 (4 times)'));
+  });
+
+  it('the rule plan names a shop visited 4 times or more', async () => {
+    const s = new Server();
+    s.ai = new FakeAi(new Error('model off'));
+    const res = await s.call('POST', '/v1/coach', request({
+      language: 'en',
+      shops: [{ name: 'TALABAT', fils: 9200, count: 4 }],
+    }));
+    assert.match(res.body.plan, /You went to TALABAT 4 times this week, BHD 9\.200/);
+  });
+
+  it('refuses shop names with digits, too many shops, or extra fields', async () => {
+    const s = new Server();
+    s.ai = new FakeAi({ response: '1. ok' });
+    const bad = [
+      [{ name: 'CARD 4111', fils: 1, count: 1 }],
+      [{ name: 'محل ٤٥', fils: 1, count: 1 }],
+      [{ name: 'a@b.com', fils: 1, count: 1 }],
+      [{ name: 'X', fils: 1, count: 1 }],
+      [{ name: 'SHOP', fils: 1, count: 1, last4: '1234' }],
+      Array.from({ length: 6 }, (_, i) => ({ name: `SHOP ${'ABCDEF'[i]}`, fils: 1, count: 1 })),
+    ];
+    for (const shops of bad) {
+      const res = await s.call('POST', '/v1/coach', request({ shops }));
+      assert.equal(res.status, 400, JSON.stringify(shops));
+      assert.equal(res.body.error, 'bad_shops');
+    }
+  });
+
+  it('an old consent version is refused', async () => {
+    const s = new Server();
+    s.ai = new FakeAi({ response: '1. ok' });
+    const res = await s.call('POST', '/v1/coach', request({ consent: '2026-11-04' }));
+    assert.equal(res.status, 400);
+    assert.equal(res.body.error, 'consent_required');
+  });
+
   it('reads the chat-completions reply shape too', async () => {
     const s = new Server();
     s.ai = new FakeAi({ choices: [{ message: { content: '1. Spend less on shopping: BHD 2.640 a week.' } }] });
