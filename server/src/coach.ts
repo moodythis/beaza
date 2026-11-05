@@ -11,7 +11,7 @@ import { HttpError, isObject } from './validate.ts';
 import { providerOf } from './gemini.ts';
 
 /** The version of the AI consent text the phone must have shown. */
-export const COACH_CONSENT_VERSION = '2026-11-05.5';
+export const COACH_CONSENT_VERSION = '2026-11-05.6';
 
 /** At most this many recent purchases (phone: kCoachMaxRecent). */
 export const COACH_MAX_RECENT = 40;
@@ -410,6 +410,7 @@ export async function coach(
   const { lines } = facts(x);
   let reply: string | null = null;
   let provider = 'workers-ai';
+  let aiError: string | undefined;
   try {
     const result = await ai.run(COACH_MODEL, {
       messages: [
@@ -422,11 +423,18 @@ export async function coach(
     });
     reply = textOf(result)?.replace(/<think>[\s\S]*?<\/think>/g, '').trim() ?? null;
     provider = providerOf(result);
-  } catch {
+  } catch (e) {
     reply = null;
+    aiError = String(e instanceof Error ? e.message : e).slice(0, 200);
   }
   if (reply && reply.length <= 1200 && onlyGivenNumbers(reply, lines)) {
     return { plan: reply, source: 'model', model: COACH_MODEL, provider, facts: lines };
   }
-  return { plan: rulePlan(x), source: 'rules', facts: lines };
+  return {
+    plan: rulePlan(x),
+    source: 'rules',
+    facts: lines,
+    // Why the model's plan was not used, for the person to send us.
+    reason: aiError ?? (reply ? 'unchecked_number' : 'empty_reply'),
+  };
 }

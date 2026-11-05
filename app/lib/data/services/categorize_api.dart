@@ -4,7 +4,7 @@ import 'package:beaza/data/services/sync_api.dart' show kSyncServer;
 import 'package:http/http.dart' as http;
 
 /// The version of the AI sorting consent (server: CATEGORIZE_CONSENT_VERSION).
-const String kCategorizeConsentVersion = '2026-11-05.2';
+const String kCategorizeConsentVersion = '2026-11-05.3';
 
 abstract class CategorizeApi {
   /// A category for each shop name the model recognised. Throws on a

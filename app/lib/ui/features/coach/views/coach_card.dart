@@ -202,7 +202,9 @@ class _PlanSheet extends StatelessWidget {
                   Text(
                     plan.fromModel
                         ? '${l10n.coachFromModel}${providerLabel(plan.provider)}'
-                        : l10n.coachFromRules,
+                        : plan.reason == null
+                            ? l10n.coachFromRules
+                            : '${l10n.coachFromRules} (${plan.reason})',
                     key: const Key('coachSource'),
                     style: theme.textTheme.bodySmall,
                   ),

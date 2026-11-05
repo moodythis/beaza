@@ -11,9 +11,8 @@
   // Replace with the real project address before release.
   // GOOGLE_CLIENT_ID: the Web OAuth client id Google ID tokens must be for.
   "vars": { "PRIVACY_CONTACT": "privacy@beaza.example", "GOOGLE_CLIENT_ID": "16049310186-eb57dja4q527kmotnt4krj40anri2331.apps.googleusercontent.com" },
-  // Workers AI for the optional savings plan (POST /v1/coach). No API key:
-  // the binding is the account's own.
-  "ai": { "binding": "AI" },
+  // AI is Google Gemini only: its key is the Worker secret GEMINI_API_KEY
+  // (never here). The Workers AI binding was removed on 5 Nov 2026.
   "d1_databases": [
     {
       "binding": "DB",

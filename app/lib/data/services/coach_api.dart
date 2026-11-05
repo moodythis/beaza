@@ -4,7 +4,12 @@ import 'package:beaza/data/services/sync_api.dart' show kSyncServer;
 import 'package:http/http.dart' as http;
 
 class CoachPlan {
-  const CoachPlan({required this.text, required this.fromModel, this.provider});
+  const CoachPlan({
+    required this.text,
+    required this.fromModel,
+    this.provider,
+    this.reason,
+  });
 
   final String text;
 
@@ -14,6 +19,9 @@ class CoachPlan {
 
   /// Which AI wrote it: "gemini" or "workers-ai" (null from an older server).
   final String? provider;
+
+  /// Why the model's plan was not used (the AI's own error), when not.
+  final String? reason;
 }
 
 class CoachException implements Exception {
@@ -31,7 +39,7 @@ abstract class CoachApi {
   Future<CoachPlan> plan(Map<String, Object> request);
 }
 
-/// POST /v1/coach on Beaza's server, which runs the model on Cloudflare
+/// POST /v1/coach on Beaza's server, which asks Google's Gemini
 /// Workers AI. No account and no API key on the phone.
 class HttpCoachApi implements CoachApi {
   HttpCoachApi({
@@ -76,6 +84,7 @@ class HttpCoachApi implements CoachApi {
       text: text.trim(),
       fromModel: body['source'] == 'model',
       provider: body['provider'] as String?,
+      reason: body['reason'] as String?,
     );
   }
 }

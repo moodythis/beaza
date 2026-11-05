@@ -27,7 +27,7 @@ class LegalDocument {
 }
 
 const privacyNotice = LegalDocument(
-  version: '2026-11-05.7',
+  version: '2026-11-05.8',
   titleAr: 'إشعار الخصوصية لتطبيق بيزة',
   titleEn: 'Beaza privacy notice',
   ar: [
@@ -79,7 +79,7 @@ const privacyNotice = LegalDocument(
     LegalSection(
       'نماذج الذكاء الاصطناعي',
       [
-        'يرسل خادم بيزة كل طلب ذكاء اصطناعي (خطة التوفير، التصنيف، صور الإيصالات، الصوت) أولًا إلى نموذج Gemini من Google عبر خدمتها المجانية. في الخدمة المجانية قد تحتفظ Google بما يُرسل وبالرد، وتستخدمهما لتحسين منتجاتها ونماذجها، وقد يقرؤهما موظفون لديها؛ وتذكر Google أنها تفصلهما أولًا عن حساب بيزة. إذا لم يرد Gemini (مثلًا عند انتهاء الحصة المجانية اليومية)، يذهب الطلب نفسه إلى Cloudflare Workers AI (Gemma، وWhisper للكلام) نيابةً عنا، وتذكر أنها لا تحتفظ بالطلبات ولا تدرّب عليها. لا يُرسل مع طلب الذكاء الاصطناعي أي حساب أو اسم أو رقم هاتف. وبسبب شروط Google المجانية، لا ترسل ما لا تريد أن يقرأه شخص، وغطِّ أرقام البطاقة في صورة الإيصال.',
+        'يرسل خادم بيزة كل طلب ذكاء اصطناعي (خطة التوفير، التصنيف، صور الإيصالات، الصوت) أولًا إلى نموذج Gemini من Google عبر خدمتها المجانية. في الخدمة المجانية قد تحتفظ Google بما يُرسل وبالرد، وتستخدمهما لتحسين منتجاتها ونماذجها، وقد يقرؤهما موظفون لديها؛ وتذكر Google أنها تفصلهما أولًا عن حساب بيزة. إذا لم يرد Gemini (مثلًا عند انتهاء الحصة المجانية اليومية)، لا يُسأل أي ذكاء اصطناعي آخر: تُكتب الخطة بالقواعد وتُقرأ الصور والكلام على هاتفك. لا يُرسل مع طلب الذكاء الاصطناعي أي حساب أو اسم أو رقم هاتف. وبسبب شروط Google المجانية، لا ترسل ما لا تريد أن يقرأه شخص، وغطِّ أرقام البطاقة في صورة الإيصال.',
       ],
     ),
     LegalSection(
@@ -192,7 +192,7 @@ const privacyNotice = LegalDocument(
     LegalSection(
       'Which AI models',
       [
-        'Beaza\'s server first sends each AI request (savings plan, sorting, receipt photos, voice) to Google\'s Gemini model through Google\'s free tier. On the free tier, Google may keep what is sent and the answer, use them to improve its products and models, and people at Google may read them; Google says it first separates them from Beaza\'s account. If Gemini does not answer (for example when the free daily allowance is used up), the same request goes to Cloudflare Workers AI (Gemma, and Whisper for speech), acting for us, which states that it does not keep requests or train models on them. No account, name or phone number is sent with an AI request. Because of Google\'s free-tier terms, send nothing you would not want a person to read, and cover card digits on a receipt photo.',
+        'Beaza\'s server first sends each AI request (savings plan, sorting, receipt photos, voice) to Google\'s Gemini model through Google\'s free tier. On the free tier, Google may keep what is sent and the answer, use them to improve its products and models, and people at Google may read them; Google says it first separates them from Beaza\'s account. If Gemini does not answer (for example when the free daily allowance is used up), no other AI is asked: the plan is written by rules and photos and speech are read on your phone. No account, name or phone number is sent with an AI request. Because of Google\'s free-tier terms, send nothing you would not want a person to read, and cover card digits on a receipt photo.',
       ],
     ),
     LegalSection(
