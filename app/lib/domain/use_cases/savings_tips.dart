@@ -18,6 +18,12 @@ enum TipKind {
 
   /// What 20% less on a category would keep each week.
   trimTarget,
+
+  /// Several purchases late at night (22:00 to 03:00, Bahrain time).
+  lateNight,
+
+  /// Friday and Saturday (Bahrain's weekend) took half the week or more.
+  weekend,
 }
 
 class SavingsTip {
@@ -37,7 +43,8 @@ class SavingsTip {
   /// Main amount: this week's spending, or what trimming keeps.
   final int fils;
 
-  /// The week before, for [TipKind.categorySpike].
+  /// The week before, for [TipKind.categorySpike]; the whole week, for
+  /// [TipKind.weekend].
   final int otherFils;
 
   /// Days over the limit, small purchases, or the share in percent for
@@ -50,6 +57,21 @@ const int kTipsMinWeekFils = 5000;
 
 /// A category must be at least this much to be called out.
 const int kTipsMinCategoryFils = 5000;
+
+/// 20% of a category is only worth saying from this much a week: below it,
+/// the saving is pennies.
+const int kTipsMinTrimFils = 10000;
+
+/// Late-night purchases: at least this many, and this much together.
+const int kTipsMinLateCount = 3;
+const int kTipsMinLateFils = 3000;
+
+/// Weekend spending is called out from this much, when it is at least half
+/// of the week (two days out of seven would be about 29%).
+const int kTipsMinWeekendFils = 5000;
+
+/// The Bahrain hour of an instant (no daylight saving, so a fixed offset).
+int _hour(DateTime t) => t.toUtc().add(kBahrainOffset).hour;
 
 /// This many small purchases in 7 days are worth a word.
 const int kTipsMinSmallCount = 5;
@@ -133,7 +155,36 @@ List<SavingsTip> savingsTips(
         fils: smallFils, count: smallCount));
   }
 
-  // 4. One category taking a big share of the week.
+  // 4. Late at night, when buying is easiest and least needed.
+  var lateCount = 0;
+  var lateFils = 0;
+  // 5. Friday and Saturday against the whole week.
+  var weekendFils = 0;
+  for (final e in list) {
+    final t = e.result.timestamp;
+    final a = e.result.amountFils;
+    if (!e.countsTowardSpending || t == null || a == null || a <= 0) continue;
+    if (t.toUtc().isBefore(weekStart) || !t.toUtc().isBefore(weekEnd)) continue;
+    final h = _hour(t);
+    if (h >= 22 || h < 3) {
+      lateCount++;
+      lateFils += a;
+    }
+    final d = Day.of(t);
+    final weekday = DateTime.utc(d.year, d.month, d.day).weekday;
+    if (weekday == DateTime.friday || weekday == DateTime.saturday) {
+      weekendFils += a;
+    }
+  }
+  if (lateCount >= kTipsMinLateCount && lateFils >= kTipsMinLateFils) {
+    tips.add(SavingsTip(TipKind.lateNight, fils: lateFils, count: lateCount));
+  }
+  if (weekendFils >= kTipsMinWeekendFils && weekendFils * 2 >= weekTotal) {
+    tips.add(SavingsTip(TipKind.weekend,
+        fils: weekendFils, otherFils: weekTotal));
+  }
+
+  // 6. One category taking a big share of the week.
   if (weekTotal >= 2 * kTipsMinWeekFils) {
     for (final t in now) {
       if (!_tippable(t.bucket) || used.contains(t.bucket)) continue;
@@ -151,11 +202,11 @@ List<SavingsTip> savingsTips(
     }
   }
 
-  // 5. What 20% less on the biggest discretionary category would keep.
+  // 7. What 20% less on the biggest discretionary category would keep.
   for (final t in now) {
     if (!kDiscretionary.contains(t.bucket) ||
         t.bucket == spike?.bucket ||
-        t.totalFils < kTipsMinCategoryFils) {
+        t.totalFils < kTipsMinTrimFils) {
       continue;
     }
     tips.add(SavingsTip(TipKind.trimTarget,

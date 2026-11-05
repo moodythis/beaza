@@ -98,7 +98,7 @@ void main() {
   test('trim target: 20 percent of the biggest discretionary category', () {
     final t = savingsTips(
       ledger([
-        tx(9000, bh(10), category: 'entertainment'),
+        tx(12000, bh(10), category: 'entertainment'),
         tx(2000, bh(11), category: 'bills'),
         tx(2000, bh(12), category: 'transport'),
       ]),
@@ -107,7 +107,7 @@ void main() {
     expect(t.map((x) => x.kind), contains(TipKind.trimTarget));
     final trim = t.firstWhere((x) => x.kind == TipKind.trimTarget);
     expect(trim.bucket, 'entertainment');
-    expect(trim.fils, 1800);
+    expect(trim.fils, 2400);
   });
 
   test('transfers and unsorted spending are never given a tip', () {
@@ -147,5 +147,70 @@ void main() {
     );
     expect(t.length, lessThanOrEqualTo(3));
     expect(t, isNotEmpty);
+  });
+
+  test('no trim tip below 10 BHD a week: 20% of it is pennies', () {
+    final t = savingsTips(
+      ledger([
+        tx(9000, bh(10), category: 'food'),
+        tx(2000, bh(11), category: 'transport'),
+      ]),
+      today,
+    );
+    expect(t.map((x) => x.kind), isNot(contains(TipKind.trimTarget)));
+  });
+
+  test('late-night purchases (22:00 to 03:00 Bahrain) are called out', () {
+    final t = savingsTips(
+      ledger([
+        tx(1500, bh(9, 23), category: 'food'),
+        tx(1200, bh(10, 1), category: 'food'), // 1 am counts
+        tx(1800, bh(11, 22), category: 'food'),
+        tx(4000, bh(12, 13), category: 'transport'), // daytime: not counted
+      ]),
+      today,
+    );
+    final late = t.firstWhere((x) => x.kind == TipKind.lateNight);
+    expect(late.count, 3);
+    expect(late.fils, 4500);
+  });
+
+  test('two late purchases are not a habit', () {
+    final t = savingsTips(
+      ledger([
+        tx(3000, bh(9, 23), category: 'food'),
+        tx(3000, bh(10, 23), category: 'food'),
+        tx(4000, bh(12), category: 'transport'),
+      ]),
+      today,
+    );
+    expect(t.map((x) => x.kind), isNot(contains(TipKind.lateNight)));
+  });
+
+  test('Friday and Saturday taking half the week are called out', () {
+    // 13 Nov 2026 is a Friday, 14 Nov a Saturday.
+    final t = savingsTips(
+      ledger([
+        tx(4000, bh(13), category: 'entertainment'),
+        tx(3000, bh(14), category: 'food'),
+        tx(2000, bh(10), category: 'transport'),
+      ]),
+      today,
+    );
+    final w = t.firstWhere((x) => x.kind == TipKind.weekend);
+    expect(w.fils, 7000);
+    expect(w.otherFils, 9000);
+  });
+
+  test('a normal weekend is not called out', () {
+    final t = savingsTips(
+      ledger([
+        tx(2000, bh(13), category: 'food'),
+        tx(6000, bh(10), category: 'transport'),
+        tx(4000, bh(11), category: 'food'),
+      ]),
+      today,
+    );
+    expect(t.map((x) => x.kind), isNot(contains(TipKind.weekend)));
   });
 }

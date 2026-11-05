@@ -107,4 +107,56 @@ void main() {
     expect(prefs.values.containsKey('budget.income'), isFalse);
     vm.dispose();
   });
+
+  group('can I buy it?', () {
+    // Plan: 150.000 free in November (30 days). 9.000 spent on the 1st,
+    // 4.000 today (the 2nd), whose limit is 4.862.
+    Future<PurchaseCheck> check(int item,
+        {Day today = const Day(2026, 11, 2), BudgetPlan? p = plan}) async {
+      final ledger = InMemoryLedgerRepository(
+          initial: [purchase(9000, bh(1, 23)), purchase(4000, bh(2, 9))]);
+      return checkPurchase(
+        itemFils: item,
+        dailyLimitFils: 4862,
+        spentTodayFils: 4000,
+        entries: await ledger.entries(),
+        today: today,
+        plan: p,
+      );
+    }
+
+    test('the limit from tomorrow, with and without it', () async {
+      final c = await check(18000);
+      expect(c.leftTodayFils, 862);
+      expect(c.fitsToday, isFalse);
+      expect(c.monthLeftFils, 137000);
+      expect(c.limitFromTomorrowFils, 4892); // 137.000 over 28 days
+      expect(c.limitIfBoughtFils, 4250); // 119.000 over 28 days
+      expect(c.daysOfLimit, 4);
+      expect(c.beyondMonth, isFalse);
+    });
+
+    test('something small fits today', () async {
+      final c = await check(500);
+      expect(c.fitsToday, isTrue);
+      expect(c.daysOfLimit, 1);
+    });
+
+    test('more than the month has left', () async {
+      expect((await check(200000)).beyondMonth, isTrue);
+    });
+
+    test('last day of the month: no "from tomorrow"', () async {
+      final c = await check(1000, today: const Day(2026, 11, 30));
+      expect(c.limitFromTomorrowFils, isNull);
+      expect(c.limitIfBoughtFils, isNull);
+    });
+
+    test('without a plan: only today and days of the limit', () async {
+      final c = await check(18000, p: null);
+      expect(c.monthLeftFils, isNull);
+      expect(c.limitIfBoughtFils, isNull);
+      expect(c.daysOfLimit, 4);
+    });
+  });
 }

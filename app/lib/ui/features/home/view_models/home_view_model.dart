@@ -3,7 +3,8 @@ import 'dart:async';
 import 'package:beaza/data/repositories/ledger_repository.dart';
 import 'package:beaza/data/repositories/preferences_store.dart';
 import 'package:beaza/data/repositories/settings_repository.dart';
-import 'package:beaza/domain/use_cases/daily_budget.dart';
+import 'package:beaza/domain/use_cases/daily_budget.dart' as budget;
+import 'package:beaza/domain/use_cases/daily_budget.dart' show BudgetPlan, PurchaseCheck, safeDailyLimitFils;
 import 'package:beaza/data/services/device_service.dart';
 import 'package:beaza/data/services/receipt_scanner.dart';
 import 'package:beaza/data/services/voice_input.dart';
@@ -300,6 +301,20 @@ class HomeViewModel extends ChangeNotifier {
 
   static const _incomeKey = 'budget.income';
   static const _fixedKey = 'budget.fixed';
+
+  /// "Can I buy it?" for [itemFils]: today's room and, with a budget plan,
+  /// the limit from tomorrow with and without it. Nothing is saved.
+  Future<PurchaseCheck> checkPurchase(int itemFils) async {
+    final summary = _state?.summary;
+    return budget.checkPurchase(
+      itemFils: itemFils,
+      dailyLimitFils: summary?.limitFils ?? 0,
+      spentTodayFils: summary?.spentFils ?? 0,
+      entries: await _ledger.entries(),
+      today: Day.of(_clock()),
+      plan: _budget,
+    );
+  }
 
   /// Turns on the worked-out limit.
   Future<void> setBudget(BudgetPlan plan) async {

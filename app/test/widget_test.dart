@@ -308,6 +308,26 @@ void main() {
     expect(find.text('Sample Bakery - Mal Bah'), findsOneWidget);
   });
 
+  testWidgets('"Can I buy it?" shows what it does and saves nothing',
+      (tester) async {
+    await pumpHome(tester, limit: 10000, results: [
+      purchase(4000, bh(9), merchant: 'CAFE', category: 'food'),
+    ]);
+    await tester.tap(find.byKey(const Key('canIBuy')));
+    await tester.pumpAndSettle();
+    await tester.enterText(find.byKey(const Key('amountField')), '3');
+    await tester.tap(find.byKey(const Key('saveAmount')));
+    await tester.pumpAndSettle();
+    expect(find.byKey(const Key('buyResult')), findsOneWidget);
+    expect(find.textContaining("It fits in what is left of today's limit (BHD 6.000)"),
+        findsOneWidget);
+    expect(find.textContaining('Work out your limit from your income'),
+        findsOneWidget);
+    await tester.tap(find.text('OK'));
+    await tester.pumpAndSettle();
+    expect(find.text('BHD 6.000'), findsOneWidget); // remaining unchanged
+  });
+
   testWidgets('no SMS card when there is no SMS support', (tester) async {
     await pumpHome(tester);
     expect(find.byKey(const Key('smsCard')), findsNothing);

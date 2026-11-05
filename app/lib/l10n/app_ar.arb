@@ -454,5 +454,19 @@
   "earlierTitle": "تضيف الرسائل السابقة؟",
   "earlierFound": "لقينا {count} مشتريات في آخر {days} يوم، مجموعها {total}. بتنضاف لقائمتك.",
   "earlierNone": "ما لقينا مشتريات سابقة في آخر {days} يوم.",
-  "earlierAdd": "أضفها"
+  "earlierAdd": "أضفها",
+  "tipLateNight": "{count} مشتريات آخر الليل (بعد 10 بالليل) هالأسبوع مجموعها {amount}. طلبات آخر الليل أسهل شي تتركه.",
+  "tipWeekend": "الجمعة والسبت أخذوا {amount} من صرف الأسبوع ({total}). خطط للويكند قبل لا يبدأ.",
+  "canIBuy": "يمديني أشتري؟",
+  "canIBuyTitle": "كم سعره؟",
+  "canIBuyResult": "شي بسعر {price}",
+  "buyFitsToday": "يدخل ضمن باقي حدك اليوم ({left}).",
+  "buyOverToday": "أكثر من باقي حدك اليوم ({left}).",
+  "buyAlreadyOver": "أنت متجاوز حدك اليوم أصلاً.",
+  "buyTomorrow": "لو اشتريته اليوم يصير حدك من باجر {withIt} بدل {without}.",
+  "buyBeyondMonth": "أكثر من كل الفلوس الباقية لهالشهر ({left}).",
+  "buyDays": "يساوي حدك اليومي لـ {days} أيام.",
+  "buyNoPlan": "احسب حدك من دخلك عشان تشوف تأثيره على باقي الشهر.",
+  "buyDecide": "ما ينحفظ شي: القرار لك.",
+  "buyClose": "تمام"
 }

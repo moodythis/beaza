@@ -153,6 +153,7 @@ class HomeView extends StatelessWidget {
                 onEditLimit: () => _editLimit(context),
                 onBudget: () => _editBudget(context),
                 fromBudget: viewModel.budget != null,
+                onCanIBuy: () => _canIBuy(context),
               ),
               if (viewModel.smsAllowed == false) ...[
                 const SizedBox(height: 12),
@@ -305,6 +306,56 @@ class HomeView extends StatelessWidget {
     if (add == true) await viewModel.addEarlier(days);
   }
 
+  Future<void> _canIBuy(BuildContext context) async {
+    final l10n = AppLocalizations.of(context);
+    final input =
+        await showAmountDialog(context, title: l10n.canIBuyTitle);
+    if (input == null || input.fils <= 0 || !context.mounted) return;
+    final c = await viewModel.checkPurchase(input.fils);
+    if (!context.mounted) return;
+    String money(int fils) => l10n.bhd(formatFils(fils));
+    final lines = <String>[
+      if (c.leftTodayFils <= 0)
+        l10n.buyAlreadyOver
+      else if (c.fitsToday)
+        l10n.buyFitsToday(money(c.leftTodayFils))
+      else
+        l10n.buyOverToday(money(c.leftTodayFils)),
+      if (c.beyondMonth)
+        l10n.buyBeyondMonth(money(c.monthLeftFils! < 0 ? 0 : c.monthLeftFils!))
+      else if (c.limitIfBoughtFils != null)
+        l10n.buyTomorrow(
+            money(c.limitIfBoughtFils!), money(c.limitFromTomorrowFils!)),
+      if (c.daysOfLimit > 1) l10n.buyDays(c.daysOfLimit),
+      if (c.monthLeftFils == null) l10n.buyNoPlan,
+      l10n.buyDecide,
+    ];
+    await showDialog<void>(
+      context: context,
+      builder: (d) => AlertDialog(
+        title: Text(l10n.canIBuyResult(money(c.itemFils))),
+        content: Column(
+          key: const Key('buyResult'),
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            for (final line in lines)
+              Padding(
+                padding: const EdgeInsets.only(bottom: 8),
+                child: Text(line),
+              ),
+          ],
+        ),
+        actions: [
+          FilledButton(
+            onPressed: () => Navigator.of(d).pop(),
+            child: Text(l10n.buyClose),
+          ),
+        ],
+      ),
+    );
+  }
+
   Future<void> _openHistory(BuildContext context, {bool unsortedOnly = false}) =>
       Navigator.of(context).push(
         MaterialPageRoute<void>(
@@ -348,12 +399,16 @@ class LimitCard extends StatelessWidget {
     required this.onEditLimit,
     this.onBudget,
     this.fromBudget = false,
+    this.onCanIBuy,
   });
 
   final DaySummary summary;
   final VoidCallback onEditLimit;
   final VoidCallback? onBudget;
   final bool fromBudget;
+
+  /// "Can I buy it?"; null hides the button.
+  final VoidCallback? onCanIBuy;
 
   @override
   Widget build(BuildContext context) {
@@ -451,6 +506,13 @@ class LimitCard extends StatelessWidget {
                 icon: const Icon(Icons.calculate_outlined),
                 label: Text(
                     fromBudget ? l10n.budgetNote : l10n.budgetFromIncome),
+              ),
+            if (onCanIBuy != null)
+              TextButton.icon(
+                key: const Key('canIBuy'),
+                onPressed: onCanIBuy,
+                icon: const Icon(Icons.shopping_bag_outlined),
+                label: Text(l10n.canIBuy),
               ),
           ],
         ),
@@ -608,6 +670,8 @@ class TipsCard extends StatelessWidget {
       TipKind.smallPurchases => l10n.tipSmall(t.count, money(t.fils)),
       TipKind.topCategory => l10n.tipTop(category, t.count, money(t.fils)),
       TipKind.trimTarget => l10n.tipTrim(category, money(t.fils)),
+      TipKind.lateNight => l10n.tipLateNight(t.count, money(t.fils)),
+      TipKind.weekend => l10n.tipWeekend(money(t.fils), money(t.otherFils)),
     };
   }
 
@@ -652,6 +716,10 @@ class TipsCard extends StatelessWidget {
                   Icon(
                     tips[i].kind == TipKind.smallPurchases
                         ? Icons.coffee_outlined
+                        : tips[i].kind == TipKind.lateNight
+                        ? Icons.nightlight_outlined
+                        : tips[i].kind == TipKind.weekend
+                        ? Icons.weekend_outlined
                         : tips[i].bucket == null
                         ? Icons.warning_amber_outlined
                         : categoryIcon(tips[i].bucket!),
