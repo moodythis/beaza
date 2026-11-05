@@ -17,6 +17,7 @@ class AiReceipt {
     this.shop,
     this.date,
     this.time,
+    this.category,
   });
 
   final int fils;
@@ -25,6 +26,9 @@ class AiReceipt {
   final String? shop;
   final String? date;
   final String? time;
+
+  /// One of the app's categories, chosen by the AI from what was bought.
+  final String? category;
 
   static AiReceipt? fromJson(Object? j) {
     if (j is! Map) return null;
@@ -37,6 +41,7 @@ class AiReceipt {
       shop: j['shop'] as String?,
       date: j['date'] as String?,
       time: j['time'] as String?,
+      category: j['category'] as String?,
     );
   }
 }

@@ -69,6 +69,7 @@ export type AiReceipt = {
   date?: string;
   time?: string;
   kind: string;
+  category?: string;
 };
 
 /** Keeps only well-formed fields of what the model read. */
@@ -85,13 +86,16 @@ export function cleanReceipt(v: unknown): AiReceipt | null {
     kind: typeof o.kind === 'string' && KINDS.includes(o.kind) ? o.kind : 'purchase',
   };
   if (typeof o.shop === 'string' && o.shop.trim().length >= 2) out.shop = o.shop.trim().slice(0, 60);
+  if (typeof o.category === 'string' && CATEGORIES.includes(o.category.trim().toLowerCase())) {
+    out.category = o.category.trim().toLowerCase();
+  }
   if (typeof o.date === 'string' && /^\d{4}-\d{2}-\d{2}$/.test(o.date)) out.date = o.date;
   if (typeof o.time === 'string' && /^\d{2}:\d{2}$/.test(o.time)) out.time = o.time;
   return out;
 }
 
 const RECEIPT_PROMPT = `Read this receipt or payment screen from Bahrain. Reply with one JSON object only:
-{"total": the amount actually paid as a string with 3 decimals like "1.100", "currency": "BHD" or the 3-letter code printed, "shop": the shop or payee name as printed, "date": "YYYY-MM-DD" or null, "time": "HH:MM" (24 h) or null, "kind": "purchase", "refund", "declined" (failed or rejected) or "transfer" (money sent to a person or account)}.
+{"total": the amount actually paid as a string with 3 decimals like "1.100", "currency": "BHD" or the 3-letter code printed, "shop": the shop or payee name as printed, "date": "YYYY-MM-DD" or null, "time": "HH:MM" (24 h) or null, "kind": "purchase", "refund", "declined" (failed or rejected) or "transfer" (money sent to a person or account), "category": one of ${CATEGORIES.join(', ')} from what was bought}.
 Dates in Bahrain are usually day/month/year. Arabic and English text may both appear. If there is no amount, reply {"total": null}.`;
 
 export async function readReceipt(

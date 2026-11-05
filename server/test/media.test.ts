@@ -23,13 +23,14 @@ describe('AI reading of receipt photos and voice', () => {
   it('a photo goes to the vision model and comes back as checked fields', async () => {
     const s = new Server();
     const ai = new FakeAi({
-      response: '```json\n{"total": "1.100", "currency": "BHD", "shop": "Kids Port Games", "date": "2026-11-03", "time": "22:56", "kind": "purchase"}\n```',
+      response: '```json\n{"total": "1.100", "currency": "BHD", "shop": "Kids Port Games", "date": "2026-11-03", "time": "22:56", "kind": "purchase", "category": "entertainment"}\n```',
     });
     s.ai = ai;
     const res = await s.call('POST', '/v1/receipt', { consent: MEDIA_CONSENT_VERSION, language: 'ar', image: JPEG });
     assert.equal(res.status, 200);
     assert.deepEqual(res.body.receipt, {
       fils: 1100, currency: 'BHD', shop: 'Kids Port Games', date: '2026-11-03', time: '22:56', kind: 'purchase',
+      category: 'entertainment',
     });
     const content = ai.calls[0].input.messages[0].content;
     assert.equal(content[1].image_url.url, `data:image/jpeg;base64,${JPEG}`);

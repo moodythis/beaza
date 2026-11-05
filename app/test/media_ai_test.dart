@@ -104,6 +104,7 @@ void main() {
           shop: 'Kids Port Games',
           date: '2026-11-03',
           time: '22:56',
+          category: 'entertainment',
         );
       final vm = ReceiptViewModel(
         scanner: ImageScanner('garbled text 8.000 x 0.100'),
@@ -117,6 +118,7 @@ void main() {
       expect(vm.fromAi, isTrue);
       expect(vm.result!.amountFils, 1100);
       expect(vm.result!.merchantRaw, 'Kids Port Games');
+      expect(vm.result!.category, 'entertainment'); // chosen by the AI
       // 3 Nov 22:56 in Bahrain = 19:56 UTC.
       expect(vm.result!.timestamp, DateTime.utc(2026, 11, 3, 19, 56));
 

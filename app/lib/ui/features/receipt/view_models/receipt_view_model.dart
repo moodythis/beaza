@@ -231,7 +231,11 @@ ExtractionResult resultFromAi(AiReceipt a, ExtractionResult local, DateTime now)
     type: a.kind == 'transfer' ? TxnType.transferOut : TxnType.purchase,
     direction: TxDirection.outgoing,
     merchantRaw: shop,
-    category: const MerchantNormalizer().normalize(shop)?.category ?? local.category,
+    // A known shop keeps its category; otherwise the AI's choice. The
+    // person can change it on the review screen.
+    category: const MerchantNormalizer().normalize(shop)?.category ??
+        (kCategories.contains(a.category) ? a.category : null) ??
+        local.category,
     timestamp: at ?? local.timestamp ?? now,
     templateVersion: 'receipt-ai',
     flags: [
