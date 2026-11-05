@@ -469,5 +469,8 @@
   "buyNoPlan": "احسب حدك من دخلك عشان تشوف تأثيره على باقي الشهر.",
   "buyDecide": "ما ينحفظ شي: القرار لك.",
   "buyClose": "تمام",
-  "coachSendShop": "محل {name}: {amount} ({count} مرات)"
+  "coachSendShop": "محل {name}: {amount} ({count} مرات)",
+  "coachSendLate": "{count} مشتريات آخر الليل (10 بالليل لين 3 الفجر): {amount}",
+  "coachSendWeekend": "الجمعة والسبت: {amount}",
+  "coachSendMonth": "الباقي للشهر: {amount} لـ {days} يوم (مو دخلك)"
 }

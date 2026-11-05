@@ -6,6 +6,7 @@ import 'package:beaza/data/repositories/preferences_store.dart';
 import 'package:beaza/data/repositories/settings_repository.dart';
 import 'package:beaza/data/services/coach_api.dart';
 import 'package:beaza/domain/use_cases/coach_request.dart';
+import 'package:beaza/domain/use_cases/daily_budget.dart';
 import 'package:beaza/ui/features/coach/view_models/coach_view_model.dart';
 import 'package:beaza/ui/features/home/view_models/home_view_model.dart';
 import 'package:beaza_extraction/beaza_extraction.dart';
@@ -78,6 +79,7 @@ void main() {
         'consent', 'language', 'week_total_fils', 'previous_week_total_fils',
         'daily_limit_fils', 'days_over_limit', 'small_purchases_count',
         'small_purchases_fils', 'categories', 'shops',
+        'late_night_count', 'late_night_fils', 'weekend_fils',
       });
       expect(r['week_total_fils'], 19150);
       expect(r['previous_week_total_fils'], 12000);
@@ -128,6 +130,32 @@ void main() {
       expect(json, isNot(contains('AHMED')));
       expect(RegExp(r'[0-9\u0660-\u0669]').hasMatch(
           shops.map((x) => x['name']).join()), isFalse);
+    });
+
+    test('late-night and weekend totals; month left only with a plan',
+        () async {
+      // 13 Nov 2026 is a Friday; 14 Nov (today) a Saturday.
+      final ledger = InMemoryLedgerRepository(initial: [
+        tx(1500, bh(9, 23)),
+        tx(1200, bh(10, 1)),
+        tx(4000, bh(13, 15)),
+        tx(30000, bh(2, 10)), // earlier this month, outside the week
+      ]);
+      final entries = await ledger.entries();
+      final r = coachRequest(entries,
+          const GuardrailSettings(dailyLimitFils: 10000), const Day(2026, 11, 14), 'en');
+      expect(r['late_night_count'], 2);
+      expect(r['late_night_fils'], 2700);
+      expect(r['weekend_fils'], 4000);
+      expect(r.containsKey('month_left_fils'), isFalse);
+
+      final withPlan = coachRequest(entries,
+          const GuardrailSettings(dailyLimitFils: 10000), const Day(2026, 11, 14), 'en',
+          plan: const BudgetPlan(incomeFils: 300000, fixedFils: 105000));
+      // 195.000 free - 36.700 spent so far = 158.300, for 16 days after today.
+      expect(withPlan['month_left_fils'], 158300);
+      expect(withPlan['days_left_in_month'], 16);
+      expect(jsonEncode(withPlan), isNot(contains('300000')));
     });
 
     test('coachShopName', () {

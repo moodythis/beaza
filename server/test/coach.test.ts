@@ -159,9 +159,35 @@ describe('POST /v1/coach (AI savings plan)', () => {
   it('an old consent version is refused', async () => {
     const s = new Server();
     s.ai = new FakeAi({ response: '1. ok' });
-    const res = await s.call('POST', '/v1/coach', request({ consent: '2026-11-04' }));
+    const res = await s.call('POST', '/v1/coach', request({ consent: '2026-11-05' }));
     assert.equal(res.status, 400);
     assert.equal(res.body.error, 'consent_required');
+  });
+
+  it('late-night, weekend and month-left facts are worked out here', async () => {
+    const s = new Server();
+    s.ai = new FakeAi(new Error('model off'));
+    const res = await s.call('POST', '/v1/coach', request({
+      language: 'en',
+      late_night_count: 3, late_night_fils: 4500,
+      weekend_fils: 9575,
+      month_left_fils: 158300, days_left_in_month: 16,
+    }));
+    assert.equal(res.status, 200);
+    assert.ok(res.body.facts.includes('Late-night purchases (10 pm to 3 am): 3, together BHD 4.500'));
+    assert.ok(res.body.facts.includes('Friday and Saturday: BHD 9.575 (50% of the week)'));
+    assert.ok(res.body.facts.includes('Left until the end of the month: BHD 158.300 for 16 days, about BHD 9.893 a day'));
+    assert.match(res.body.plan, /3 late-night purchases came to BHD 4\.500/);
+  });
+
+  it('month left needs both fields and at least one day', async () => {
+    const s = new Server();
+    s.ai = new FakeAi({ response: '1. ok' });
+    for (const extra of [{ month_left_fils: 1000 }, { month_left_fils: 1000, days_left_in_month: 0 }]) {
+      const res = await s.call('POST', '/v1/coach', request(extra));
+      assert.equal(res.status, 400);
+      assert.equal(res.body.error, 'bad_number');
+    }
   });
 
   it('reads the chat-completions reply shape too', async () => {

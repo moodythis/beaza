@@ -1,3 +1,4 @@
+import 'package:beaza/data/repositories/preferences_store.dart';
 import 'package:beaza_extraction/beaza_extraction.dart';
 
 /// What the person earns in a month and what is already spoken for (rent,
@@ -117,3 +118,33 @@ PurchaseCheck checkPurchase({
     limitIfBoughtFils: daysAfter == 0 ? null : perDay(monthLeft - itemFils),
   );
 }
+
+/// Where the plan is kept (PreferencesStore), in fils.
+const String kBudgetIncomeKey = 'budget.income';
+const String kBudgetFixedKey = 'budget.fixed';
+
+/// The saved plan, or null while the limit is set by hand.
+Future<BudgetPlan?> readBudgetPlan(PreferencesStore prefs) async {
+  final income = int.tryParse(await prefs.read(kBudgetIncomeKey) ?? '');
+  if (income == null || income <= 0) return null;
+  final fixed = int.tryParse(await prefs.read(kBudgetFixedKey) ?? '') ?? 0;
+  return BudgetPlan(incomeFils: income, fixedFils: fixed < 0 ? 0 : fixed);
+}
+
+/// Free money left in the month after today's spending, and the days after
+/// today. Null on the last day of the month.
+({int leftFils, int daysAfter})? monthLeft(
+    BudgetPlan plan, Iterable<LedgerEntry> entries, Day today) {
+  final guardrail = Guardrail(const GuardrailSettings(dailyLimitFils: 0));
+  var spent = 0;
+  for (var d = Day(today.year, today.month, 1);
+      d.compareTo(today) <= 0;
+      d = d.addDays(1)) {
+    spent += guardrail.spentOn(entries, d);
+  }
+  final daysInMonth = Day(today.year, today.month + 1, 1).addDays(-1).day;
+  final daysAfter = daysInMonth - today.day;
+  if (daysAfter == 0) return null;
+  return (leftFils: plan.freeFils - spent, daysAfter: daysAfter);
+}
+

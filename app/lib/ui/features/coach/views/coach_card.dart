@@ -88,6 +88,15 @@ List<String> requestLines(AppLocalizations l10n, Map<String, Object> r) {
     lines.add(l10n.coachSendCategory(categoryName(l10n, c['category'] as String),
         money(c['fils']), c['percent'] as int));
   }
+  final late = r['late_night_count'] as int? ?? 0;
+  if (late > 0) {
+    lines.add(l10n.coachSendLate(late, money(r['late_night_fils'])));
+  }
+  lines.add(l10n.coachSendWeekend(money(r['weekend_fils'] ?? 0)));
+  if (r['month_left_fils'] != null) {
+    lines.add(l10n.coachSendMonth(
+        money(r['month_left_fils']), r['days_left_in_month'] as int));
+  }
   for (final x in ((r['shops'] as List?) ?? const []).cast<Map<String, Object>>()) {
     lines.add(l10n.coachSendShop(
         x['name'] as String, money(x['fils']), x['count'] as int));

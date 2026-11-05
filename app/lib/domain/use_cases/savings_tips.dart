@@ -156,26 +156,8 @@ List<SavingsTip> savingsTips(
   }
 
   // 4. Late at night, when buying is easiest and least needed.
-  var lateCount = 0;
-  var lateFils = 0;
   // 5. Friday and Saturday against the whole week.
-  var weekendFils = 0;
-  for (final e in list) {
-    final t = e.result.timestamp;
-    final a = e.result.amountFils;
-    if (!e.countsTowardSpending || t == null || a == null || a <= 0) continue;
-    if (t.toUtc().isBefore(weekStart) || !t.toUtc().isBefore(weekEnd)) continue;
-    final h = _hour(t);
-    if (h >= 22 || h < 3) {
-      lateCount++;
-      lateFils += a;
-    }
-    final d = Day.of(t);
-    final weekday = DateTime.utc(d.year, d.month, d.day).weekday;
-    if (weekday == DateTime.friday || weekday == DateTime.saturday) {
-      weekendFils += a;
-    }
-  }
+  final (:lateCount, :lateFils, :weekendFils) = weekPatterns(list, today);
   if (lateCount >= kTipsMinLateCount && lateFils >= kTipsMinLateFils) {
     tips.add(SavingsTip(TipKind.lateNight, fils: lateFils, count: lateCount));
   }
@@ -216,3 +198,32 @@ List<SavingsTip> savingsTips(
 
   return tips.length <= limit ? tips : tips.sublist(0, limit);
 }
+
+/// Over the 7 Bahrain days ending on [today]: purchases late at night
+/// (22:00 to 03:00) and spending on Friday and Saturday, Bahrain's weekend.
+({int lateCount, int lateFils, int weekendFils}) weekPatterns(
+    Iterable<LedgerEntry> entries, Day today) {
+  final weekStart = today.addDays(-6).startUtc;
+  final weekEnd = today.endUtc;
+  var lateCount = 0;
+  var lateFils = 0;
+  var weekendFils = 0;
+  for (final e in entries) {
+    final t = e.result.timestamp;
+    final a = e.result.amountFils;
+    if (!e.countsTowardSpending || t == null || a == null || a <= 0) continue;
+    if (t.toUtc().isBefore(weekStart) || !t.toUtc().isBefore(weekEnd)) continue;
+    final h = _hour(t);
+    if (h >= 22 || h < 3) {
+      lateCount++;
+      lateFils += a;
+    }
+    final d = Day.of(t);
+    final weekday = DateTime.utc(d.year, d.month, d.day).weekday;
+    if (weekday == DateTime.friday || weekday == DateTime.saturday) {
+      weekendFils += a;
+    }
+  }
+  return (lateCount: lateCount, lateFils: lateFils, weekendFils: weekendFils);
+}
+

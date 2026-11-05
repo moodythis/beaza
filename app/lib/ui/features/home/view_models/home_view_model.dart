@@ -292,15 +292,11 @@ class HomeViewModel extends ChangeNotifier {
 
   Future<BudgetPlan?> _readBudget() async {
     final prefs = _prefs;
-    if (prefs == null) return null;
-    final income = int.tryParse(await prefs.read(_incomeKey) ?? '');
-    if (income == null || income <= 0) return null;
-    final fixed = int.tryParse(await prefs.read(_fixedKey) ?? '') ?? 0;
-    return BudgetPlan(incomeFils: income, fixedFils: fixed < 0 ? 0 : fixed);
+    return prefs == null ? null : daily.readBudgetPlan(prefs);
   }
 
-  static const _incomeKey = 'budget.income';
-  static const _fixedKey = 'budget.fixed';
+  static const _incomeKey = daily.kBudgetIncomeKey;
+  static const _fixedKey = daily.kBudgetFixedKey;
 
   /// "Can I buy it?" for [itemFils]: today's room and, with a budget plan,
   /// the limit from tomorrow with and without it. Nothing is saved.

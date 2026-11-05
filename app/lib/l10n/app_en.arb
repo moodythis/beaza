@@ -700,5 +700,11 @@
   "@buyBeyondMonth": {"placeholders": {"left": {"type": "String"}}},
   "@buyDays": {"placeholders": {"days": {"type": "int"}}},
   "coachSendShop": "Shop {name}: {amount} ({count} times)",
-  "@coachSendShop": {"placeholders": {"name": {"type": "String"}, "amount": {"type": "String"}, "count": {"type": "int"}}}
+  "@coachSendShop": {"placeholders": {"name": {"type": "String"}, "amount": {"type": "String"}, "count": {"type": "int"}}},
+  "coachSendLate": "{count} purchases late at night (10 pm to 3 am): {amount}",
+  "coachSendWeekend": "Friday and Saturday: {amount}",
+  "coachSendMonth": "Left for the month: {amount} for {days} days (not your income)",
+  "@coachSendLate": {"placeholders": {"count": {"type": "int"}, "amount": {"type": "String"}}},
+  "@coachSendWeekend": {"placeholders": {"amount": {"type": "String"}}},
+  "@coachSendMonth": {"placeholders": {"amount": {"type": "String"}, "days": {"type": "int"}}}
 }

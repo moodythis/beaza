@@ -3,6 +3,7 @@ import 'package:beaza/data/repositories/preferences_store.dart';
 import 'package:beaza/data/repositories/settings_repository.dart';
 import 'package:beaza/data/services/coach_api.dart';
 import 'package:beaza/domain/use_cases/coach_request.dart';
+import 'package:beaza/domain/use_cases/daily_budget.dart';
 import 'package:beaza_extraction/beaza_extraction.dart';
 import 'package:flutter/foundation.dart';
 
@@ -54,6 +55,7 @@ class CoachViewModel extends ChangeNotifier {
         await _settings.load(),
         Day.of(_clock()),
         language,
+        plan: await readBudgetPlan(_prefs),
       );
 
   Future<void> agree() async {

@@ -9,7 +9,7 @@ import type { D1Like } from './d1.ts';
 import { HttpError, isObject } from './validate.ts';
 
 /** The version of the AI consent text the phone must have shown. */
-export const COACH_CONSENT_VERSION = '2026-11-05';
+export const COACH_CONSENT_VERSION = '2026-11-05.2';
 
 /** At most this many shops (phone: kCoachMaxShops). */
 export const COACH_MAX_SHOPS = 5;
@@ -48,12 +48,18 @@ export type CoachInput = {
   smallFils: number;
   categories: { category: string; fils: number; percent: number }[];
   shops: { name: string; fils: number; count: number }[];
+  lateCount: number;
+  lateFils: number;
+  weekendFils: number;
+  /** Only when the limit is worked out from income; never the income. */
+  month?: { leftFils: number; days: number };
 };
 
 const KEYS = [
   'consent', 'language', 'week_total_fils', 'previous_week_total_fils',
   'daily_limit_fils', 'days_over_limit', 'small_purchases_count',
-  'small_purchases_fils', 'categories', 'shops',
+  'small_purchases_fils', 'categories', 'shops', 'late_night_count',
+  'late_night_fils', 'weekend_fils', 'month_left_fils', 'days_left_in_month',
 ];
 
 /** A shop name may carry no digit of any script (no card, phone, branch or
@@ -129,7 +135,19 @@ export function checkCoachInput(body: Record<string, unknown>): CoachInput {
     smallFils: int(body.small_purchases_fils, MAX_FILS, 'bad_number'),
     categories: categories.sort((a, b) => b.fils - a.fils),
     shops: shops.sort((a, b) => b.fils - a.fils),
+    lateCount: int(body.late_night_count ?? 0, 10_000, 'bad_number'),
+    lateFils: int(body.late_night_fils ?? 0, MAX_FILS, 'bad_number'),
+    weekendFils: int(body.weekend_fils ?? 0, MAX_FILS, 'bad_number'),
+    month: monthOf(body),
   };
+}
+
+function monthOf(body: Record<string, unknown>): CoachInput['month'] {
+  const has = body.month_left_fils !== undefined || body.days_left_in_month !== undefined;
+  if (!has) return undefined;
+  const days = int(body.days_left_in_month, 30, 'bad_number');
+  if (days < 1) throw new HttpError(400, 'bad_number');
+  return { leftFils: int(body.month_left_fils, MAX_FILS, 'bad_number'), days };
 }
 
 export function money(fils: number, ar: boolean): string {
@@ -181,6 +199,23 @@ export function facts(x: CoachInput): { lines: string[]; trim?: { category: stri
   }
   for (const c of x.categories.slice(0, 5)) {
     lines.push(`${name(c.category, ar)}: ${money(c.fils, ar)} (${c.percent}${ar ? '٪' : '%'})`);
+  }
+  if (x.lateCount > 0) {
+    lines.push(ar
+      ? `مشتريات آخر الليل (10 بالليل لين 3 الفجر): ${x.lateCount} مرات، مجموعها ${money(x.lateFils, true)}`
+      : `Late-night purchases (10 pm to 3 am): ${x.lateCount}, together ${money(x.lateFils, false)}`);
+  }
+  if (x.weekendFils > 0 && x.weekTotalFils > 0) {
+    const pct = Math.round((x.weekendFils * 100) / x.weekTotalFils);
+    lines.push(ar
+      ? `الجمعة والسبت: ${money(x.weekendFils, true)} (${pct}٪ من الأسبوع)`
+      : `Friday and Saturday: ${money(x.weekendFils, false)} (${pct}% of the week)`);
+  }
+  if (x.month) {
+    const perDay = Math.floor(x.month.leftFils / x.month.days);
+    lines.push(ar
+      ? `الباقي لآخر الشهر: ${money(x.month.leftFils, true)} لـ ${x.month.days} يوم، يعني تقريباً ${money(perDay, true)} باليوم`
+      : `Left until the end of the month: ${money(x.month.leftFils, false)} for ${x.month.days} days, about ${money(perDay, false)} a day`);
   }
   for (const sh of x.shops) {
     lines.push(ar
@@ -264,6 +299,11 @@ export function rulePlan(x: CoachInput): string {
     steps.push(ar
       ? `خفّف ${name(trim.category, true)} 20٪ هالأسبوع: توفّر تقريباً ${money(trim.week, true)}، يعني ${money(trim.month, true)} في 4 أسابيع.`
       : `Cut ${trim.category} by 20% this week: about ${money(trim.week, false)} kept, ${money(trim.month, false)} in 4 weeks.`);
+  }
+  if (x.lateCount >= 3) {
+    steps.push(ar
+      ? `${x.lateCount} مشتريات آخر الليل بمجموع ${money(x.lateFils, true)}: حط قاعدة ما تطلب بعد 10 بالليل.`
+      : `${x.lateCount} late-night purchases came to ${money(x.lateFils, false)}: make a rule of no orders after 10 pm.`);
   }
   const often = x.shops.find((sh) => sh.count >= 4);
   if (often) {

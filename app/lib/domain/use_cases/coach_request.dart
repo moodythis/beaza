@@ -1,21 +1,26 @@
+import 'package:beaza/domain/use_cases/daily_budget.dart';
+import 'package:beaza/domain/use_cases/savings_tips.dart';
 import 'package:beaza/domain/use_cases/spending_by_category.dart';
 import 'package:beaza_extraction/beaza_extraction.dart';
 
 /// The version of the AI consent text (server: COACH_CONSENT_VERSION).
-const String kCoachConsentVersion = '2026-11-05';
+const String kCoachConsentVersion = '2026-11-05.2';
 
 /// Everything the AI savings plan sends, worked out on the phone in integer
 /// fils: totals of the last 7 days and the 7 before, the daily limit, how
 /// many days passed it, small purchases, a total per category, and the
 /// names of the shops where most was spent (digits removed, at most
-/// [kCoachMaxShops]). No message text, account digit, reference, date or
+/// [kCoachMaxShops]), late-night and weekend totals, and, when the limit
+/// is worked out from income, the free money and days left in the month
+/// (never the income itself). No message text, account digit, reference, date or
 /// transfer recipient is in it, and the server refuses any other field.
 Map<String, Object> coachRequest(
   Iterable<LedgerEntry> entries,
   GuardrailSettings settings,
   Day today,
-  String language,
-) {
+  String language, {
+  BudgetPlan? plan,
+}) {
   final list = entries.toList();
   int sum(List<CategoryTotal> t) => t.fold(0, (a, c) => a + c.totalFils);
   final week = spendingByCategory(list, today.addDays(-6), today);
@@ -67,6 +72,9 @@ Map<String, Object> coachRequest(
   final topShops = shops.values.toList()
     ..sort((x, y) => y.$2.compareTo(x.$2));
 
+  final (:lateCount, :lateFils, :weekendFils) = weekPatterns(list, today);
+  final month = plan == null ? null : monthLeft(plan, list, today);
+
   return {
     'consent': kCoachConsentVersion,
     'language': language == 'ar' ? 'ar' : 'en',
@@ -76,6 +84,13 @@ Map<String, Object> coachRequest(
     'days_over_limit': overDays,
     'small_purchases_count': smallCount,
     'small_purchases_fils': smallFils,
+    'late_night_count': lateCount,
+    'late_night_fils': lateFils,
+    'weekend_fils': weekendFils,
+    if (month != null) ...{
+      'month_left_fils': month.leftFils < 0 ? 0 : month.leftFils,
+      'days_left_in_month': month.daysAfter,
+    },
     'shops': [
       for (final (name, fils, count) in topShops.take(kCoachMaxShops))
         {'name': name, 'fils': fils, 'count': count},
