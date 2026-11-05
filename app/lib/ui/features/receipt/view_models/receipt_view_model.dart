@@ -48,6 +48,11 @@ class ReceiptViewModel extends ChangeNotifier {
   /// Why the AI failed, in the server's or the network's words.
   String? get aiDetail => _aiDetail;
 
+  String? _provider;
+
+  /// Which AI read the photo ("gemini" or "workers-ai").
+  String? get provider => _provider;
+
   bool _aiTried = false;
 
   /// The photo went to the AI (the switch was on).
@@ -79,6 +84,7 @@ class ReceiptViewModel extends ChangeNotifier {
     try {
       final a = await ai!.readReceipt(jpeg, _language);
       if (a != null) {
+        _provider = a.provider;
         _result = resultFromAi(a, local, now);
         _fromAi = true;
         _aiFailed = false;

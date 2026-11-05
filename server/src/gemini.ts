@@ -94,7 +94,9 @@ export class GeminiAi implements AiLike {
     const text = geminiText(await res.json());
     if (text === null) throw new Error('gemini empty');
     // The shapes the callers already read: Whisper's {text}, the LLMs' {response}.
-    return typeof i.audio === 'string' ? { text } : { response: text };
+    return typeof i.audio === 'string'
+      ? { text, provider: 'gemini' }
+      : { response: text, provider: 'gemini' };
   }
 }
 
@@ -112,3 +114,9 @@ export function firstOf(first: AiLike | undefined, second: AiLike | undefined): 
     },
   };
 }
+
+/** Which service answered: "gemini" or "workers-ai". */
+export function providerOf(result: unknown): string {
+  return (result as { provider?: unknown } | null)?.provider === 'gemini' ? 'gemini' : 'workers-ai';
+}
+

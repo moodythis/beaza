@@ -8,6 +8,7 @@
 // per-day request count, and the request body is never logged.
 import type { D1Like } from './d1.ts';
 import { HttpError, isObject } from './validate.ts';
+import { providerOf } from './gemini.ts';
 
 /** The version of the AI consent text the phone must have shown. */
 export const COACH_CONSENT_VERSION = '2026-11-05.5';
@@ -408,6 +409,7 @@ export async function coach(
   const ar = x.language === 'ar';
   const { lines } = facts(x);
   let reply: string | null = null;
+  let provider = 'workers-ai';
   try {
     const result = await ai.run(COACH_MODEL, {
       messages: [
@@ -419,11 +421,12 @@ export async function coach(
       chat_template_kwargs: { enable_thinking: false },
     });
     reply = textOf(result)?.replace(/<think>[\s\S]*?<\/think>/g, '').trim() ?? null;
+    provider = providerOf(result);
   } catch {
     reply = null;
   }
   if (reply && reply.length <= 1200 && onlyGivenNumbers(reply, lines)) {
-    return { plan: reply, source: 'model', model: COACH_MODEL, facts: lines };
+    return { plan: reply, source: 'model', model: COACH_MODEL, provider, facts: lines };
   }
   return { plan: rulePlan(x), source: 'rules', facts: lines };
 }

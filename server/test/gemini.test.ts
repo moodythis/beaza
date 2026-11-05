@@ -42,11 +42,11 @@ describe('Gemini first, Workers AI behind it', () => {
   it('the key goes in a header, never the URL; answers keep the callers\' shapes', async () => {
     const { f, calls } = fakeFetch(200, reply('1. ok'));
     const g = new GeminiAi('SECRET', 'gemini-2.5-flash', f);
-    assert.deepEqual(await g.run('@cf/x', { messages: [{ role: 'user', content: 'hi' }] }), { response: '1. ok' });
+    assert.deepEqual(await g.run('@cf/x', { messages: [{ role: 'user', content: 'hi' }] }), { response: '1. ok', provider: 'gemini' });
     assert.equal(calls[0].url.includes('SECRET'), false);
     assert.equal(calls[0].init.headers['x-goog-api-key'], 'SECRET');
     assert.match(calls[0].url, /models\/gemini-2\.5-flash:generateContent$/);
-    assert.deepEqual(await g.run('@cf/whisper', { audio: 'QUJD', language: 'ar' }), { text: '1. ok' });
+    assert.deepEqual(await g.run('@cf/whisper', { audio: 'QUJD', language: 'ar' }), { text: '1. ok', provider: 'gemini' });
   });
 
   it('quota or errors fall back to Workers AI with the same call', async () => {

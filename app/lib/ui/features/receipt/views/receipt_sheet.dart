@@ -6,6 +6,7 @@ import 'package:beaza/ui/core/category_style.dart';
 import 'package:beaza/ui/core/entry_text.dart';
 import 'package:beaza/ui/core/formatting.dart';
 import 'package:beaza/ui/core/media_consent.dart';
+import 'package:beaza/ui/features/coach/views/coach_card.dart' show providerLabel;
 import 'package:beaza/ui/features/receipt/view_models/receipt_view_model.dart';
 import 'package:beaza_extraction/beaza_extraction.dart';
 import 'package:flutter/material.dart';
@@ -172,7 +173,7 @@ class _ReceiptSheetState extends State<ReceiptSheet> {
     final r = vm.result!;
     final foreign = r.currency != null && r.currency != 'BHD';
     final notes = <String>[
-      if (vm.fromAi) l10n.receiptFromAi,
+      if (vm.fromAi) '${l10n.receiptFromAi}${providerLabel(vm.provider)}',
       if (vm.aiFailed) l10n.receiptAiFailed,
       if (!vm.aiTried && vm.ai != null) l10n.receiptReadOnPhone,
       if (r.kind == MessageKind.declined)

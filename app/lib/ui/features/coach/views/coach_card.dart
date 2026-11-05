@@ -200,7 +200,9 @@ class _PlanSheet extends StatelessWidget {
                   SelectableText(plan.text, key: const Key('coachPlan')),
                   const SizedBox(height: 12),
                   Text(
-                    plan.fromModel ? l10n.coachFromModel : l10n.coachFromRules,
+                    plan.fromModel
+                        ? '${l10n.coachFromModel}${providerLabel(plan.provider)}'
+                        : l10n.coachFromRules,
                     key: const Key('coachSource'),
                     style: theme.textTheme.bodySmall,
                   ),
@@ -223,3 +225,12 @@ class _PlanSheet extends StatelessWidget {
     );
   }
 }
+
+/// " (Gemini)" or " (Cloudflare)", so the person (and a tester) can see
+/// which AI answered.
+String providerLabel(String? provider) => switch (provider) {
+      'gemini' => ' (Gemini)',
+      'workers-ai' => ' (Cloudflare)',
+      _ => '',
+    };
+

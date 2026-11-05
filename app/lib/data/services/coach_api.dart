@@ -4,13 +4,16 @@ import 'package:beaza/data/services/sync_api.dart' show kSyncServer;
 import 'package:http/http.dart' as http;
 
 class CoachPlan {
-  const CoachPlan({required this.text, required this.fromModel});
+  const CoachPlan({required this.text, required this.fromModel, this.provider});
 
   final String text;
 
   /// False when the server wrote the plan by rules (model off, busy, or its
   /// reply used a number it was not given).
   final bool fromModel;
+
+  /// Which AI wrote it: "gemini" or "workers-ai" (null from an older server).
+  final String? provider;
 }
 
 class CoachException implements Exception {
@@ -69,6 +72,10 @@ class HttpCoachApi implements CoachApi {
     if (text is! String || text.trim().isEmpty) {
       throw const CoachException('server_error');
     }
-    return CoachPlan(text: text.trim(), fromModel: body['source'] == 'model');
+    return CoachPlan(
+      text: text.trim(),
+      fromModel: body['source'] == 'model',
+      provider: body['provider'] as String?,
+    );
   }
 }

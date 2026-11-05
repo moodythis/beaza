@@ -18,7 +18,11 @@ class AiReceipt {
     this.date,
     this.time,
     this.category,
+    this.provider,
   });
+
+  /// Which AI read it: "gemini" or "workers-ai".
+  final String? provider;
 
   final int fils;
   final String currency;
@@ -30,7 +34,7 @@ class AiReceipt {
   /// One of the app's categories, chosen by the AI from what was bought.
   final String? category;
 
-  static AiReceipt? fromJson(Object? j) {
+  static AiReceipt? fromJson(Object? j, {String? provider}) {
     if (j is! Map) return null;
     final fils = j['fils'];
     if (fils is! int || fils <= 0) return null;
@@ -42,6 +46,7 @@ class AiReceipt {
       date: j['date'] as String?,
       time: j['time'] as String?,
       category: j['category'] as String?,
+      provider: provider,
     );
   }
 }
@@ -118,7 +123,7 @@ class HttpMediaAiApi implements MediaAiApi {
   @override
   Future<AiReceipt?> readReceipt(String jpegBase64, String language) async {
     final j = await _post('/v1/receipt', {'language': language, 'image': jpegBase64});
-    final r = AiReceipt.fromJson(j['receipt']);
+    final r = AiReceipt.fromJson(j['receipt'], provider: j['provider'] as String?);
     if (r == null && j['reason'] is String) {
       throw MediaAiException(j['reason'] as String, j['detail'] as String?);
     }

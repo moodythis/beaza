@@ -7,6 +7,7 @@ import { allow, COACH_DAILY_CAP, COACH_MODEL, textOf } from './coach.ts';
 import type { AiLike } from './coach.ts';
 import { CATEGORIES } from './categorize.ts';
 import { HttpError } from './validate.ts';
+import { providerOf } from './gemini.ts';
 
 /** The version of the photo and voice consent the phone must have shown. */
 export const MEDIA_CONSENT_VERSION = '2026-11-05.2';
@@ -110,6 +111,7 @@ export async function readReceipt(
   if (!ai) throw new HttpError(503, 'coach_disabled');
   if (!(await allow(db, now, cap))) throw new HttpError(429, 'coach_busy');
   let reply: string | null = null;
+  let provider = 'workers-ai';
   try {
     const result = await ai.run(COACH_MODEL, {
       messages: [{
@@ -124,14 +126,15 @@ export async function readReceipt(
       chat_template_kwargs: { enable_thinking: false },
     });
     reply = textOf(result);
+    provider = providerOf(result);
   } catch (e) {
     // Why, so a failure on a real phone can be told apart (no image in it).
     return { receipt: null, reason: 'model_error', detail: String(e).slice(0, 200) };
   }
-  if (!reply) return { receipt: null, reason: 'empty_reply' };
+  if (!reply) return { receipt: null, reason: 'empty_reply', provider };
   const receipt = cleanReceipt(jsonIn(reply));
-  if (!receipt) return { receipt: null, reason: 'no_amount', detail: reply.slice(0, 200) };
-  return { receipt };
+  if (!receipt) return { receipt: null, reason: 'no_amount', detail: reply.slice(0, 200), provider };
+  return { receipt, provider };
 }
 
 export type AiDraft = { item: string; fils: number; category?: string };
