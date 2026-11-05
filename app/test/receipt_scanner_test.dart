@@ -13,7 +13,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';
 
-class FakeScanner implements ReceiptScanner {
+class FakeScanner extends ReceiptScanner {
   FakeScanner(this.text, {this.failCode});
   final String? text;
   final String? failCode;
