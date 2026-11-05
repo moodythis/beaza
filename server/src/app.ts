@@ -22,6 +22,7 @@ import { legalPage, PRIVACY_VERSION, TERMS_VERSION } from './legal.ts';
 import { fetchGoogleKeys, verifyGoogleIdToken } from './google.ts';
 import { coach } from './coach.ts';
 import { categorize } from './categorize.ts';
+import { readExpenses, readReceipt, readVoice } from './media.ts';
 import type { AiLike } from './coach.ts';
 import type { GoogleIdentity, GoogleKeys } from './google.ts';
 
@@ -155,6 +156,12 @@ async function dispatch(route: string, url: URL, ctx: Ctx): Promise<Record<strin
     case 'POST /v1/categorize':
       // No account needed: only shop names, nothing about the person.
       return categorize(await readJson(ctx.request), ctx.db, ctx.ai, ctx.now, ctx.coachCap);
+    case 'POST /v1/receipt':
+      return readReceipt(await readJson(ctx.request, MAX_MEDIA_BODY), ctx.db, ctx.ai, ctx.now, ctx.coachCap);
+    case 'POST /v1/voice':
+      return readVoice(await readJson(ctx.request, MAX_MEDIA_BODY), ctx.db, ctx.ai, ctx.now, ctx.coachCap);
+    case 'POST /v1/expenses':
+      return readExpenses(await readJson(ctx.request), ctx.db, ctx.ai, ctx.now, ctx.coachCap);
     default:
       throw new HttpError(404, 'not_found');
   }
@@ -171,12 +178,15 @@ function json(status: number, body: Record<string, unknown>): Response {
   });
 }
 
-async function readJson(request: Request): Promise<Record<string, unknown>> {
-  if (Number(request.headers.get('content-length') ?? 0) > MAX_BODY) {
+/** A receipt photo or a voice recording, as base64 JSON. */
+const MAX_MEDIA_BODY = 4 * 1024 * 1024;
+
+async function readJson(request: Request, max = MAX_BODY): Promise<Record<string, unknown>> {
+  if (Number(request.headers.get('content-length') ?? 0) > max) {
     throw new HttpError(413, 'too_large');
   }
   const text = await request.text();
-  if (text.length > MAX_BODY) throw new HttpError(413, 'too_large');
+  if (text.length > max) throw new HttpError(413, 'too_large');
   let value: unknown;
   try {
     value = JSON.parse(text);

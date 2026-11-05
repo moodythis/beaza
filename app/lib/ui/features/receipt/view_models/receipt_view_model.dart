@@ -1,4 +1,5 @@
 import 'package:beaza/data/repositories/ledger_repository.dart';
+import 'package:beaza/data/services/media_ai_api.dart';
 import 'package:beaza/data/services/receipt_scanner.dart';
 import 'package:beaza/domain/use_cases/same_payment.dart';
 import 'package:beaza_extraction/beaza_extraction.dart';
@@ -16,6 +17,8 @@ class ReceiptViewModel extends ChangeNotifier {
     required LedgerRepository ledger,
     DateTime Function()? clock,
     this.reader = const ReceiptReader(),
+    this.ai,
+    this.consent,
   })  : _scanner = scanner,
         _ledger = ledger,
         _clock = clock ?? DateTime.now;
@@ -24,6 +27,20 @@ class ReceiptViewModel extends ChangeNotifier {
   final LedgerRepository _ledger;
   final DateTime Function() _clock;
   final ReceiptReader reader;
+
+  /// Reading the photo with AI, after the person agreed; null hides it.
+  final MediaAiApi? ai;
+  final MediaAiConsent? consent;
+
+  bool _fromAi = false;
+
+  /// What is shown was read by the AI from the photo.
+  bool get fromAi => _fromAi;
+
+  bool _aiFailed = false;
+
+  /// The AI could not be reached, so the phone's own reading is shown.
+  bool get aiFailed => _aiFailed;
 
   ReceiptStep _step = ReceiptStep.choose;
   ReceiptStep get step => _step;
@@ -50,15 +67,43 @@ class ReceiptViewModel extends ChangeNotifier {
 
   bool _disposed = false;
 
-  Future<void> scan(ReceiptSource source) async {
+  Future<void> scan(ReceiptSource source, {String language = 'ar'}) async {
     _set(ReceiptStep.scanning);
+    _fromAi = false;
+    _aiFailed = false;
     try {
-      final text = await _scanner.scan(source);
-      if (text == null) {
-        _set(ReceiptStep.choose);
-        return;
+      final useAi = ai != null && (await consent?.isOn() ?? false);
+      final String text;
+      String? jpeg;
+      if (useAi) {
+        final scanned = await _scanner.scanWithImage(source);
+        if (scanned == null) {
+          _set(ReceiptStep.choose);
+          return;
+        }
+        text = scanned.text;
+        jpeg = scanned.jpeg;
+      } else {
+        final t = await _scanner.scan(source);
+        if (t == null) {
+          _set(ReceiptStep.choose);
+          return;
+        }
+        text = t;
       }
-      final r = reader.read(text, now: _clock());
+      final now = _clock();
+      var r = reader.read(text, now: now);
+      if (useAi && jpeg != null) {
+        try {
+          final a = await ai!.readReceipt(jpeg, language);
+          if (a != null) {
+            r = resultFromAi(a, r, now);
+            _fromAi = true;
+          }
+        } on Object {
+          _aiFailed = true; // the phone's own reading stays
+        }
+      }
       _result = r;
       _duplicate = likelySamePayment(await _ledger.entries(), r);
       _set(ReceiptStep.review);
@@ -105,3 +150,51 @@ class ReceiptViewModel extends ChangeNotifier {
     super.dispose();
   }
 }
+
+/// A receipt as the AI read it, keeping what the phone found when the AI
+/// left a field out. Nothing is saved until the person confirms.
+ExtractionResult resultFromAi(AiReceipt a, ExtractionResult local, DateTime now) {
+  final at = _aiTime(a, now);
+  final shop = a.shop ?? local.merchantRaw;
+  if (a.kind == 'declined' || a.kind == 'refund') {
+    return ExtractionResult(
+      status: ExtractionStatus.nonTransaction,
+      kind: a.kind == 'declined' ? MessageKind.declined : MessageKind.refund,
+      amountFils: a.fils,
+      currency: a.currency,
+      merchantRaw: shop,
+      timestamp: at ?? local.timestamp,
+      templateVersion: 'receipt-ai',
+    );
+  }
+  return ExtractionResult(
+    status: ExtractionStatus.transaction,
+    kind: MessageKind.transaction,
+    amountFils: a.fils,
+    currency: a.currency,
+    type: a.kind == 'transfer' ? TxnType.transferOut : TxnType.purchase,
+    direction: TxDirection.outgoing,
+    merchantRaw: shop,
+    category: const MerchantNormalizer().normalize(shop)?.category ?? local.category,
+    timestamp: at ?? local.timestamp ?? now,
+    templateVersion: 'receipt-ai',
+    flags: [
+      if (at == null && local.timestamp == null) ExtractionFlag.timestampFromReceipt,
+    ],
+  );
+}
+
+/// The printed date and time (Bahrain) as an instant, when it is sensible:
+/// not in the future and not more than about a year old.
+DateTime? _aiTime(AiReceipt a, DateTime now) {
+  final d = a.date?.split('-').map(int.tryParse).toList();
+  if (d == null || d.length != 3 || d.contains(null)) return null;
+  final t = a.time?.split(':').map(int.tryParse).toList();
+  final h = t != null && t.length == 2 && t[0] != null ? t[0]! : 12;
+  final m = t != null && t.length == 2 && t[1] != null ? t[1]! : 0;
+  final at = DateTime.utc(d[0]!, d[1]!, d[2]!, h, m).subtract(kBahrainOffset);
+  if (at.isAfter(now.toUtc().add(const Duration(days: 1)))) return null;
+  if (at.isBefore(now.toUtc().subtract(const Duration(days: 400)))) return null;
+  return at;
+}
+

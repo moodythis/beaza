@@ -7,6 +7,7 @@ import 'package:beaza/domain/use_cases/auto_categorize.dart';
 import 'package:beaza/domain/use_cases/daily_budget.dart' as daily;
 import 'package:beaza/domain/use_cases/daily_budget.dart' show BudgetPlan, PurchaseCheck, safeDailyLimitFils;
 import 'package:beaza/data/services/device_service.dart';
+import 'package:beaza/data/services/media_ai_api.dart';
 import 'package:beaza/data/services/receipt_scanner.dart';
 import 'package:beaza/data/services/voice_input.dart';
 import 'package:beaza/domain/use_cases/data_export.dart';
@@ -56,6 +57,9 @@ class HomeViewModel extends ChangeNotifier {
     this.savings,
     this.challenge,
     this.autoSort,
+    this.mediaAi,
+    this.mediaConsent,
+    this.recorder,
     this.export,
     PreferencesStore? preferences,
     DateTime Function()? clock,
@@ -94,6 +98,14 @@ class HomeViewModel extends ChangeNotifier {
   /// AI sorting of shop names, run after new messages are read; null
   /// when not available.
   final AutoCategorizer? autoSort;
+
+  /// Photos and voice read with AI, after a separate consent; null hides
+  /// the switch.
+  final MediaAiApi? mediaAi;
+  final MediaAiConsent? mediaConsent;
+
+  /// Records the voice for the AI (instead of the phone's speech service).
+  final VoiceRecorder? recorder;
 
   /// For the questions screen.
   SettingsRepository get settings => _settings;

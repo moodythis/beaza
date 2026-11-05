@@ -20,7 +20,10 @@ interface PermissionRequester {
     fun openAppSettings(result: MethodChannel.Result)
     fun listen(language: String, result: MethodChannel.Result)
     fun stopListening()
-    fun scanReceipt(source: String, result: MethodChannel.Result)
+    fun scanReceipt(source: String, withImage: Boolean, result: MethodChannel.Result)
+    fun recordStart(result: MethodChannel.Result)
+    fun recordStop(result: MethodChannel.Result)
+    fun recordCancel()
 }
 
 /**
@@ -102,8 +105,19 @@ object Channels {
                 }
                 "scanReceipt" -> {
                     val source = call.argument<String>("source") ?: "gallery"
-                    permissions?.scanReceipt(source, result)
+                    val withImage = call.argument<Boolean>("withImage") ?: false
+                    permissions?.scanReceipt(source, withImage, result)
                         ?: result.error("no_screen", "Scanning needs the app screen", null)
+                }
+                "recordStart" ->
+                    permissions?.recordStart(result)
+                        ?: result.error("no_screen", "Recording needs the app screen", null)
+                "recordStop" ->
+                    permissions?.recordStop(result)
+                        ?: result.error("no_screen", "Recording needs the app screen", null)
+                "recordCancel" -> {
+                    permissions?.recordCancel()
+                    result.success(null)
                 }
                 "stopListening" -> {
                     permissions?.stopListening()

@@ -27,7 +27,7 @@ class LegalDocument {
 }
 
 const privacyNotice = LegalDocument(
-  version: '2026-11-05.5',
+  version: '2026-11-05.6',
   titleAr: 'إشعار الخصوصية لتطبيق بيزة',
   titleEn: 'Beaza privacy notice',
   ar: [
@@ -68,6 +68,12 @@ const privacyNotice = LegalDocument(
       'تصنيف المشتريات بالذكاء الاصطناعي (اختياري، بموافقة منفصلة)',
       [
         'فقط إذا شغّلته من شاشة السجل، يرسل بيزة إلى خادمه أسماء المحلات التي لم يستطع تصنيفها بنفسه (بعد حذف الأرقام)، ويطلب الخادم من نموذج الذكاء الاصطناعي نفسه اختيار صنف لكل محل. لا يُرسل أي شيء آخر: لا مبلغ ولا تاريخ ولا رقم حساب أو بطاقة ولا نص رسالة ولا أي شيء عنك، ويرفض الخادم أي حقل آخر. يُحفظ الصنف على هاتفك ويمكنك تغييره في أي وقت. لا يحفظ بيزة شيئًا عن الطلب سوى العدد اليومي. ويمكنك إيقافه في أي وقت من المكان نفسه.',
+      ],
+    ),
+    LegalSection(
+      'قراءة صور الإيصالات والصوت بالذكاء الاصطناعي (اختيارية، بموافقة منفصلة)',
+      [
+        'فقط إذا شغّلتها من شاشة الإيصال أو الإضافة السريعة: تُرسل صورة الإيصال (بعد تصغيرها على هاتفك) أو تسجيل صوتي حتى 60 ثانية إلى خادم بيزة، الذي يطلب من نماذج ذكاء اصطناعي على Cloudflare Workers AI قراءتها (Gemma للصور ولفهم الكلام، وWhisper لتحويل الصوت إلى نص). قد تُظهر الصورة كل ما في الإيصال، مثل آخر أرقام البطاقة، فقص أو غطِّ ما لا تريد إرساله. تذكر Cloudflare أنها لا تحتفظ بهذه الطلبات ولا تستخدمها للتدريب. لا يحفظ بيزة الصورة ولا التسجيل ولا النص: ترى ما قُرئ وتعدّله قبل الحفظ. بدون هذا الخيار، تُقرأ الصور على هاتفك ويذهب الكلام إلى خدمة الكلام في هاتفك. ويمكنك إيقافها في أي وقت من المكان نفسه.',
       ],
     ),
     LegalSection(
@@ -169,6 +175,12 @@ const privacyNotice = LegalDocument(
       'Sorting purchases with AI (optional, separate consent)',
       [
         'Only if you turn it on in the history screen, Beaza sends the names of shops it could not sort itself (digits removed) to its server, which asks the same AI model to pick a category for each. Nothing else is sent: no amount, date, account or card number, message text, or anything about you, and the server refuses any other field. The category is saved on your phone and you can change it at any time. Beaza stores nothing about the request except the daily count. You can turn it off at any time in the same place.',
+      ],
+    ),
+    LegalSection(
+      'Receipt photos and voice read with AI (optional, separate consent)',
+      [
+        'Only if you turn it on in the receipt or quick add screen: a receipt photo (made smaller on your phone) or a voice recording of up to 60 seconds is sent to Beaza\'s server, which asks AI models on Cloudflare Workers AI to read it (Gemma for photos and for understanding the words, Whisper to turn speech into text). A photo can show whatever is on the receipt, such as the last digits of a card, so crop or cover anything you do not want to send. Cloudflare states that it does not keep these requests or use them to train models. Beaza does not store the photo, the recording or the text: you see what was read and change it before anything is saved. Without this, photos are read on your phone and speech goes to your phone\'s own speech service. You can turn it off at any time in the same place.',
       ],
     ),
     LegalSection(

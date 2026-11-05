@@ -131,6 +131,8 @@ class HomeView extends StatelessWidget {
                   scanner: viewModel.receipts!,
                   ledger: viewModel.ledger,
                   clock: viewModel.now,
+                  ai: viewModel.mediaAi,
+                  consent: viewModel.mediaConsent,
                 ),
               ),
               child: const Icon(Icons.receipt_long_outlined),

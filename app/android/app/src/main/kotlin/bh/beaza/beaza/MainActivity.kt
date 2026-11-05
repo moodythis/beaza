@@ -11,6 +11,9 @@ import android.graphics.Bitmap
 import android.graphics.BitmapFactory
 import android.graphics.Matrix
 import android.media.ExifInterface
+import android.media.MediaRecorder
+import android.util.Base64
+import java.io.ByteArrayOutputStream
 import android.net.Uri
 import android.os.Build
 import android.provider.Settings
@@ -38,6 +41,9 @@ class MainActivity : FlutterActivity(), PermissionRequester {
     private var pendingMic: Pair<String, MethodChannel.Result>? = null
     private var pendingScan: MethodChannel.Result? = null
     private var cameraFile: File? = null
+    private var scanWithImage = false
+    private var recorder: MediaRecorder? = null
+    private var recordFile: File? = null
     private var pendingSpeech: MethodChannel.Result? = null
     private var recognizer: SpeechRecognizer? = null
     private var speechEvents: EventChannel.EventSink? = null
@@ -268,12 +274,13 @@ class MainActivity : FlutterActivity(), PermissionRequester {
      * soon as its text is read, also on failure; a gallery picture is read in
      * place and never copied. Answers the text, or null when cancelled.
      */
-    override fun scanReceipt(source: String, result: MethodChannel.Result) {
+    override fun scanReceipt(source: String, withImage: Boolean, result: MethodChannel.Result) {
         if (pendingScan != null) {
             result.error("busy", "A scan is already open", null)
             return
         }
         pendingScan = result
+        scanWithImage = withImage
         try {
             if (source == "camera") {
                 val dir = File(cacheDir, "receipts").apply { mkdirs() }
@@ -316,12 +323,20 @@ class MainActivity : FlutterActivity(), PermissionRequester {
             result.success(null)
             return
         }
+        val withImage = scanWithImage
         Thread {
             try {
-                val image = InputImage.fromBitmap(loadBitmap(uri), 0)
+                val bitmap = loadBitmap(uri)
+                // For reading with AI (only after the person agreed): a smaller
+                // JPEG in memory, never written to disk.
+                val jpeg = if (withImage) jpegBase64(bitmap) else null
+                val image = InputImage.fromBitmap(bitmap, 0)
                 val recognizer = TextRecognition.getClient(TextRecognizerOptions.DEFAULT_OPTIONS)
                 recognizer.process(image)
-                    .addOnSuccessListener { text -> result.success(text.text) }
+                    .addOnSuccessListener { text ->
+                        if (jpeg == null) result.success(text.text)
+                        else result.success(mapOf("text" to text.text, "jpeg" to jpeg))
+                    }
                     .addOnFailureListener { e ->
                         result.error("ocr", "recognize: ${describe(e)}", null)
                     }
@@ -375,6 +390,99 @@ class MainActivity : FlutterActivity(), PermissionRequester {
         if (degrees == 0f) return bitmap
         val m = Matrix().apply { postRotate(degrees) }
         return Bitmap.createBitmap(bitmap, 0, 0, bitmap.width, bitmap.height, m, true)
+    }
+
+    /** At most 1600 px on the long side, JPEG quality 80, as base64. */
+    private fun jpegBase64(bitmap: Bitmap): String {
+        val long = maxOf(bitmap.width, bitmap.height)
+        val scaled = if (long <= 1600) bitmap else Bitmap.createScaledBitmap(
+            bitmap,
+            bitmap.width * 1600 / long,
+            bitmap.height * 1600 / long,
+            true,
+        )
+        val out = ByteArrayOutputStream()
+        scaled.compress(Bitmap.CompressFormat.JPEG, 80, out)
+        return Base64.encodeToString(out.toByteArray(), Base64.NO_WRAP)
+    }
+
+    /**
+     * Records the microphone to a temporary AAC file (at most 60 s) for
+     * speech to text with AI, only after the person agreed. The file is
+     * deleted as soon as it is read or cancelled.
+     */
+    override fun recordStart(result: MethodChannel.Result) {
+        if (checkSelfPermission(Manifest.permission.RECORD_AUDIO) !=
+            PackageManager.PERMISSION_GRANTED
+        ) {
+            requestPermissions(arrayOf(Manifest.permission.RECORD_AUDIO), RECORD_PERMISSION_REQUEST)
+            result.error("no_permission", "Microphone not allowed yet", null)
+            return
+        }
+        recordCancel()
+        try {
+            val dir = File(cacheDir, "voice").apply { mkdirs() }
+            val file = File.createTempFile("voice", ".m4a", dir)
+            val r = if (Build.VERSION.SDK_INT >= 31) MediaRecorder(this)
+            else @Suppress("DEPRECATION") MediaRecorder()
+            r.setAudioSource(MediaRecorder.AudioSource.MIC)
+            r.setOutputFormat(MediaRecorder.OutputFormat.MPEG_4)
+            r.setAudioEncoder(MediaRecorder.AudioEncoder.AAC)
+            r.setAudioChannels(1)
+            r.setAudioSamplingRate(16000)
+            r.setAudioEncodingBitRate(32000)
+            r.setMaxDuration(60_000)
+            r.setOutputFile(file.absolutePath)
+            r.prepare()
+            r.start()
+            recorder = r
+            recordFile = file
+            result.success(true)
+        } catch (e: Exception) {
+            recordCancel()
+            result.error("record", describe(e), null)
+        }
+    }
+
+    override fun recordStop(result: MethodChannel.Result) {
+        val r = recorder
+        val file = recordFile
+        recorder = null
+        recordFile = null
+        if (r == null || file == null) {
+            result.success(null)
+            return
+        }
+        try {
+            r.stop()
+        } catch (e: RuntimeException) {
+            // Stopped before any sound was recorded.
+            r.release()
+            file.delete()
+            result.success(null)
+            return
+        }
+        r.release()
+        try {
+            val bytes = file.readBytes()
+            result.success(Base64.encodeToString(bytes, Base64.NO_WRAP))
+        } catch (e: Exception) {
+            result.error("record", describe(e), null)
+        } finally {
+            file.delete()
+        }
+    }
+
+    override fun recordCancel() {
+        try {
+            recorder?.stop()
+        } catch (e: RuntimeException) {
+        }
+        recorder?.release()
+        recorder = null
+        recordFile?.delete()
+        recordFile = null
+        File(cacheDir, "voice").listFiles()?.forEach { it.delete() }
     }
 
     /** Anything left from a scan that was interrupted (the app was closed). */
@@ -432,6 +540,7 @@ class MainActivity : FlutterActivity(), PermissionRequester {
 
     override fun onDestroy() {
         finishSpeech(null, null)
+        recordCancel()
         stopSmsListening()
         uiAlive = false
         super.onDestroy()
@@ -443,6 +552,7 @@ class MainActivity : FlutterActivity(), PermissionRequester {
         private const val SAVE_FILE_REQUEST = 4103
         private const val MIC_PERMISSION_REQUEST = 4105
         private const val SCAN_REQUEST = 4106
+        private const val RECORD_PERMISSION_REQUEST = 4107
 
         /** True while the app screen's engine is running. */
         @Volatile

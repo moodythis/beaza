@@ -39,3 +39,29 @@ class PlatformVoiceInput implements VoiceInput {
 /// The speech language: Bahraini Arabic or English.
 String speechLanguage(String appLanguage) =>
     appLanguage == 'ar' ? 'ar-BH' : 'en-US';
+
+/// A short recording (at most 60 s, AAC) for speech to text with AI, only
+/// after the person agreed. The file is deleted on the phone once read.
+abstract class VoiceRecorder {
+  /// Throws a [PlatformException] `no_permission` when the microphone is
+  /// not allowed yet (Android then asks).
+  Future<void> start();
+
+  /// The recording as base64, or null when nothing was recorded.
+  Future<String?> stop();
+
+  Future<void> cancel();
+}
+
+class PlatformVoiceRecorder implements VoiceRecorder {
+  static const _channel = MethodChannel('beaza/device');
+
+  @override
+  Future<void> start() => _channel.invokeMethod<void>('recordStart');
+
+  @override
+  Future<String?> stop() => _channel.invokeMethod<String>('recordStop');
+
+  @override
+  Future<void> cancel() => _channel.invokeMethod<void>('recordCancel');
+}

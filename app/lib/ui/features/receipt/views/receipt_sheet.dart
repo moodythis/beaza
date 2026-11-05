@@ -5,6 +5,7 @@ import 'package:beaza/ui/core/category_picker.dart';
 import 'package:beaza/ui/core/category_style.dart';
 import 'package:beaza/ui/core/entry_text.dart';
 import 'package:beaza/ui/core/formatting.dart';
+import 'package:beaza/ui/core/media_consent.dart';
 import 'package:beaza/ui/features/receipt/view_models/receipt_view_model.dart';
 import 'package:beaza_extraction/beaza_extraction.dart';
 import 'package:flutter/material.dart';
@@ -136,28 +137,36 @@ class _ReceiptSheetState extends State<ReceiptSheet> {
     );
   }
 
+  String get _language => Localizations.localeOf(context).languageCode;
+
   List<Widget> _choose(AppLocalizations l10n, ThemeData theme) => [
         FilledButton.tonalIcon(
           key: const Key('receiptCamera'),
-          onPressed: () => vm.scan(ReceiptSource.camera),
+          onPressed: () => vm.scan(ReceiptSource.camera, language: _language),
           icon: const Icon(Icons.photo_camera_outlined),
           label: Text(l10n.receiptCamera),
         ),
         const SizedBox(height: 8),
         OutlinedButton.icon(
           key: const Key('receiptGallery'),
-          onPressed: () => vm.scan(ReceiptSource.gallery),
+          onPressed: () => vm.scan(ReceiptSource.gallery, language: _language),
           icon: const Icon(Icons.photo_library_outlined),
           label: Text(l10n.receiptGallery),
         ),
         const SizedBox(height: 8),
         Text(l10n.receiptPrivacy, style: theme.textTheme.bodySmall),
+        if (vm.ai != null && vm.consent != null) ...[
+          const SizedBox(height: 8),
+          MediaAiSwitch(consent: vm.consent!),
+        ],
       ];
 
   List<Widget> _review(AppLocalizations l10n, ThemeData theme) {
     final r = vm.result!;
     final foreign = r.currency != null && r.currency != 'BHD';
     final notes = <String>[
+      if (vm.fromAi) l10n.receiptFromAi,
+      if (vm.aiFailed) l10n.receiptAiFailed,
       if (r.kind == MessageKind.declined)
         l10n.receiptDeclined
       else if (r.kind == MessageKind.refund)

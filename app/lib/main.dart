@@ -23,6 +23,7 @@ import 'package:beaza/l10n/app_localizations.dart';
 import 'package:beaza/ui/core/alert_text.dart';
 import 'package:beaza/ui/core/language_controller.dart';
 import 'package:beaza/data/services/categorize_api.dart';
+import 'package:beaza/data/services/media_ai_api.dart';
 import 'package:beaza/domain/use_cases/auto_categorize.dart';
 import 'package:beaza/ui/features/challenge/view_models/challenge_view_model.dart';
 import 'package:beaza/ui/features/coach/view_models/coach_view_model.dart';
@@ -96,6 +97,9 @@ Future<void> main() async {
       voice: PlatformVoiceInput(),
       preferences: storage.preferences,
       receipts: PlatformReceiptScanner(),
+      mediaAi: HttpMediaAiApi(),
+      mediaConsent: MediaAiConsent(storage.preferences),
+      recorder: PlatformVoiceRecorder(),
       autoSort: AutoCategorizer(
         ledger: storage.ledger,
         preferences: storage.preferences,
