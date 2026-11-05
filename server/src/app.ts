@@ -21,6 +21,7 @@ import type { Bundle } from './validate.ts';
 import { legalPage, PRIVACY_VERSION, TERMS_VERSION } from './legal.ts';
 import { fetchGoogleKeys, verifyGoogleIdToken } from './google.ts';
 import { coach } from './coach.ts';
+import { categorize } from './categorize.ts';
 import type { AiLike } from './coach.ts';
 import type { GoogleIdentity, GoogleKeys } from './google.ts';
 
@@ -151,6 +152,9 @@ async function dispatch(route: string, url: URL, ctx: Ctx): Promise<Record<strin
     case 'POST /v1/coach':
       // No account needed: the request holds only totals, no identity.
       return coach(await readJson(ctx.request), ctx.db, ctx.ai, ctx.now, ctx.coachCap);
+    case 'POST /v1/categorize':
+      // No account needed: only shop names, nothing about the person.
+      return categorize(await readJson(ctx.request), ctx.db, ctx.ai, ctx.now, ctx.coachCap);
     default:
       throw new HttpError(404, 'not_found');
   }

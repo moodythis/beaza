@@ -72,7 +72,7 @@ const KEYS = [
 /** A shop name may carry no digit of any script (no card, phone, branch or
  * reference number can ride along), and nothing that looks like an email
  * or a phone number. */
-function shopName(v: unknown, code = 'bad_shops'): string {
+export function shopName(v: unknown, code = 'bad_shops'): string {
   if (typeof v !== 'string') throw new HttpError(400, code);
   const s = v.trim();
   if (s.length < 2 || s.length > 40 || /[0-9\u0660-\u0669\u06F0-\u06F9@+]/.test(s) || /[\u0000-\u001F]/.test(s)) {
@@ -371,7 +371,7 @@ export function rulePlan(x: CoachInput): string {
   return steps.slice(0, 4).map((s, i) => `${i + 1}. ${s}`).join('\n');
 }
 
-function textOf(r: unknown): string | null {
+export function textOf(r: unknown): string | null {
   if (!isObject(r)) return null;
   if (typeof r.response === 'string') return r.response;
   const choices = r.choices;
@@ -383,7 +383,7 @@ function textOf(r: unknown): string | null {
 }
 
 /** Counts this request against today's cap; false when the cap is reached. */
-async function allow(db: D1Like, now: number, cap: number): Promise<boolean> {
+export async function allow(db: D1Like, now: number, cap: number): Promise<boolean> {
   const day = new Date(now).toISOString().slice(0, 10);
   const row = await db
     .prepare(

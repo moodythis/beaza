@@ -385,7 +385,9 @@ class HomeView extends StatelessWidget {
         MaterialPageRoute<void>(
           builder: (_) => HistoryView(
             viewModel: HistoryViewModel(
-                ledger: viewModel.ledger, unsortedOnly: unsortedOnly)
+                ledger: viewModel.ledger,
+                unsortedOnly: unsortedOnly,
+                autoSort: viewModel.autoSort)
               ..load(),
           ),
         ),

@@ -1,4 +1,5 @@
 import 'package:beaza/data/repositories/ledger_repository.dart';
+import 'package:beaza/domain/use_cases/auto_categorize.dart';
 import 'package:beaza/domain/use_cases/spending_by_category.dart';
 import 'package:beaza_extraction/beaza_extraction.dart';
 import 'package:flutter/foundation.dart';
@@ -18,8 +19,11 @@ class HistoryDay {
 
 /// Every transaction, by day. Copies and unreadable messages are left out.
 class HistoryViewModel extends ChangeNotifier {
-  HistoryViewModel({required LedgerRepository ledger, bool unsortedOnly = false})
-      : _ledger = ledger,
+  HistoryViewModel({
+    required LedgerRepository ledger,
+    bool unsortedOnly = false,
+    this.autoSort,
+  })  : _ledger = ledger,
         _unsortedOnly = unsortedOnly {
     _ledger.addListener(load);
   }
@@ -35,6 +39,31 @@ class HistoryViewModel extends ChangeNotifier {
   bool _disposed = false;
 
   bool _unsortedOnly;
+
+  /// AI sorting of shop names (FR-8.14); null hides it.
+  final AutoCategorizer? autoSort;
+
+  bool _autoSortOn = false;
+  bool get autoSortOn => _autoSortOn;
+
+  /// Turns AI sorting on (the person agreed) and sorts now. Returns how
+  /// many shops got a category.
+  Future<int> turnOnAutoSort() async {
+    final a = autoSort;
+    if (a == null) return 0;
+    await a.turnOn();
+    _autoSortOn = true;
+    if (!_disposed) notifyListeners();
+    final n = await a.run();
+    await load();
+    return n;
+  }
+
+  Future<void> turnOffAutoSort() async {
+    await autoSort?.turnOff();
+    _autoSortOn = false;
+    if (!_disposed) notifyListeners();
+  }
 
   /// Shows only purchases without a category, so they can be sorted.
   bool get unsortedOnly => _unsortedOnly;
@@ -53,6 +82,7 @@ class HistoryViewModel extends ChangeNotifier {
       e.role == EntryRole.spending && bucketOf(e.result) == kUnsortedBucket;
 
   Future<void> load() async {
+    _autoSortOn = await autoSort?.isOn() ?? false;
     final all = await _ledger.entries();
     _unsortedCount = all.where(_unsorted).length;
     final entries = _unsortedOnly ? all.where(_unsorted) : all;

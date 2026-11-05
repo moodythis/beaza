@@ -737,5 +737,14 @@
   "askExampleWhere": "Where did my money go this month?",
   "askExampleLeft": "How much is left today?",
   "askExampleTip": "Give me a tip",
-  "askExampleLog": "coffee 0.800 BD"
+  "askExampleLog": "coffee 0.800 BD",
+  "autoSortExplain": "Let AI sort these by shop name. You can change any category by tapping it.",
+  "autoSortButton": "Sort them with AI",
+  "autoSortConsentTitle": "Sort purchases with AI?",
+  "autoSortConsentBody": "Beaza will send only the names of shops it cannot sort (digits removed) to its server, which asks an AI model (Gemma on Cloudflare Workers AI) for a category. No amount, date, account number, message text or anything about you is sent. New purchases are sorted the same way from now on. You can change any category, and turn this off here at any time.",
+  "autoSortAgree": "Agree and sort",
+  "autoSortIsOn": "AI sorting is on. Tap any purchase to change its category.",
+  "autoSortStop": "Turn off",
+  "autoSortDone": "Sorted {count} shops. Tap any purchase to change it.",
+  "@autoSortDone": {"placeholders": {"count": {"type": "int"}}}
 }

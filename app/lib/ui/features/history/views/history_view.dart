@@ -59,6 +59,8 @@ class HistoryView extends StatelessWidget {
             children: [
               if (viewModel.unsortedOnly || viewModel.unsortedCount > 0)
                 filter,
+              if (viewModel.unsortedOnly && viewModel.autoSort != null)
+                _autoSortCard(context, l10n),
               for (final d in viewModel.days) ...[
                 Padding(
                   padding: const EdgeInsets.only(top: 16, bottom: 4),
@@ -96,6 +98,69 @@ class HistoryView extends StatelessWidget {
         },
       ),
     );
+  }
+
+  Widget _autoSortCard(BuildContext context, AppLocalizations l10n) {
+    final theme = Theme.of(context);
+    if (viewModel.autoSortOn) {
+      return Card(
+        key: const Key('autoSortOnCard'),
+        child: ListTile(
+          leading: const Icon(Icons.auto_awesome_outlined),
+          title: Text(l10n.autoSortIsOn, style: theme.textTheme.bodyMedium),
+          trailing: TextButton(
+            key: const Key('autoSortOff'),
+            onPressed: viewModel.turnOffAutoSort,
+            child: Text(l10n.autoSortStop),
+          ),
+        ),
+      );
+    }
+    return Card(
+      key: const Key('autoSortCard'),
+      child: Padding(
+        padding: const EdgeInsets.all(12),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            Text(l10n.autoSortExplain, style: theme.textTheme.bodyMedium),
+            const SizedBox(height: 8),
+            FilledButton.tonalIcon(
+              key: const Key('autoSortOn'),
+              icon: const Icon(Icons.auto_awesome),
+              label: Text(l10n.autoSortButton),
+              onPressed: () => _turnOnAutoSort(context),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Future<void> _turnOnAutoSort(BuildContext context) async {
+    final l10n = AppLocalizations.of(context);
+    final ok = await showDialog<bool>(
+      context: context,
+      builder: (d) => AlertDialog(
+        title: Text(l10n.autoSortConsentTitle),
+        content: Text(l10n.autoSortConsentBody),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(d).pop(false),
+            child: Text(l10n.cancel),
+          ),
+          FilledButton(
+            key: const Key('autoSortAgree'),
+            onPressed: () => Navigator.of(d).pop(true),
+            child: Text(l10n.autoSortAgree),
+          ),
+        ],
+      ),
+    );
+    if (ok != true || !context.mounted) return;
+    final messenger = ScaffoldMessenger.of(context);
+    final n = await viewModel.turnOnAutoSort();
+    messenger.showSnackBar(SnackBar(content: Text(l10n.autoSortDone(n))));
   }
 
   Future<void> _actions(BuildContext context, LedgerEntry entry) async {

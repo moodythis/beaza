@@ -3,6 +3,7 @@ import 'dart:async';
 import 'package:beaza/data/repositories/ledger_repository.dart';
 import 'package:beaza/data/repositories/preferences_store.dart';
 import 'package:beaza/data/repositories/settings_repository.dart';
+import 'package:beaza/domain/use_cases/auto_categorize.dart';
 import 'package:beaza/domain/use_cases/daily_budget.dart' as daily;
 import 'package:beaza/domain/use_cases/daily_budget.dart' show BudgetPlan, PurchaseCheck, safeDailyLimitFils;
 import 'package:beaza/data/services/device_service.dart';
@@ -54,6 +55,7 @@ class HomeViewModel extends ChangeNotifier {
     this.coach,
     this.savings,
     this.challenge,
+    this.autoSort,
     this.export,
     PreferencesStore? preferences,
     DateTime Function()? clock,
@@ -88,6 +90,10 @@ class HomeViewModel extends ChangeNotifier {
 
   /// This week's challenge; null hides its card.
   final ChallengeViewModel? challenge;
+
+  /// AI sorting of shop names, run after new messages are read; null
+  /// when not available.
+  final AutoCategorizer? autoSort;
 
   /// For the questions screen.
   SettingsRepository get settings => _settings;
@@ -246,6 +252,8 @@ class HomeViewModel extends ChangeNotifier {
       if (_smsAllowed == true) {
         _notUnderstood = (await intake.scan()).notUnderstood;
         _offerEarlier = await intake.offersEarlier();
+        // Only does something once the person turned it on.
+        await autoSort?.run();
       }
     } on Exception {
       // Reading SMS is a convenience: a failure must not break the screen.
