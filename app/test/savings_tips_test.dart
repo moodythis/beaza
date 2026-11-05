@@ -213,4 +213,33 @@ void main() {
     );
     expect(t.map((x) => x.kind), isNot(contains(TipKind.weekend)));
   });
+
+  test('the same shop 4 times or more in the week is called out', () {
+    ExtractionResult at(int fils, int day, String shop) => ExtractionResult(
+          status: ExtractionStatus.transaction,
+          amountFils: fils,
+          currency: 'BHD',
+          type: TxnType.purchase,
+          direction: TxDirection.outgoing,
+          merchantRaw: shop,
+          category: 'food',
+          reference: 'S${_n++}',
+          timestamp: bh(day),
+        );
+    final t = savingsTips(
+      ledger([
+        at(1800, 8, 'COSTA COFFEE 123'),
+        at(1800, 9, 'Costa Coffee'),
+        at(1900, 10, 'COSTA COFFEE'),
+        at(2000, 11, 'COSTA COFFEE 456'),
+        at(1000, 12, 'JASMIS'),
+      ]),
+      today,
+    );
+    final s = t.firstWhere((x) => x.kind == TipKind.frequentShop);
+    expect(s.shop, 'COSTA COFFEE');
+    expect(s.count, 4);
+    expect(s.fils, 7500);
+  });
 }
+

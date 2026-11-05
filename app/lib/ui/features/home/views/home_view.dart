@@ -13,6 +13,9 @@ import 'package:beaza/ui/core/entry_tile.dart';
 import 'package:beaza/ui/core/formatting.dart';
 import 'package:beaza/ui/core/language_controller.dart';
 import 'package:beaza/ui/features/account/views/account_view.dart';
+import 'package:beaza/ui/features/ask/view_models/ask_view_model.dart';
+import 'package:beaza/ui/features/ask/views/ask_view.dart';
+import 'package:beaza/ui/features/challenge/views/challenge_card.dart';
 import 'package:beaza/ui/features/coach/views/coach_card.dart';
 import 'package:beaza/ui/features/history/view_models/history_view_model.dart';
 import 'package:beaza/ui/features/history/views/history_view.dart';
@@ -66,6 +69,23 @@ class HomeView extends StatelessWidget {
                     : 'ar',
               ),
             ),
+          IconButton(
+            key: const Key('askButton'),
+            tooltip: l10n.askTitle,
+            icon: const Icon(Icons.chat_bubble_outline),
+            onPressed: () => Navigator.of(context).push(
+              MaterialPageRoute<void>(
+                builder: (_) => AskView(
+                  viewModel: AskViewModel(
+                    ledger: viewModel.ledger,
+                    settings: viewModel.settings,
+                    addDrafts: viewModel.addDrafts,
+                    clock: viewModel.now,
+                  ),
+                ),
+              ),
+            ),
+          ),
           IconButton(
             key: const Key('historyButton'),
             tooltip: l10n.historyButton,
@@ -239,6 +259,10 @@ class HomeView extends StatelessWidget {
                   adviceText(l10n, state.summary.level) != null) ...[
                 const SizedBox(height: 12),
                 TipsCard(tips: state.tips, level: state.summary.level),
+              ],
+              if (viewModel.challenge != null) ...[
+                const SizedBox(height: 12),
+                ChallengeCard(viewModel: viewModel.challenge!),
               ],
               if (viewModel.savings != null) ...[
                 const SizedBox(height: 12),
@@ -672,6 +696,8 @@ class TipsCard extends StatelessWidget {
       TipKind.trimTarget => l10n.tipTrim(category, money(t.fils)),
       TipKind.lateNight => l10n.tipLateNight(t.count, money(t.fils)),
       TipKind.weekend => l10n.tipWeekend(money(t.fils), money(t.otherFils)),
+      TipKind.frequentShop =>
+        l10n.tipFrequentShop(t.shop ?? '-', t.count, money(t.fils)),
     };
   }
 
@@ -720,6 +746,8 @@ class TipsCard extends StatelessWidget {
                         ? Icons.nightlight_outlined
                         : tips[i].kind == TipKind.weekend
                         ? Icons.weekend_outlined
+                        : tips[i].kind == TipKind.frequentShop
+                        ? Icons.storefront_outlined
                         : tips[i].bucket == null
                         ? Icons.warning_amber_outlined
                         : categoryIcon(tips[i].bucket!),

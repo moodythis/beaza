@@ -10,6 +10,7 @@ import 'package:beaza/data/services/receipt_scanner.dart';
 import 'package:beaza/data/services/voice_input.dart';
 import 'package:beaza/domain/use_cases/data_export.dart';
 import 'package:beaza/domain/use_cases/message_intake.dart';
+import 'package:beaza/ui/features/challenge/view_models/challenge_view_model.dart';
 import 'package:beaza/ui/features/coach/view_models/coach_view_model.dart';
 import 'package:beaza/ui/features/savings/view_models/savings_view_model.dart';
 import 'package:beaza/domain/use_cases/savings_tips.dart';
@@ -52,6 +53,7 @@ class HomeViewModel extends ChangeNotifier {
     this.receipts,
     this.coach,
     this.savings,
+    this.challenge,
     this.export,
     PreferencesStore? preferences,
     DateTime Function()? clock,
@@ -83,6 +85,12 @@ class HomeViewModel extends ChangeNotifier {
 
   /// Goal, cooling-off and subscriptions; null hides its card.
   final SavingsViewModel? savings;
+
+  /// This week's challenge; null hides its card.
+  final ChallengeViewModel? challenge;
+
+  /// For the questions screen.
+  SettingsRepository get settings => _settings;
 
   /// The optional AI savings plan; null hides its card.
   final CoachViewModel? coach;

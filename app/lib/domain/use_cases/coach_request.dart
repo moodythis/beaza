@@ -1,5 +1,6 @@
 import 'package:beaza/domain/use_cases/daily_budget.dart';
 import 'package:beaza/domain/use_cases/savings_tips.dart';
+import 'package:beaza/domain/use_cases/shop_name.dart';
 import 'package:beaza/domain/use_cases/spending_by_category.dart';
 import 'package:beaza_extraction/beaza_extraction.dart';
 
@@ -145,17 +146,5 @@ const int kCoachMaxRecent = 40;
 
 const List<String> _weekdays = ['mon', 'tue', 'wed', 'thu', 'fri', 'sat', 'sun'];
 
-/// A shop name as it may be sent: no digits (Western, Arabic or Persian),
-/// one space between words, at most 40 characters. Null when nothing
-/// readable is left.
-String? coachShopName(String? raw) {
-  if (raw == null) return null;
-  final s = raw
-      .replaceAll(RegExp(r'[0-9\u0660-\u0669\u06F0-\u06F9]'), '')
-      .replaceAll(RegExp(r'[*#@+]'), '')
-      .replaceAll(RegExp(r'\s+'), ' ')
-      .replaceAll(RegExp(r'^[\s\-–.,/]+|[\s\-–.,/]+$'), '')
-      .trim();
-  if (s.length < 2) return null;
-  return s.length <= 40 ? s : s.substring(0, 40).trim();
-}
+/// A shop name as it may be sent (see [cleanShopName]).
+String? coachShopName(String? raw) => cleanShopName(raw);

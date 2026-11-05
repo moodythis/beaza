@@ -191,6 +191,10 @@ class BahrainiMoneyParser {
       }
       final unit = _unitAt(t, i + 1);
       final whole = number != null ? int.tryParse(number) : kNumberWords[word];
+      // "ثلاث ارباع (دينار)" is three quarters of a dinar.
+      if (whole == 3 && i + 1 < t.length && t[i + 1] == 'ارباع') {
+        return _Part(750, _unitAt(t, i + 2) == _Unit.dinar ? i + 3 : i + 2);
+      }
       switch (unit) {
         case _Unit.dinar:
           final f = number != null ? decimalToFils(number) : whole! * 1000;

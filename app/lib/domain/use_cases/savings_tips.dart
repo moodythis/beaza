@@ -1,3 +1,4 @@
+import 'package:beaza/domain/use_cases/shop_name.dart';
 import 'package:beaza/domain/use_cases/spending_by_category.dart';
 import 'package:beaza_extraction/beaza_extraction.dart';
 
@@ -24,6 +25,9 @@ enum TipKind {
 
   /// Friday and Saturday (Bahrain's weekend) took half the week or more.
   weekend,
+
+  /// The same shop several times in the week.
+  frequentShop,
 }
 
 class SavingsTip {
@@ -33,9 +37,13 @@ class SavingsTip {
     this.fils = 0,
     this.otherFils = 0,
     this.count = 0,
+    this.shop,
   });
 
   final TipKind kind;
+
+  /// The shop, for [TipKind.frequentShop] (digits removed).
+  final String? shop;
 
   /// The category, when the tip is about one.
   final String? bucket;
@@ -61,6 +69,9 @@ const int kTipsMinCategoryFils = 5000;
 /// 20% of a category is only worth saying from this much a week: below it,
 /// the saving is pennies.
 const int kTipsMinTrimFils = 10000;
+
+/// The same shop this many times in 7 days is a habit worth a word.
+const int kTipsMinShopVisits = 4;
 
 /// Late-night purchases: at least this many, and this much together.
 const int kTipsMinLateCount = 3;
@@ -135,7 +146,15 @@ List<SavingsTip> savingsTips(
     if (over >= 2) tips.add(SavingsTip(TipKind.overLimitDays, count: over));
   }
 
-  // 3. Small purchases that add up (at most the micro threshold each).
+  // 3. The shop visited most, when it is a habit.
+  final shops = weekShops(list, today);
+  if (shops.isNotEmpty && shops.first.count >= kTipsMinShopVisits) {
+    final top = shops.first;
+    tips.add(SavingsTip(TipKind.frequentShop,
+        shop: top.name, fils: top.fils, count: top.count));
+  }
+
+  // 3b. Small purchases that add up (at most the micro threshold each).
   final weekStart = today.addDays(-6).startUtc;
   final weekEnd = today.endUtc;
   var smallCount = 0;
@@ -225,5 +244,38 @@ List<SavingsTip> savingsTips(
     }
   }
   return (lateCount: lateCount, lateFils: lateFils, weekendFils: weekendFils);
+}
+
+/// One shop over the last 7 days.
+class ShopWeek {
+  const ShopWeek(this.name, this.fils, this.count);
+
+  final String name;
+  final int fils;
+  final int count;
+}
+
+/// Shops of the 7 Bahrain days ending on [today], most visits first (then
+/// most spent). Purchases only: transfers name people, not shops.
+List<ShopWeek> weekShops(Iterable<LedgerEntry> entries, Day today) {
+  final weekStart = today.addDays(-6).startUtc;
+  final weekEnd = today.endUtc;
+  final by = <String, ShopWeek>{};
+  for (final e in entries) {
+    final t = e.result.timestamp?.toUtc();
+    final a = e.result.amountFils;
+    if (!e.countsTowardSpending || t == null || a == null || a <= 0) continue;
+    if (t.isBefore(weekStart) || !t.isBefore(weekEnd)) continue;
+    if (bucketOf(e.result) == kTransferBucket) continue;
+    final name = cleanShopName(e.result.merchantNorm ?? e.result.merchantRaw);
+    if (name == null) continue;
+    final key = name.toUpperCase();
+    final old = by[key];
+    by[key] = ShopWeek(old?.name ?? name, (old?.fils ?? 0) + a, (old?.count ?? 0) + 1);
+  }
+  return by.values.toList()
+    ..sort((x, y) => x.count != y.count
+        ? y.count.compareTo(x.count)
+        : y.fils.compareTo(x.fils));
 }
 
