@@ -48,16 +48,17 @@ class AutoCategorizer {
     if (!await isOn()) return 0;
     final tried = await _tried();
     final entries = await _ledger.entries();
-    // One entry per shop: setting it sets the whole shop.
-    final byName = <String, LedgerEntry>{};
-    final seen = <String>{};
+    // Every entry of each shop: names that differ only by digits or letter
+    // case are one shop here, though the ledger may keep them apart.
+    final byName = <String, List<LedgerEntry>>{};
+    final shown = <String, String>{};
     for (final e in entries) {
       if (e.role != EntryRole.spending) continue;
       if (bucketOf(e.result) != kUnsortedBucket) continue;
       final name = cleanShopName(e.result.merchantNorm ?? e.result.merchantRaw);
       if (name == null || tried.contains(name.toUpperCase())) continue;
-      if (!seen.add(name.toUpperCase())) continue; // same shop, other case
-      byName[name] = e;
+      final key = shown.putIfAbsent(name.toUpperCase(), () => name);
+      (byName[key] ??= []).add(e);
     }
     if (byName.isEmpty) return 0;
     var sorted = 0;
@@ -73,7 +74,9 @@ class AutoCategorizer {
       for (final name in batch) {
         final category = got[name];
         if (category != null && kCategories.contains(category)) {
-          await _ledger.setCategory(byName[name]!, category);
+          for (final e in byName[name]!) {
+            await _ledger.setCategory(e, category);
+          }
           sorted++;
         }
         tried.add(name.toUpperCase());
