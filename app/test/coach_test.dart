@@ -41,6 +41,18 @@ List<ExtractionResult> sample() => [
       tx(12000, bh(3, 10), category: 'food'), // the week before
     ];
 
+/// Answers with the first shop code it was sent, as a model would.
+class _CodeEcho implements CoachApi {
+  final List<Map<String, Object>> sent = [];
+
+  @override
+  Future<CoachPlan> plan(Map<String, Object> request) async {
+    sent.add(request);
+    final code = ((request['shops'] as List).first as Map)['name'];
+    return CoachPlan(text: '1. Fewer visits to $code.', fromModel: true);
+  }
+}
+
 class FakeCoach implements CoachApi {
   final List<Map<String, Object>> sent = [];
   CoachException? fail;
@@ -158,12 +170,60 @@ void main() {
       expect(jsonEncode(withPlan), isNot(contains('300000')));
     });
 
+    test('shop names leave as salted SHA-256 codes and come back on the phone',
+        () async {
+      final ledger = InMemoryLedgerRepository(initial: sample());
+      final r = coachRequest(await ledger.entries(),
+          const GuardrailSettings(dailyLimitFils: 10000), const Day(2026, 11, 14), 'en');
+      final salt = List<int>.filled(16, 7);
+      final a = pseudonymizeShops(r, salt);
+      final json = jsonEncode(a.request);
+      for (final name in ['REDTAG', 'COSTA', 'Waleed']) {
+        expect(json, isNot(contains(name)), reason: name);
+      }
+      final codes = (a.request['shops'] as List)
+          .map((x) => (x as Map)['name'] as String)
+          .toList();
+      expect(codes, hasLength(3));
+      for (final c in codes) {
+        expect(c, matches(RegExp(r'^SHOP-[A-P]{8}$')));
+      }
+      expect(a.names[codes.first], 'REDTAG MANAMA');
+      // Same salt, same code; a new salt gives a new code.
+      expect(pseudonymizeShops(r, salt).names.keys.first, codes.first);
+      expect(pseudonymizeShops(r, List<int>.filled(16, 8)).names.keys.first,
+          isNot(codes.first));
+      // The amounts and counts are unchanged.
+      expect((a.request['shops'] as List).first, {
+        'name': codes.first, 'fils': 13200, 'count': 1,
+      });
+      expect(restoreShopNames('1. Go to ${codes.first.toLowerCase()} less.', a.names),
+          '1. Go to REDTAG MANAMA less.');
+    });
+
     test('coachShopName', () {
       expect(coachShopName(null), isNull);
       expect(coachShopName('1234'), isNull);
       expect(coachShopName(' - Jasmis 22 - '), 'Jasmis');
       expect(coachShopName('A' * 60)!.length, 40);
     });
+  });
+
+  test('the server sees codes; the plan on the phone shows the names', () async {
+    final api = _CodeEcho();
+    final vm = CoachViewModel(
+      api: api,
+      preferences: MemoryPreferencesStore(),
+      ledger: InMemoryLedgerRepository(initial: sample()),
+      settings: InMemorySettingsRepository(
+          const GuardrailSettings(dailyLimitFils: 10000)),
+      clock: () => now,
+    );
+    await vm.load();
+    await vm.agree();
+    await vm.requestPlan('en');
+    expect(jsonEncode(api.sent.single), isNot(contains('REDTAG')));
+    expect(vm.plan!.text, '1. Fewer visits to REDTAG MANAMA.');
   });
 
   group('consent', () {

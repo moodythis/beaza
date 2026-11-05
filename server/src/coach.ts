@@ -1,5 +1,6 @@
-// AI savings plan (SRS FR-8.8). The phone sends totals it computed and the
-// names of the shops where most was spent (digits removed): no message
+// AI savings plan (SRS FR-8.8). The phone sends totals it computed and a
+// code for each shop where most was spent (salted SHA-256 made on the
+// phone, which keeps the names and puts them back into the plan): no message
 // text, no account digits, no transfer recipients, no dates. Anything else
 // in the request is refused. The model writes a short plan from those
 // numbers; every number in its reply must be one it was given, otherwise a
@@ -9,7 +10,7 @@ import type { D1Like } from './d1.ts';
 import { HttpError, isObject } from './validate.ts';
 
 /** The version of the AI consent text the phone must have shown. */
-export const COACH_CONSENT_VERSION = '2026-11-05.2';
+export const COACH_CONSENT_VERSION = '2026-11-05.3';
 
 /** At most this many shops (phone: kCoachMaxShops). */
 export const COACH_MAX_SHOPS = 5;
@@ -245,7 +246,7 @@ const SYSTEM = {
 استخدم فقط الأرقام الموجودة في "الحقائق" وانسخها كما هي. لا تحسب ولا تخترع أي رقم جديد.
 لا تنصح بتخفيف فئة إلا إذا في "الحقائق" سطر "لو قلّ صرف"؛ وإلا لا تقترح تخفيف أي شي، وقل إن صرفه معقول إذا المبالغ صغيرة.
 إذا في سطر "غير مصنّف" خل الخطوة 1 تصنيف المصاريف.
-تقدر تذكر أسماء المحلات من سطور "محل" إذا تفيد النصيحة (مثل محل تتكرر فيه المشتريات)، وانسخ الاسم كما هو.
+المحلات مكتوبة برموز مثل SHOP-ABCDEFGH. تقدر تذكر الرمز إذا يفيد النصيحة (مثل محل تتكرر فيه المشتريات)، وانسخه حرفياً بدون تغيير، ولا تحاول تخمن اسم المحل.
 لا تنصح بقروض أو استثمار أو بنوك أو منتجات مالية، ولا تلوم الشخص. أقل من 120 كلمة.
 ابدأ مباشرة بالخطوة 1، بدون تحية وبدون جملة ختامية.`,
   en: `You are the savings helper in Beaza, an app for university students in Bahrain.
@@ -253,7 +254,7 @@ Write a short, friendly savings plan: 3 or 4 numbered steps, one practical sente
 Use only the numbers in FACTS, copied exactly. Never calculate or invent a number.
 Suggest cutting a category only if FACTS has an "If ... spending drops" line; otherwise suggest no cuts, and say the spending looks reasonable if the amounts are small.
 If FACTS says the spending is not sorted, make step 1 sorting it.
-You may name shops from the "Shop" lines when it helps (for example a shop visited many times); copy the name exactly.
+Shops are given as codes like SHOP-ABCDEFGH. You may mention a code when it helps (for example a shop visited many times); copy it exactly and never guess the shop's name.
 No loans, investments, banks or financial products, and no blame. Under 120 words.
 Start directly with step 1: no greeting and no closing line.`,
 };

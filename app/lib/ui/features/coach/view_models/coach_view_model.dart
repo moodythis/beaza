@@ -1,3 +1,5 @@
+import 'dart:math';
+
 import 'package:beaza/data/repositories/ledger_repository.dart';
 import 'package:beaza/data/repositories/preferences_store.dart';
 import 'package:beaza/data/repositories/settings_repository.dart';
@@ -18,7 +20,9 @@ class CoachViewModel extends ChangeNotifier {
     required LedgerRepository ledger,
     required SettingsRepository settings,
     DateTime Function()? clock,
+    List<int> Function()? salt,
   })  : _api = api,
+        _salt = salt ?? _randomSalt,
         _prefs = preferences,
         _ledger = ledger,
         _settings = settings,
@@ -31,6 +35,12 @@ class CoachViewModel extends ChangeNotifier {
   final LedgerRepository _ledger;
   final SettingsRepository _settings;
   final DateTime Function() _clock;
+  final List<int> Function() _salt;
+
+  static List<int> _randomSalt() {
+    final r = Random.secure();
+    return List<int>.generate(16, (_) => r.nextInt(256));
+  }
 
   bool _consented = false;
   bool get consented => _consented;
@@ -79,7 +89,15 @@ class CoachViewModel extends ChangeNotifier {
     _error = null;
     notifyListeners();
     try {
-      _plan = await _api.plan(await preview(language));
+      // Shop names stay here: the server gets codes, and the names are put
+      // back into the plan on the phone.
+      final (:request, :names) =
+          pseudonymizeShops(await preview(language), _salt());
+      final plan = await _api.plan(request);
+      _plan = CoachPlan(
+        text: restoreShopNames(plan.text, names),
+        fromModel: plan.fromModel,
+      );
       _step = CoachStep.ready;
     } on CoachException catch (e) {
       _error = e.code;

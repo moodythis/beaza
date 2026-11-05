@@ -190,6 +190,17 @@ describe('POST /v1/coach (AI savings plan)', () => {
     }
   });
 
+  it('accepts shop codes made on the phone', async () => {
+    const s = new Server();
+    s.ai = new FakeAi({ response: '1. Fewer visits to SHOP-KDPAGHBE.' });
+    const res = await s.call('POST', '/v1/coach', request({
+      language: 'en',
+      shops: [{ name: 'SHOP-KDPAGHBE', fils: 9200, count: 4 }],
+    }));
+    assert.equal(res.status, 200);
+    assert.equal(res.body.source, 'model');
+  });
+
   it('reads the chat-completions reply shape too', async () => {
     const s = new Server();
     s.ai = new FakeAi({ choices: [{ message: { content: '1. Spend less on shopping: BHD 2.640 a week.' } }] });

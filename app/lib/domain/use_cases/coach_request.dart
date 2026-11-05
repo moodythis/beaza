@@ -1,16 +1,19 @@
+import 'dart:convert';
+
 import 'package:beaza/domain/use_cases/daily_budget.dart';
 import 'package:beaza/domain/use_cases/savings_tips.dart';
 import 'package:beaza/domain/use_cases/spending_by_category.dart';
 import 'package:beaza_extraction/beaza_extraction.dart';
+import 'package:crypto/crypto.dart' show sha256;
 
 /// The version of the AI consent text (server: COACH_CONSENT_VERSION).
-const String kCoachConsentVersion = '2026-11-05.2';
+const String kCoachConsentVersion = '2026-11-05.3';
 
 /// Everything the AI savings plan sends, worked out on the phone in integer
 /// fils: totals of the last 7 days and the 7 before, the daily limit, how
 /// many days passed it, small purchases, a total per category, and the
-/// names of the shops where most was spent (digits removed, at most
-/// [kCoachMaxShops]), late-night and weekend totals, and, when the limit
+/// shops where most was spent (digits removed, at most [kCoachMaxShops];
+/// before sending, [pseudonymizeShops] replaces each name with a code), late-night and weekend totals, and, when the limit
 /// is worked out from income, the free money and days left in the month
 /// (never the income itself). No message text, account digit, reference, date or
 /// transfer recipient is in it, and the server refuses any other field.
@@ -126,3 +129,41 @@ String? coachShopName(String? raw) {
   return s.length <= 40 ? s : s.substring(0, 40).trim();
 }
 
+
+/// Shop names leave the phone only as codes. Each code is the first 8
+/// hex digits of SHA-256(salt + name), written with the letters A to P (so
+/// the server's number check is not tripped). The salt is new for every
+/// request and never sent, so a code cannot be turned back into a name by
+/// hashing a list of shops, and the same shop gets a different code next
+/// time. The phone keeps the map and puts the names back into the plan.
+({Map<String, Object> request, Map<String, String> names}) pseudonymizeShops(
+    Map<String, Object> request, List<int> salt) {
+  final shops = (request['shops'] as List?)?.cast<Map<String, Object>>();
+  if (shops == null || shops.isEmpty) return (request: request, names: const {});
+  final names = <String, String>{};
+  final coded = <Map<String, Object>>[];
+  for (final s in shops) {
+    final name = s['name'] as String;
+    final digest = sha256.convert([...salt, ...utf8.encode(name.toUpperCase())]);
+    final letters = StringBuffer('SHOP-');
+    for (final b in digest.bytes.take(4)) {
+      letters
+        ..writeCharCode(0x41 + (b >> 4))
+        ..writeCharCode(0x41 + (b & 0x0F));
+    }
+    final code = letters.toString();
+    names[code] = name;
+    coded.add({...s, 'name': code});
+  }
+  return (request: {...request, 'shops': coded}, names: names);
+}
+
+/// Puts the shop names back into a plan written with their codes (any
+/// letter case, as the model may change it).
+String restoreShopNames(String text, Map<String, String> names) {
+  var out = text;
+  names.forEach((code, name) {
+    out = out.replaceAll(RegExp(RegExp.escape(code), caseSensitive: false), name);
+  });
+  return out;
+}
