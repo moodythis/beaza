@@ -1,5 +1,6 @@
 import 'dart:async';
 
+import 'package:beaza/domain/use_cases/custom_categories.dart';
 import 'package:beaza/data/repositories/ledger_repository.dart';
 import 'package:beaza/data/repositories/preferences_store.dart';
 import 'package:beaza/data/repositories/settings_repository.dart';
@@ -309,8 +310,21 @@ class HomeViewModel extends ChangeNotifier {
   /// Removes the repeats; the ledger notifies, so the screen recomputes.
   Future<int> removeDuplicates() => _ledger.removeDuplicates();
 
-  Future<void> addExpense({required int amountFils, String? merchant}) =>
-      _ledger.addManual(amountFils: amountFils, merchant: merchant, at: _clock());
+  Future<void> addExpense({
+    required int amountFils,
+    String? merchant,
+    String? category,
+  }) =>
+      _ledger.addManual(
+        amountFils: amountFils,
+        merchant: merchant,
+        at: _clock(),
+        category: category,
+      );
+
+  /// The person's own categories, for the category list.
+  Future<List<String>> customCategories() async =>
+      customCategoriesIn(await _ledger.entries());
 
   BudgetPlan? _budget;
 

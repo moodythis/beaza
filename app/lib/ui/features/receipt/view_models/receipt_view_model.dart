@@ -1,3 +1,4 @@
+import 'package:beaza/domain/use_cases/custom_categories.dart';
 import 'package:beaza/data/repositories/ledger_repository.dart';
 import 'package:beaza/data/services/media_ai_api.dart';
 import 'package:beaza/data/services/receipt_scanner.dart';
@@ -171,6 +172,10 @@ class ReceiptViewModel extends ChangeNotifier {
 
   /// Saves what the person confirmed (BHD only). The guardrail and its
   /// alerts update from the ledger as for any other transaction.
+  /// The person's own categories, for the category list.
+  Future<List<String>> customCategories() async =>
+      customCategoriesIn(await _ledger.entries());
+
   Future<void> save({
     required int amountFils,
     String? merchant,

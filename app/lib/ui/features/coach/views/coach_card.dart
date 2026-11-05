@@ -1,4 +1,6 @@
 import 'package:beaza/l10n/app_localizations.dart';
+import 'package:beaza/ui/features/account/legal_text.dart';
+import 'package:beaza/ui/features/account/views/account_widgets.dart';
 import 'package:beaza/ui/core/category_style.dart';
 import 'package:beaza/ui/core/formatting.dart';
 import 'package:beaza/ui/features/coach/view_models/coach_view_model.dart';
@@ -135,14 +137,32 @@ class _ConsentSheet extends StatelessWidget {
             Text(l10n.coachConsentTitle, style: theme.textTheme.titleLarge),
             const SizedBox(height: 8),
             Text(l10n.coachConsentBody),
-            const SizedBox(height: 12),
-            Text(l10n.coachConsentWhat, style: theme.textTheme.titleSmall),
-            const SizedBox(height: 4),
-            for (final line in requestLines(l10n, request))
-              Padding(
-                padding: const EdgeInsets.symmetric(vertical: 2),
-                child: Text('• $line', style: theme.textTheme.bodySmall),
+            Align(
+              alignment: AlignmentDirectional.centerStart,
+              child: TextButton(
+                key: const Key('coachPrivacy'),
+                style: TextButton.styleFrom(padding: EdgeInsets.zero),
+                onPressed: () => openLegal(context, privacyNotice,
+                    section: kPrivacyCoachSection),
+                child: Text(l10n.privacyDetails),
               ),
+            ),
+            // The exact list, folded so the buttons stay in view.
+            ExpansionTile(
+              key: const Key('coachWhat'),
+              tilePadding: EdgeInsets.zero,
+              childrenPadding: const EdgeInsets.only(bottom: 8),
+              expandedCrossAxisAlignment: CrossAxisAlignment.start,
+              title: Text(l10n.coachConsentWhat,
+                  style: theme.textTheme.titleSmall),
+              children: [
+                for (final line in requestLines(l10n, request))
+                  Padding(
+                    padding: const EdgeInsets.symmetric(vertical: 2),
+                    child: Text('• $line', style: theme.textTheme.bodySmall),
+                  ),
+              ],
+            ),
             const SizedBox(height: 16),
             FilledButton(
               key: const Key('coachAgree'),
@@ -192,6 +212,7 @@ class _PlanSheet extends StatelessWidget {
                     switch (viewModel.error) {
                       'coach_busy' => l10n.coachBusy,
                       'network' => l10n.coachNetwork,
+                      'timeout' => l10n.coachTimeout,
                       _ => l10n.coachFailed,
                     },
                     key: const Key('coachError'),
@@ -228,11 +249,9 @@ class _PlanSheet extends StatelessWidget {
   }
 }
 
-/// " (Gemini)" or " (Cloudflare)", so the person (and a tester) can see
-/// which AI answered.
+/// " (Gemini)", so the person (and a tester) can see which AI answered.
 String providerLabel(String? provider) => switch (provider) {
       'gemini' => ' (Gemini)',
-      'workers-ai' => ' (Cloudflare)',
       _ => '',
     };
 

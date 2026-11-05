@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:convert';
 
 import 'package:beaza/data/services/sync_api.dart' show kSyncServer;
@@ -17,7 +18,7 @@ class CoachPlan {
   /// reply used a number it was not given).
   final bool fromModel;
 
-  /// Which AI wrote it: "gemini" or "workers-ai" (null from an older server).
+  /// Which AI wrote it: "gemini" (null from an older server).
   final String? provider;
 
   /// Why the model's plan was not used (the AI's own error), when not.
@@ -27,8 +28,9 @@ class CoachPlan {
 class CoachException implements Exception {
   const CoachException(this.code);
 
-  /// `coach_busy` (daily limit reached), `coach_disabled`, `network`, or
-  /// the server's error code.
+  /// `coach_busy` (daily limit reached), `coach_disabled`, `network` (the
+  /// server could not be reached), `timeout` (it took too long), or the
+  /// server's error code.
   final String code;
 
   @override
@@ -39,13 +41,13 @@ abstract class CoachApi {
   Future<CoachPlan> plan(Map<String, Object> request);
 }
 
-/// POST /v1/coach on Beaza's server, which asks Google's Gemini
-/// Workers AI. No account and no API key on the phone.
+/// POST /v1/coach on Beaza's server, which asks Google's Gemini. No
+/// account and no API key on the phone.
 class HttpCoachApi implements CoachApi {
   HttpCoachApi({
     http.Client? client,
     String baseUrl = kSyncServer,
-    this.timeout = const Duration(seconds: 45),
+    this.timeout = const Duration(seconds: 75),
   })  : _client = client ?? http.Client(),
         _base = Uri.parse(baseUrl);
 
@@ -64,6 +66,8 @@ class HttpCoachApi implements CoachApi {
             body: jsonEncode(request),
           )
           .timeout(timeout);
+    } on TimeoutException {
+      throw const CoachException('timeout');
     } on Exception {
       throw const CoachException('network');
     }

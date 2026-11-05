@@ -1,3 +1,4 @@
+import 'package:beaza/domain/use_cases/custom_categories.dart';
 import 'package:beaza/domain/use_cases/daily_budget.dart';
 import 'package:beaza/domain/use_cases/savings_tips.dart';
 import 'package:beaza/domain/use_cases/shop_name.dart';
@@ -5,7 +6,7 @@ import 'package:beaza/domain/use_cases/spending_by_category.dart';
 import 'package:beaza_extraction/beaza_extraction.dart';
 
 /// The version of the AI consent text (server: COACH_CONSENT_VERSION).
-const String kCoachConsentVersion = '2026-11-05.6';
+const String kCoachConsentVersion = '2026-11-06.1';
 
 /// Everything the AI savings plan sends, worked out on the phone in integer
 /// fils: totals of the last 7 days and the 7 before, the daily limit, how
@@ -93,7 +94,7 @@ Map<String, Object> coachRequest(
       'weekday': _weekdays[local.weekday - 1],
       'hour': local.hour,
       'fils': e.result.amountFils!,
-      'category': bucketOf(e.result),
+      'category': sharedBucket(bucketOf(e.result)),
       if (shop != null) 'shop': shop,
     });
   }
@@ -126,13 +127,12 @@ Map<String, Object> coachRequest(
     ],
     'recent': recent,
     'categories': [
-      for (final c in week)
+      for (final (bucket, fils) in _shared(week))
         {
-          'category': c.bucket,
-          'fils': c.totalFils,
-          'percent': weekTotal == 0
-              ? 0
-              : (c.totalFils * 100 + weekTotal ~/ 2) ~/ weekTotal,
+          'category': bucket,
+          'fils': fils,
+          'percent':
+              weekTotal == 0 ? 0 : (fils * 100 + weekTotal ~/ 2) ~/ weekTotal,
         },
     ],
   };
@@ -148,3 +148,18 @@ const List<String> _weekdays = ['mon', 'tue', 'wed', 'thu', 'fri', 'sat', 'sun']
 
 /// A shop name as it may be sent (see [cleanShopName]).
 String? coachShopName(String? raw) => cleanShopName(raw);
+
+/// The week's totals with every custom category counted as "other" (the
+/// only names the server takes), largest first.
+List<(String, int)> _shared(List<CategoryTotal> week) {
+  final totals = <String, int>{};
+  for (final c in week) {
+    final b = sharedBucket(c.bucket);
+    totals[b] = (totals[b] ?? 0) + c.totalFils;
+  }
+  return [for (final e in totals.entries) (e.key, e.value)]
+    ..sort((x, y) {
+      final c = y.$2.compareTo(x.$2);
+      return c != 0 ? c : x.$1.compareTo(y.$1);
+    });
+}

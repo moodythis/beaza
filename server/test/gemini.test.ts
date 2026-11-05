@@ -58,6 +58,18 @@ describe('Gemini first, Workers AI behind it', () => {
     assert.match(calls[1], /gemini-3\.5-flash-lite/);
   });
 
+  it('a model that takes too long hands the call to the next one', async () => {
+    const calls: string[] = [];
+    const f = async (url: string) => {
+      calls.push(url);
+      if (calls.length === 1) throw Object.assign(new Error('slow'), { name: 'TimeoutError' });
+      return { ok: true, status: 200, json: async () => reply('1. ok') };
+    };
+    const g = new GeminiAi('K', 'gemini-3.8-flash', f);
+    assert.deepEqual(await g.run('@cf/x', { messages: [{ role: 'user', content: 'hi' }] }), { response: '1. ok', provider: 'gemini' });
+    assert.equal(calls.length, 2);
+  });
+
   it('a bad key is not retried on other models', async () => {
     const { f, calls } = fakeFetch(400, { error: { status: 'INVALID_ARGUMENT', message: 'API key not valid' } });
     await assert.rejects(new GeminiAi('K', 'gemini-3.8-flash', f).run('@cf/x', { messages: [] }), /gemini 400/);

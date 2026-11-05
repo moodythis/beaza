@@ -156,32 +156,70 @@ class LegalLinks extends StatelessWidget {
   }
 }
 
-Future<void> openLegal(BuildContext context, LegalDocument document) =>
+/// Opens [document], scrolled to its section number [section] (0-based,
+/// the same in both languages) when given.
+Future<void> openLegal(
+  BuildContext context,
+  LegalDocument document, {
+  int? section,
+}) =>
     Navigator.of(context).push(MaterialPageRoute<void>(
-      builder: (_) => LegalView(document: document),
+      builder: (_) => LegalView(document: document, section: section),
     ));
+
+/// Where each optional AI feature is explained in the privacy notice.
+const int kPrivacyCoachSection = 4;
+const int kPrivacyMediaSection = 6;
 
 /// The full text of the privacy notice or the terms, in the app's language.
 /// Readable before agreeing, without internet.
-class LegalView extends StatelessWidget {
-  const LegalView({super.key, required this.document});
+class LegalView extends StatefulWidget {
+  const LegalView({super.key, required this.document, this.section});
 
   final LegalDocument document;
+  final int? section;
+
+  @override
+  State<LegalView> createState() => _LegalViewState();
+}
+
+class _LegalViewState extends State<LegalView> {
+  final _target = GlobalKey();
+
+  @override
+  void initState() {
+    super.initState();
+    if (widget.section != null) {
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        final c = _target.currentContext;
+        if (c != null) Scrollable.ensureVisible(c);
+      });
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context);
     final language = Localizations.localeOf(context).languageCode;
     final text = Theme.of(context).textTheme;
+    final document = widget.document;
+    final sections = document.sections(language);
     return Scaffold(
       appBar: AppBar(title: Text(document.title(language))),
-      body: ListView(
+      // A Column, not a lazy ListView, so the section to jump to is built.
+      body: SingleChildScrollView(
         padding: const EdgeInsets.fromLTRB(16, 8, 16, 32),
+        child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
           Text(l10n.legalVersion(document.version), style: text.bodySmall),
-          for (final section in document.sections(language)) ...[
+          for (final (i, section) in sections.indexed) ...[
             const SizedBox(height: 20),
-            Text(section.title, style: text.titleMedium),
+            Text(
+              section.title,
+              key: i == widget.section ? _target : null,
+              style: text.titleMedium,
+            ),
             for (final p in section.paragraphs)
               Padding(
                 padding: const EdgeInsets.only(top: 6),
@@ -189,6 +227,7 @@ class LegalView extends StatelessWidget {
               ),
           ],
         ],
+        ),
       ),
     );
   }

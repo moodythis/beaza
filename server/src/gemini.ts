@@ -9,7 +9,11 @@ export const GEMINI_DEFAULT_MODEL = 'gemini-3.8-flash';
 /** Tried in order after the first model when it is busy (503), over quota
  * (429), or closed to the key (404): lighter free-tier Flash models. */
 export const GEMINI_BACKUP_MODELS = ['gemini-3.5-flash-lite', 'gemini-3.1-flash-lite'];
-const RETRY_STATUSES = new Set([404, 429, 500, 503]);
+const RETRY_STATUSES = new Set([404, 429, 500, 503, 504]);
+
+/** How long one model may take before the next is tried, so the phone
+ * (which waits 75 s for a plan) gets an answer or a reason in time. */
+export const GEMINI_CALL_MS = 20000;
 
 type FetchLike = (url: string, init: { method: string; headers: Record<string, string>; body: string }) =>
   Promise<{ ok: boolean; status: number; json(): Promise<unknown> }>;
@@ -91,7 +95,7 @@ export class GeminiAi implements AiLike {
   constructor(key: string, model: string = GEMINI_DEFAULT_MODEL, doFetch?: FetchLike) {
     this.key = key;
     this.model = model;
-    this.doFetch = doFetch ?? ((url, init) => fetch(url, init));
+    this.doFetch = doFetch ?? ((url, init) => fetch(url, { ...init, signal: AbortSignal.timeout(GEMINI_CALL_MS) }));
   }
 
   async run(_model: string, input: unknown): Promise<unknown> {
@@ -111,7 +115,9 @@ export class GeminiAi implements AiLike {
 
   async runOn(model: string, input: unknown): Promise<unknown> {
     const i = (input ?? {}) as Record<string, unknown>;
-    const res = await this.doFetch(
+    let res: Awaited<ReturnType<FetchLike>>;
+    try {
+      res = await this.doFetch(
       `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent`,
       {
         method: 'POST',
@@ -119,6 +125,13 @@ export class GeminiAi implements AiLike {
         body: JSON.stringify(geminiBody(i, model)),
       },
     );
+    } catch (e) {
+      const name = (e as { name?: string }).name;
+      if (name !== 'TimeoutError' && name !== 'AbortError') throw e;
+      const err = new Error(`gemini timeout ${model}`) as Error & { status?: number };
+      err.status = 504;
+      throw err;
+    }
     if (!res.ok) {
       // Google's own reason ("API key not valid", "quota", "location"), so a
       // failure can be told apart on the phone. It never holds the key.

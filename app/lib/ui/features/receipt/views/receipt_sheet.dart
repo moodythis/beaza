@@ -86,7 +86,13 @@ class _ReceiptSheetState extends State<ReceiptSheet> {
   }
 
   Future<void> _chooseCategory() async {
-    final picked = await pickCategory(context, current: _category ?? kUnsortedBucket);
+    final custom = await vm.customCategories();
+    if (!mounted) return;
+    final picked = await pickCategory(
+      context,
+      current: _category ?? kUnsortedBucket,
+      custom: custom,
+    );
     if (picked != null && mounted) setState(() => _category = picked);
   }
 

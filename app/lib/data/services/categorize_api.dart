@@ -17,7 +17,7 @@ class HttpCategorizeApi implements CategorizeApi {
   HttpCategorizeApi({
     http.Client? client,
     String baseUrl = kSyncServer,
-    this.timeout = const Duration(seconds: 30),
+    this.timeout = const Duration(seconds: 70),
   })  : _client = client ?? http.Client(),
         _base = Uri.parse(baseUrl);
 

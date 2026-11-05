@@ -176,7 +176,7 @@
   "recoveryKeyBody": "If you forget your password, this key is the only way back to your synced data. Nobody else has it, not even Beaza, and it will not be shown again. Save it somewhere safe, such as a password manager or on paper.",
   "copyKey": "Copy key",
   "keyCopied": "Copied. Paste it somewhere safe.",
-  "confirmKeyLabel": "Type the last 4 characters to confirm you saved it",
+  "confirmKeyLabel": "Type the underlined characters",
   "done": "Done",
   "signedInAs": "Signed in as {email}",
   "@signedInAs": {
@@ -502,8 +502,8 @@
   "coachSubtitle": "Optional. Sends your spending, never who you are.",
   "coachAsk": "Get a plan",
   "coachConsentTitle": "Before the AI writes your plan",
-  "coachConsentBody": "To write a plan, Beaza sends what is listed below from this phone to its server, which asks an AI model (Google's Gemini, free tier): your totals, shop names, and this week's purchases with weekday, hour, amount and category. Nothing that identifies you is sent: no bank message, account or card number, phone number, CPR, reference, calendar date or name of a person you transferred to (digits are removed from shop names), and the server refuses anything else. On Gemini's free tier, Google may keep what is sent, use it to improve its products, and people at Google may read it, so send nothing you would not want a person to read. Beaza does not store the request. You can stop this at any time.",
-  "coachConsentWhat": "This is what will be sent:",
+  "coachConsentBody": "Beaza sends the totals below (no name, number or bank message) to its server, which asks Google's Gemini (free tier) for a plan. Google may keep it and people there may read it. You can stop at any time.",
+  "coachConsentWhat": "See exactly what will be sent",
   "coachAgree": "Agree and get the plan",
   "coachNotNow": "Not now",
   "coachLoading": "Writing your plan…",
@@ -511,7 +511,7 @@
   "coachFromRules": "The AI was not available, so this plan was written by rules from your totals.",
   "coachWithdraw": "Stop sending to the AI",
   "coachBusy": "Today's AI plans have run out. Try again tomorrow.",
-  "coachNetwork": "No connection to Beaza's server.",
+  "coachNetwork": "Could not reach Beaza's server. Check your internet and try again. No account is needed for the plan.",
   "coachFailed": "Could not get a plan right now.",
   "coachSendTotal": "Spent in the last 7 days: {amount}",
   "@coachSendTotal": {
@@ -750,7 +750,7 @@
   "mediaAiSwitch": "Read with AI",
   "mediaAiSwitchHint": "Sends the photo or recording to Beaza's server (Arabic too)",
   "mediaAiTitle": "Read photos and voice with AI?",
-  "mediaAiConsent": "A receipt photo (made smaller) or a voice recording of up to 60 seconds will be sent to Beaza's server, which asks an AI model to read it (Google's Gemini, free tier). A photo shows whatever is on the receipt, such as the last digits of a card, so cover what you do not want to send. On Gemini's free tier, Google may keep what is sent, use it to improve its products, and people at Google may read it, so send nothing you would not want a person to read. Beaza does not store the photo, the recording or the text, and you check what was read before saving. You can turn this off at any time.",
+  "mediaAiConsent": "The photo (made smaller) or a recording of up to 60 seconds goes to Beaza's server, which asks Google's Gemini (free tier) to read it. Google may keep it and people there may read it, so cover card digits. Beaza keeps nothing, and you check what was read before saving.",
   "mediaAiAgree": "Agree",
   "receiptFromAi": "Read by AI from the photo. Check it before adding.",
   "receiptAiFailed": "The AI could not read this photo, so it was read on the phone. Check it, or try the AI again.",
@@ -761,5 +761,17 @@
   "aiUnderstand": "Understand with AI",
   "aiDraftsNote": "Understood by AI. Check the amounts before adding.",
   "receiptAiRetry": "Try the AI again",
-  "receiptReadOnPhone": "Read on the phone (AI reading is off)."
+  "receiptReadOnPhone": "Read on the phone (AI reading is off).",
+  "newCategory": "New category…",
+  "newCategoryName": "Category name",
+  "categoryLabel": "Category",
+  "categoryAuto": "Automatic (from the shop name)",
+  "privacyDetails": "Details in the privacy notice",
+  "coachTimeout": "The AI took too long to answer. Try again in a minute.",
+  "confirmKeyHelp": "The last {count} characters of the key, at the end on the right. Then Done turns on.",
+  "@confirmKeyHelp": {
+    "placeholders": {
+      "count": {"type": "int"}
+    }
+  }
 }

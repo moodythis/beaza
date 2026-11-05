@@ -1,5 +1,7 @@
 import 'package:beaza/data/services/media_ai_api.dart';
 import 'package:beaza/l10n/app_localizations.dart';
+import 'package:beaza/ui/features/account/legal_text.dart';
+import 'package:beaza/ui/features/account/views/account_widgets.dart';
 import 'package:flutter/material.dart';
 
 /// The "use AI for photos and voice" switch: turning it on first asks for
@@ -32,7 +34,22 @@ class _MediaAiSwitchState extends State<MediaAiSwitch> {
         context: context,
         builder: (d) => AlertDialog(
           title: Text(l10n.mediaAiTitle),
-          content: SingleChildScrollView(child: Text(l10n.mediaAiConsent)),
+          content: SingleChildScrollView(
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(l10n.mediaAiConsent),
+                TextButton(
+                  key: const Key('mediaAiPrivacy'),
+                  style: TextButton.styleFrom(padding: EdgeInsets.zero),
+                  onPressed: () => openLegal(d, privacyNotice,
+                      section: kPrivacyMediaSection),
+                  child: Text(l10n.privacyDetails),
+                ),
+              ],
+            ),
+          ),
           actions: [
             TextButton(
               onPressed: () => Navigator.of(d).pop(false),

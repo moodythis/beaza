@@ -5,6 +5,7 @@ import 'package:beaza/data/repositories/settings_repository.dart';
 import 'package:beaza/data/services/account_store.dart';
 import 'package:beaza/data/services/sync_api.dart';
 import 'package:beaza/ui/features/account/legal_text.dart';
+import 'package:beaza/ui/features/account/views/recovery_key_view.dart';
 import 'package:beaza/ui/features/home/view_models/home_view_model.dart';
 import 'package:beaza_crypto/beaza_crypto.dart';
 import 'package:beaza_extraction/beaza_extraction.dart';
@@ -253,5 +254,15 @@ void main() {
     await pumpApp(tester, accounts: accounts);
     await goBack(tester);
     expect(find.byIcon(Icons.cloud_done_outlined), findsOneWidget);
+  });
+
+  test('confirming the key accepts what phones really type', () {
+    expect(confirmsLastGroup('7k0q', '7K0Q'), isTrue);
+    expect(confirmsLastGroup(' 7K-0Q ', '7K0Q'), isTrue);
+    expect(confirmsLastGroup('٧KOQ', '7K0Q'), isTrue); // Arabic-Indic 7, O for 0
+    expect(confirmsLastGroup('۷K0Q', '7K0Q'), isTrue); // Persian 7
+    expect(confirmsLastGroup('L23A', '123A'), isTrue);
+    expect(confirmsLastGroup('7K0', '7K0Q'), isFalse);
+    expect(confirmsLastGroup('ZZZZ', '7K0Q'), isFalse);
   });
 }

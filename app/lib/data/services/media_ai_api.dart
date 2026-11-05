@@ -5,7 +5,7 @@ import 'package:beaza/data/services/sync_api.dart' show kSyncServer;
 import 'package:http/http.dart' as http;
 
 /// The version of the photo and voice consent (server: MEDIA_CONSENT_VERSION).
-const String kMediaConsentVersion = '2026-11-05.3';
+const String kMediaConsentVersion = '2026-11-06.1';
 
 /// What the AI read on a receipt photo. [date] is YYYY-MM-DD and [time]
 /// HH:MM when printed; [kind] is purchase, refund, declined or transfer.
@@ -86,7 +86,7 @@ class HttpMediaAiApi implements MediaAiApi {
   HttpMediaAiApi({
     http.Client? client,
     String baseUrl = kSyncServer,
-    this.timeout = const Duration(seconds: 60),
+    this.timeout = const Duration(seconds: 75),
   })  : _client = client ?? http.Client(),
         _base = Uri.parse(baseUrl);
 

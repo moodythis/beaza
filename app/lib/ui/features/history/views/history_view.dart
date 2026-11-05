@@ -255,10 +255,13 @@ class HistoryView extends StatelessWidget {
 
   Future<void> _choose(BuildContext context, LedgerEntry entry) async {
     final current = bucketOf(entry.result);
+    final custom = await viewModel.customCategories();
+    if (!context.mounted) return;
     final picked = await pickCategory(
       context,
       current: current,
       shop: shopName(entry.result),
+      custom: custom,
     );
     if (picked == null || picked == current) return;
     await viewModel.setCategory(entry, picked);

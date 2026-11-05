@@ -11,7 +11,7 @@ import { HttpError, isObject } from './validate.ts';
 import { providerOf } from './gemini.ts';
 
 /** The version of the AI consent text the phone must have shown. */
-export const COACH_CONSENT_VERSION = '2026-11-05.6';
+export const COACH_CONSENT_VERSION = '2026-11-06.1';
 
 /** At most this many recent purchases (phone: kCoachMaxRecent). */
 export const COACH_MAX_RECENT = 40;

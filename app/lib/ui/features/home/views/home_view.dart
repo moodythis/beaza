@@ -283,21 +283,32 @@ class HomeView extends StatelessWidget {
 
   Future<void> _addExpense(BuildContext context) async {
     final l10n = AppLocalizations.of(context);
+    final custom = await viewModel.customCategories();
+    if (!context.mounted) return;
     final input = await showAmountDialog(
       context,
       title: l10n.addExpense,
       withMerchant: true,
+      withCategory: true,
+      customCategories: custom,
     );
     if (input == null) return;
-    await viewModel.addExpense(amountFils: input.fils, merchant: input.merchant);
+    await viewModel.addExpense(
+      amountFils: input.fils,
+      merchant: input.merchant,
+      category: input.category,
+    );
   }
 
   Future<void> _chooseCategory(BuildContext context, LedgerEntry entry) async {
     final current = bucketOf(entry.result);
+    final custom = await viewModel.customCategories();
+    if (!context.mounted) return;
     final picked = await pickCategory(
       context,
       current: current,
       shop: shopName(entry.result),
+      custom: custom,
     );
     if (picked == null || picked == current) return;
     await viewModel.setCategory(entry, picked);

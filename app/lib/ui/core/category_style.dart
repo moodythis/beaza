@@ -1,3 +1,4 @@
+import 'package:beaza/domain/use_cases/custom_categories.dart';
 import 'package:beaza/domain/use_cases/spending_by_category.dart';
 import 'package:beaza/l10n/app_localizations.dart';
 import 'package:flutter/material.dart';
@@ -13,6 +14,7 @@ IconData categoryIcon(String bucket) => switch (bucket) {
       'education' => Icons.school_outlined,
       'other' => Icons.category_outlined,
       kTransferBucket => Icons.swap_horiz,
+      _ when isCustomCategory(bucket) => Icons.label_outline,
       _ => Icons.help_outline,
     };
 
@@ -27,5 +29,6 @@ String categoryName(AppLocalizations l10n, String bucket) => switch (bucket) {
       'education' => l10n.categoryEducation,
       'other' => l10n.categoryOther,
       kTransferBucket => l10n.categoryTransfer,
+      _ when isCustomCategory(bucket) => customCategoryName(bucket),
       _ => l10n.categoryUnsorted,
     };

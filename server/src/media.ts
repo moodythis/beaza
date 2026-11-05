@@ -10,7 +10,7 @@ import { HttpError } from './validate.ts';
 import { providerOf } from './gemini.ts';
 
 /** The version of the photo and voice consent the phone must have shown. */
-export const MEDIA_CONSENT_VERSION = '2026-11-05.3';
+export const MEDIA_CONSENT_VERSION = '2026-11-06.1';
 
 export const WHISPER_MODEL = '@cf/openai/whisper-large-v3-turbo';
 

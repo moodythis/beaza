@@ -1,3 +1,4 @@
+import 'package:beaza/domain/use_cases/custom_categories.dart';
 import 'package:beaza/data/repositories/ledger_repository.dart';
 import 'package:beaza/domain/use_cases/auto_categorize.dart';
 import 'package:beaza/domain/use_cases/spending_by_category.dart';
@@ -116,6 +117,10 @@ class HistoryViewModel extends ChangeNotifier {
 
   Future<void> setCategory(LedgerEntry entry, String category) =>
       _ledger.setCategory(entry, category);
+
+  /// The person's own categories, for the category list.
+  Future<List<String>> customCategories() async =>
+      customCategoriesIn(await _ledger.entries());
 
   Future<void> remove(LedgerEntry entry) => _ledger.remove(entry);
 

@@ -19,14 +19,7 @@ class _RecoveryKeyViewState extends State<RecoveryKeyView> {
   late final String _text = widget.recoveryKey.format();
   late final String _lastGroup = _text.split('-').last;
 
-  bool get _confirmed {
-    final typed = _confirm.text
-        .trim()
-        .toUpperCase()
-        .replaceAll('O', '0')
-        .replaceAll(RegExp('[IL]'), '1');
-    return typed == _lastGroup;
-  }
+  bool get _confirmed => confirmsLastGroup(_confirm.text, _lastGroup);
 
   @override
   void dispose() {
@@ -53,8 +46,22 @@ class _RecoveryKeyViewState extends State<RecoveryKeyView> {
             Card(
               child: Padding(
                 padding: const EdgeInsets.all(16),
-                child: SelectableText(
-                  _text.replaceAll('-', ' - '),
+                // The last group is highlighted: it is what gets typed below.
+                child: SelectableText.rich(
+                  TextSpan(children: [
+                    TextSpan(
+                        text: _text
+                            .substring(0, _text.length - _lastGroup.length)
+                            .replaceAll('-', ' - ')),
+                    TextSpan(
+                      text: _lastGroup,
+                      style: TextStyle(
+                        color: theme.colorScheme.primary,
+                        fontWeight: FontWeight.bold,
+                        decoration: TextDecoration.underline,
+                      ),
+                    ),
+                  ]),
                   key: const Key('recoveryKeyText'),
                   textAlign: TextAlign.center,
                   textDirection: TextDirection.ltr,
@@ -85,10 +92,19 @@ class _RecoveryKeyViewState extends State<RecoveryKeyView> {
               controller: _confirm,
               autocorrect: false,
               enableSuggestions: false,
+              // An English keyboard on Android, so Arabic letters are not typed.
+              keyboardType: TextInputType.visiblePassword,
               textDirection: TextDirection.ltr,
               textCapitalization: TextCapitalization.characters,
-              maxLength: 4,
-              decoration: InputDecoration(labelText: l10n.confirmKeyLabel),
+              maxLength: 6,
+              decoration: InputDecoration(
+                labelText: l10n.confirmKeyLabel,
+                helperText: l10n.confirmKeyHelp(_lastGroup.length),
+                helperMaxLines: 2,
+                suffixIcon: _confirmed
+                    ? const Icon(Icons.check_circle, color: Colors.green)
+                    : null,
+              ),
               onChanged: (_) => setState(() {}),
             ),
             const SizedBox(height: 8),
@@ -102,4 +118,27 @@ class _RecoveryKeyViewState extends State<RecoveryKeyView> {
       ),
     );
   }
+}
+
+/// Whether [typed] is the key's last group: case, spaces and dashes do not
+/// matter, Arabic-Indic digits count as digits, and the look-alikes O
+/// (zero) and I, L (one) are accepted, as when the key is read back.
+bool confirmsLastGroup(String typed, String lastGroup) {
+  const arabic = '٠١٢٣٤٥٦٧٨٩';
+  const persian = '۰۱۲۳۴۵۶۷۸۹';
+  final b = StringBuffer();
+  for (final ch in typed.toUpperCase().split('')) {
+    final a = arabic.indexOf(ch);
+    final p = persian.indexOf(ch);
+    if (a >= 0) {
+      b.write(a);
+    } else if (p >= 0) {
+      b.write(p);
+    } else if (ch != ' ' && ch != '-') {
+      b.write(ch);
+    }
+  }
+  final normal =
+      b.toString().replaceAll('O', '0').replaceAll(RegExp('[IL]'), '1');
+  return normal == lastGroup;
 }

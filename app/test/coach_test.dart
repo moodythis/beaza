@@ -6,7 +6,10 @@ import 'package:beaza/data/repositories/preferences_store.dart';
 import 'package:beaza/data/repositories/settings_repository.dart';
 import 'package:beaza/data/services/coach_api.dart';
 import 'package:beaza/domain/use_cases/coach_request.dart';
+import 'package:beaza/domain/use_cases/custom_categories.dart';
 import 'package:beaza/domain/use_cases/daily_budget.dart';
+import 'package:beaza/ui/features/account/legal_text.dart';
+import 'package:beaza/ui/features/account/views/account_widgets.dart';
 import 'package:beaza/ui/features/coach/view_models/coach_view_model.dart';
 import 'package:beaza/ui/features/home/view_models/home_view_model.dart';
 import 'package:beaza_extraction/beaza_extraction.dart';
@@ -70,6 +73,40 @@ Future<(CoachViewModel, FakeCoach, MemoryPreferencesStore)> make() async {
 
 void main() {
   group('what is sent', () {
+    test('own categories go as "other", added to it, never by name',
+        () async {
+      final ledger = InMemoryLedgerRepository(initial: [
+        tx(3000, bh(14, 9), category: 'custom:Gifts for Sara'),
+        tx(2000, bh(13, 9), category: 'other'),
+        tx(1000, bh(12, 9), category: 'food'),
+      ]);
+      final r = coachRequest(await ledger.entries(),
+          const GuardrailSettings(dailyLimitFils: 10000), const Day(2026, 11, 14), 'en');
+      expect(r['categories'], [
+        {'category': 'other', 'fils': 5000, 'percent': 83},
+        {'category': 'food', 'fils': 1000, 'percent': 17},
+      ]);
+      for (final x in (r['recent'] as List).cast<Map<String, Object>>()) {
+        expect(x['category'], isNot(startsWith('custom:')));
+      }
+      expect(jsonEncode(r), isNot(contains('Sara')));
+    });
+
+    test('custom category names are cleaned and listed from the ledger',
+        () async {
+      expect(customCategory('  Car\n  wash '), 'custom:Car wash');
+      expect(customCategory('   '), isNull);
+      expect(customCategoryName(customCategory('x' * 40)!).length, 24);
+      final ledger = InMemoryLedgerRepository(initial: [
+        tx(100, bh(14), category: 'custom:Car'),
+        tx(100, bh(13), category: 'custom:Car'),
+        tx(100, bh(12), category: 'custom:Baby'),
+        tx(100, bh(11), category: 'food'),
+      ]);
+      expect(customCategoriesIn(await ledger.entries()),
+          ['custom:Baby', 'custom:Car']);
+    });
+
     test('totals and top shop names; no text, digits, reference or date',
         () async {
       final ledger = InMemoryLedgerRepository(initial: sample());
@@ -278,6 +315,10 @@ void main() {
     await tester.tap(find.byKey(const Key('coachAsk')));
     await tester.pumpAndSettle();
 
+    // The list is folded so the buttons stay in view; it opens on a tap.
+    expect(find.text('• Spent in the last 7 days: BHD 19.150'), findsNothing);
+    await tester.tap(find.byKey(const Key('coachWhat')));
+    await tester.pumpAndSettle();
     expect(find.text('• Spent in the last 7 days: BHD 19.150'), findsOneWidget);
     expect(find.text('• Shopping: BHD 13.200 (69%)'), findsOneWidget);
     expect(api.sent, isEmpty);
@@ -294,5 +335,32 @@ void main() {
     await tester.tap(find.byKey(const Key('coachWithdraw')));
     await tester.pumpAndSettle();
     expect(coach.consented, isFalse);
+  });
+
+  testWidgets('the consent links to the AI plan part of the privacy notice',
+      (tester) async {
+    final (coach, _, _) = await make();
+    final home = HomeViewModel(
+      ledger: InMemoryLedgerRepository(initial: sample()),
+      settings: InMemorySettingsRepository(
+          const GuardrailSettings(dailyLimitFils: 10000)),
+      coach: coach,
+      clock: () => now,
+    );
+    await home.load();
+    await tester.pumpWidget(BeazaApp(homeViewModel: home));
+    await tester.pumpAndSettle();
+    await tester.scrollUntilVisible(find.byKey(const Key('coachAsk')), 300,
+        scrollable: find.byType(Scrollable).first);
+    await tester.ensureVisible(find.byKey(const Key('coachAsk')));
+    await tester.pumpAndSettle();
+    await tester.tap(find.byKey(const Key('coachAsk')));
+    await tester.pumpAndSettle();
+    await tester.tap(find.byKey(const Key('coachPrivacy')));
+    await tester.pumpAndSettle();
+    final title = privacyNotice.en[kPrivacyCoachSection].title;
+    expect(title, startsWith('AI savings plan'));
+    expect(find.text(title), findsOneWidget);
+    expect(tester.getTopLeft(find.text(title)).dy, lessThan(400));
   });
 }
