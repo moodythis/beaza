@@ -50,12 +50,14 @@ class AutoCategorizer {
     final entries = await _ledger.entries();
     // One entry per shop: setting it sets the whole shop.
     final byName = <String, LedgerEntry>{};
+    final seen = <String>{};
     for (final e in entries) {
       if (e.role != EntryRole.spending) continue;
       if (bucketOf(e.result) != kUnsortedBucket) continue;
       final name = cleanShopName(e.result.merchantNorm ?? e.result.merchantRaw);
       if (name == null || tried.contains(name.toUpperCase())) continue;
-      byName.putIfAbsent(name, () => e);
+      if (!seen.add(name.toUpperCase())) continue; // same shop, other case
+      byName[name] = e;
     }
     if (byName.isEmpty) return 0;
     var sorted = 0;
