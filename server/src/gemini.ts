@@ -6,6 +6,11 @@ import type { AiLike } from './coach.ts';
 
 export const GEMINI_DEFAULT_MODEL = 'gemini-3.8-flash';
 
+/** Tried in order after the first model when it is busy (503), over quota
+ * (429), or closed to the key (404): lighter free-tier Flash models. */
+export const GEMINI_BACKUP_MODELS = ['gemini-3.5-flash-lite', 'gemini-3.1-flash-lite'];
+const RETRY_STATUSES = new Set([404, 429, 500, 503]);
+
 type FetchLike = (url: string, init: { method: string; headers: Record<string, string>; body: string }) =>
   Promise<{ ok: boolean; status: number; json(): Promise<unknown> }>;
 
@@ -90,13 +95,28 @@ export class GeminiAi implements AiLike {
   }
 
   async run(_model: string, input: unknown): Promise<unknown> {
+    const models = [this.model, ...GEMINI_BACKUP_MODELS.filter((m) => m !== this.model)];
+    let last: unknown;
+    for (const model of models) {
+      try {
+        return await this.runOn(model, input);
+      } catch (e) {
+        last = e;
+        const status = (e as { status?: number }).status;
+        if (status === undefined || !RETRY_STATUSES.has(status)) throw e;
+      }
+    }
+    throw last;
+  }
+
+  async runOn(model: string, input: unknown): Promise<unknown> {
     const i = (input ?? {}) as Record<string, unknown>;
     const res = await this.doFetch(
-      `https://generativelanguage.googleapis.com/v1beta/models/${this.model}:generateContent`,
+      `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent`,
       {
         method: 'POST',
         headers: { 'content-type': 'application/json', 'x-goog-api-key': this.key },
-        body: JSON.stringify(geminiBody(i, this.model)),
+        body: JSON.stringify(geminiBody(i, model)),
       },
     );
     if (!res.ok) {
@@ -109,7 +129,9 @@ export class GeminiAi implements AiLike {
       } catch {
         reason = '';
       }
-      throw new Error(`gemini ${res.status}${reason ? ` ${reason.slice(0, 160)}` : ''}`);
+      const err = new Error(`gemini ${res.status} ${model}${reason ? ` ${reason.slice(0, 140)}` : ''}`) as Error & { status?: number };
+      err.status = res.status;
+      throw err;
     }
     const text = geminiText(await res.json());
     if (text === null) throw new Error('gemini empty');

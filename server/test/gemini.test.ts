@@ -45,6 +45,25 @@ describe('Gemini first, Workers AI behind it', () => {
     assert.match(voice.contents[0].parts[0].text, /Arabic/);
   });
 
+  it('a busy model hands the same call to the next free model', async () => {
+    const calls: string[] = [];
+    const f = async (url: string) => {
+      calls.push(url);
+      const busy = calls.length === 1;
+      return { ok: !busy, status: busy ? 503 : 200, json: async () => (busy ? { error: { status: 'UNAVAILABLE' } } : reply('1. ok')) };
+    };
+    const g = new GeminiAi('K', 'gemini-3.8-flash', f);
+    assert.deepEqual(await g.run('@cf/x', { messages: [{ role: 'user', content: 'hi' }] }), { response: '1. ok', provider: 'gemini' });
+    assert.equal(calls.length, 2);
+    assert.match(calls[1], /gemini-3\.5-flash-lite/);
+  });
+
+  it('a bad key is not retried on other models', async () => {
+    const { f, calls } = fakeFetch(400, { error: { status: 'INVALID_ARGUMENT', message: 'API key not valid' } });
+    await assert.rejects(new GeminiAi('K', 'gemini-3.8-flash', f).run('@cf/x', { messages: [] }), /gemini 400/);
+    assert.equal(calls.length, 1);
+  });
+
   it('the key goes in a header, never the URL; answers keep the callers\' shapes', async () => {
     const { f, calls } = fakeFetch(200, reply('1. ok'));
     const g = new GeminiAi('SECRET', 'gemini-2.5-flash', f);
