@@ -233,6 +233,9 @@ void main() {
 
   testWidgets('SMS card asks for permission, then bank messages appear',
       (tester) async {
+    tester.view.physicalSize = const Size(800, 2400);
+    tester.view.devicePixelRatio = 1.0;
+    addTearDown(tester.view.reset);
     final sms = fixtures.FakeSms([('1', 'BisB', bh(16, 32), fixtures.bisbCard)])
       ..granted = false;
     final ledger = InMemoryLedgerRepository();
