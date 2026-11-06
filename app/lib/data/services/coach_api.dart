@@ -37,8 +37,31 @@ class CoachException implements Exception {
   String toString() => 'CoachException($code)';
 }
 
+/// One AI idea for spending less at a shop. A suggestion to check, never a
+/// price or an offer (the server drops any idea with a number in it).
+class CheaperOption {
+  const CheaperOption({required this.shop, required this.idea});
+
+  final String shop;
+  final String idea;
+}
+
+class CheaperOptions {
+  const CheaperOptions({required this.options, this.provider, this.reason});
+
+  final List<CheaperOption> options;
+  final String? provider;
+
+  /// Why there are none (the AI's own error), when there are none.
+  final String? reason;
+}
+
 abstract class CoachApi {
   Future<CoachPlan> plan(Map<String, Object> request);
+
+  /// POST /v1/alternatives with the shop names and visit counts of a plan
+  /// request.
+  Future<CheaperOptions> alternatives(Map<String, Object> request);
 }
 
 /// POST /v1/coach on Beaza's server, which asks Google's Gemini. No
@@ -56,12 +79,43 @@ class HttpCoachApi implements CoachApi {
   final Duration timeout;
 
   @override
+  Future<CheaperOptions> alternatives(Map<String, Object> request) async {
+    final body = await _post('/v1/alternatives', request);
+    final list = body['alternatives'];
+    if (list is! List) throw const CoachException('server_error');
+    return CheaperOptions(
+      options: [
+        for (final x in list)
+          if (x is Map && x['shop'] is String && x['idea'] is String)
+            CheaperOption(shop: x['shop'] as String, idea: x['idea'] as String),
+      ],
+      provider: body['provider'] as String?,
+      reason: body['reason'] as String?,
+    );
+  }
+
+  @override
   Future<CoachPlan> plan(Map<String, Object> request) async {
+    final body = await _post('/v1/coach', request);
+    final text = body['plan'];
+    if (text is! String || text.trim().isEmpty) {
+      throw const CoachException('server_error');
+    }
+    return CoachPlan(
+      text: text.trim(),
+      fromModel: body['source'] == 'model',
+      provider: body['provider'] as String?,
+      reason: body['reason'] as String?,
+    );
+  }
+
+  Future<Map<String, Object?>> _post(
+      String path, Map<String, Object> request) async {
     final http.Response res;
     try {
       res = await _client
           .post(
-            _base.resolve('/v1/coach'),
+            _base.resolve(path),
             headers: {'content-type': 'application/json'},
             body: jsonEncode(request),
           )
@@ -80,15 +134,6 @@ class HttpCoachApi implements CoachApi {
     if (res.statusCode != 200) {
       throw CoachException(body['error'] as String? ?? 'server_error');
     }
-    final text = body['plan'];
-    if (text is! String || text.trim().isEmpty) {
-      throw const CoachException('server_error');
-    }
-    return CoachPlan(
-      text: text.trim(),
-      fromModel: body['source'] == 'model',
-      provider: body['provider'] as String?,
-      reason: body['reason'] as String?,
-    );
+    return body;
   }
 }

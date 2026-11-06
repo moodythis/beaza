@@ -54,6 +54,18 @@ class FakeCoach implements CoachApi {
     if (fail != null) throw fail!;
     return const CoachPlan(text: '1. خفّف التسوق.', fromModel: true);
   }
+
+  final List<Map<String, Object>> altSent = [];
+
+  @override
+  Future<CheaperOptions> alternatives(Map<String, Object> request) async {
+    altSent.add(request);
+    if (fail != null) throw fail!;
+    return const CheaperOptions(
+      options: [CheaperOption(shop: 'REDTAG MANAMA', idea: 'Try a cheaper outlet.')],
+      provider: 'gemini',
+    );
+  }
 }
 
 Future<(CoachViewModel, FakeCoach, MemoryPreferencesStore)> make() async {
@@ -362,5 +374,22 @@ void main() {
     expect(title, startsWith('AI savings plan'));
     expect(find.text(title), findsOneWidget);
     expect(tester.getTopLeft(find.text(title)).dy, lessThan(400));
+  });
+
+  test('cheaper options send only shop names and visits, with the plan consent',
+      () async {
+    final (vm, api, _) = await make();
+    await vm.requestAlternatives('en');
+    expect(api.altSent, isEmpty); // no consent yet
+    await vm.agree();
+    await vm.requestAlternatives('en');
+    final r = api.altSent.single;
+    expect(r.keys.toSet(), {'consent', 'language', 'shops'});
+    expect(r['consent'], kCoachConsentVersion);
+    for (final s in (r['shops'] as List).cast<Map<String, Object>>()) {
+      expect(s.keys.toSet(), {'name', 'count'});
+    }
+    expect(vm.alternatives!.options.single.shop, 'REDTAG MANAMA');
+    expect(vm.altStep, CoachStep.ready);
   });
 }

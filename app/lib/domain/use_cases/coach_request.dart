@@ -6,7 +6,7 @@ import 'package:beaza/domain/use_cases/spending_by_category.dart';
 import 'package:beaza_extraction/beaza_extraction.dart';
 
 /// The version of the AI consent text (server: COACH_CONSENT_VERSION).
-const String kCoachConsentVersion = '2026-11-06.1';
+const String kCoachConsentVersion = '2026-11-06.2';
 
 /// Everything the AI savings plan sends, worked out on the phone in integer
 /// fils: totals of the last 7 days and the 7 before, the daily limit, how
@@ -162,4 +162,20 @@ List<(String, int)> _shared(List<CategoryTotal> week) {
       final c = y.$2.compareTo(x.$2);
       return c != 0 ? c : x.$1.compareTo(y.$1);
     });
+}
+
+/// What "Cheaper options" sends: from a plan request, only the consent,
+/// the language and the shop names with visit counts (no amounts), or
+/// null when there are no shops yet.
+Map<String, Object>? alternativesRequest(Map<String, Object> planRequest) {
+  final shops = planRequest['shops'];
+  if (shops is! List || shops.isEmpty) return null;
+  return {
+    'consent': planRequest['consent']!,
+    'language': planRequest['language']!,
+    'shops': [
+      for (final s in shops.cast<Map<String, Object>>())
+        {'name': s['name']!, 'count': s['count']!},
+    ],
+  };
 }

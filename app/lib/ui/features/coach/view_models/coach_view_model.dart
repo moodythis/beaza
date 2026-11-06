@@ -70,6 +70,44 @@ class CoachViewModel extends ChangeNotifier {
     _consented = false;
     _plan = null;
     _step = CoachStep.idle;
+    _alternatives = null;
+    _altStep = CoachStep.idle;
+    notifyListeners();
+  }
+
+  CoachStep _altStep = CoachStep.idle;
+  CoachStep get altStep => _altStep;
+
+  CheaperOptions? _alternatives;
+  CheaperOptions? get alternatives => _alternatives;
+
+  /// True when there are no shops to ask about yet.
+  bool _noShops = false;
+  bool get noShops => _noShops;
+
+  /// "Cheaper options": the shop names and visit counts of the plan
+  /// request only, under the same consent.
+  Future<void> requestAlternatives(String language) async {
+    if (!_consented) return;
+    _altStep = CoachStep.loading;
+    _error = null;
+    _noShops = false;
+    notifyListeners();
+    final request = alternativesRequest(await preview(language));
+    if (request == null) {
+      _noShops = true;
+      _alternatives = null;
+      _altStep = CoachStep.ready;
+      notifyListeners();
+      return;
+    }
+    try {
+      _alternatives = await _api.alternatives(request);
+      _altStep = CoachStep.ready;
+    } on CoachException catch (e) {
+      _error = e.code;
+      _altStep = CoachStep.failed;
+    }
     notifyListeners();
   }
 

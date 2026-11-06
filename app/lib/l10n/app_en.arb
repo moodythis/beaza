@@ -502,7 +502,7 @@
   "coachSubtitle": "Optional. Sends your spending, never who you are.",
   "coachAsk": "Get a plan",
   "coachConsentTitle": "Before the AI writes your plan",
-  "coachConsentBody": "Beaza sends the totals below (no name, number or bank message) to its server, which asks Google's Gemini (free tier) for a plan. Google may keep it and people there may read it. You can stop at any time.",
+  "coachConsentBody": "Beaza sends the totals below (no name, number or bank message) to its server, which asks Google's Gemini (free tier) for a plan, or, for cheaper options, only the shop names and visits. Google may keep it and people there may read it. You can stop at any time.",
   "coachConsentWhat": "See exactly what will be sent",
   "coachAgree": "Agree and get the plan",
   "coachNotNow": "Not now",
@@ -773,5 +773,10 @@
     "placeholders": {
       "count": {"type": "int"}
     }
-  }
+  },
+  "cheaperAsk": "Cheaper options",
+  "cheaperTitle": "Cheaper options for your shops",
+  "cheaperNoShops": "No shop stands out in the last 7 days yet. Try again after a few purchases.",
+  "cheaperNone": "The AI had no ideas this time. Try again later.",
+  "cheaperNote": "Ideas from AI for the shops where you spent most this week. It does not know prices, so check before you switch."
 }

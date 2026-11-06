@@ -14,7 +14,7 @@ class CoachCard extends StatelessWidget {
 
   final CoachViewModel viewModel;
 
-  Future<void> _ask(BuildContext context) async {
+  Future<void> _ask(BuildContext context, {bool cheaper = false}) async {
     final language = Localizations.localeOf(context).languageCode;
     if (!viewModel.consented) {
       final preview = await viewModel.preview(language);
@@ -30,13 +30,19 @@ class CoachCard extends StatelessWidget {
       await viewModel.agree();
     }
     if (!context.mounted) return;
-    viewModel.requestPlan(language);
+    if (cheaper) {
+      viewModel.requestAlternatives(language);
+    } else {
+      viewModel.requestPlan(language);
+    }
     await showModalBottomSheet<void>(
       context: context,
       useSafeArea: true,
       isScrollControlled: true,
       showDragHandle: true,
-      builder: (_) => _PlanSheet(viewModel: viewModel),
+      builder: (_) => cheaper
+          ? _CheaperSheet(viewModel: viewModel)
+          : _PlanSheet(viewModel: viewModel),
     );
   }
 
@@ -68,6 +74,13 @@ class CoachCard extends StatelessWidget {
               onPressed: () => _ask(context),
               icon: const Icon(Icons.auto_awesome),
               label: Text(l10n.coachAsk),
+            ),
+            const SizedBox(height: 8),
+            OutlinedButton.icon(
+              key: const Key('coachCheaper'),
+              onPressed: () => _ask(context, cheaper: true),
+              icon: const Icon(Icons.local_offer_outlined),
+              label: Text(l10n.cheaperAsk),
             ),
           ],
         ),
@@ -240,6 +253,79 @@ class _PlanSheet extends StatelessWidget {
                   },
                   child: Text(l10n.coachWithdraw),
                 ),
+              ],
+            ),
+          );
+        },
+      ),
+    );
+  }
+}
+
+/// "Cheaper options": one AI idea per shop where the person spends most.
+class _CheaperSheet extends StatelessWidget {
+  const _CheaperSheet({required this.viewModel});
+
+  final CoachViewModel viewModel;
+
+  @override
+  Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context);
+    final theme = Theme.of(context);
+    return SafeArea(
+      child: ListenableBuilder(
+        listenable: viewModel,
+        builder: (context, _) {
+          final result = viewModel.alternatives;
+          return SingleChildScrollView(
+            padding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                Text(l10n.cheaperTitle, style: theme.textTheme.titleLarge),
+                const SizedBox(height: 12),
+                if (viewModel.altStep == CoachStep.loading) ...[
+                  const Center(child: CircularProgressIndicator()),
+                  const SizedBox(height: 12),
+                  Text(l10n.coachLoading, textAlign: TextAlign.center),
+                ],
+                if (viewModel.altStep == CoachStep.failed)
+                  Text(
+                    switch (viewModel.error) {
+                      'coach_busy' => l10n.coachBusy,
+                      'network' => l10n.coachNetwork,
+                      'timeout' => l10n.coachTimeout,
+                      _ => l10n.coachFailed,
+                    },
+                    key: const Key('cheaperError'),
+                  ),
+                if (viewModel.altStep == CoachStep.ready) ...[
+                  if (viewModel.noShops)
+                    Text(l10n.cheaperNoShops, key: const Key('cheaperNoShops'))
+                  else if (result == null || result.options.isEmpty)
+                    Text(
+                      result?.reason == null
+                          ? l10n.cheaperNone
+                          : '${l10n.cheaperNone} (${result!.reason})',
+                      key: const Key('cheaperNone'),
+                    )
+                  else ...[
+                    for (final o in result.options)
+                      ListTile(
+                        key: Key('cheaper_${o.shop}'),
+                        contentPadding: EdgeInsets.zero,
+                        leading: const Icon(Icons.storefront_outlined),
+                        title: Text(o.shop),
+                        subtitle: Text(o.idea),
+                      ),
+                    const SizedBox(height: 8),
+                    Text(
+                      '${l10n.cheaperNote}${providerLabel(result.provider)}',
+                      key: const Key('cheaperNote'),
+                      style: theme.textTheme.bodySmall,
+                    ),
+                  ],
+                ],
               ],
             ),
           );

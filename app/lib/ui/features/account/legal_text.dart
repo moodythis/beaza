@@ -27,7 +27,7 @@ class LegalDocument {
 }
 
 const privacyNotice = LegalDocument(
-  version: '2026-11-05.8',
+  version: '2026-11-06.1',
   titleAr: 'إشعار الخصوصية لتطبيق بيزة',
   titleEn: 'Beaza privacy notice',
   ar: [
@@ -61,7 +61,7 @@ const privacyNotice = LegalDocument(
       'خطة التوفير بالذكاء الاصطناعي (اختيارية، بموافقة منفصلة)',
       [
         'فقط إذا وافقت في شاشة خطة الذكاء الاصطناعي، يرسل بيزة إلى خادمه هذه المجاميع المحسوبة على هاتفك: مصروفك في آخر 7 أيام والـ7 التي قبلها، وحدك اليومي وعدد الأيام التي تجاوزته فيها، وعدد مشترياتك الصغيرة ومجموعها، ومجموع كل صنف ونسبته، وأسماء ما يصل إلى 5 محلات صرفت فيها أكثر في آخر 7 أيام مع ما صرفته فيها وعدد المرات، وكل عملية شراء في آخر 7 أيام (حتى 40) مع يوم الأسبوع والساعة والمبلغ والصنف واسم المحل، وعدد مشترياتك في آخر الليل (من 10 مساءً إلى 3 فجرًا) ومجموعها، وما صرفته يومي الجمعة والسبت، وإذا كان حدك محسوبًا من دخلك: المبلغ الباقي للشهر وعدد الأيام الباقية (ولا يُرسل الدخل نفسه أبدًا). تعرض لك الشاشة القائمة نفسها قبل أن توافق. لا يُرسل أي شيء يعرّف بك: لا نص رسالة بنك ولا رقم حساب أو بطاقة ولا رقم هاتف ولا رقم شخصي (CPR) ولا رقم مرجعي ولا تاريخ ولا اسم شخص حوّلت له (تُحذف الأرقام من أسماء المحلات ولا تُرسل التحويلات)، ويرفض الخادم أي حقل آخر. لا يلزم حساب، ولا يُربط الطلب بأي حساب.',
-        'يطلب الخادم من نموذج ذكاء اصطناعي (انظر «نماذج الذكاء الاصطناعي») كتابة خطة قصيرة من هذه المعلومات، ويتحقق أن كل رقم في الخطة من الأرقام التي أُعطيت له. ما قد يفعله مزوّد الذكاء الاصطناعي بالطلب مبيّن في «نماذج الذكاء الاصطناعي». لا يحفظ بيزة شيئًا عن الطلب سوى عدد الخطط المطلوبة في ذلك اليوم، دون ربطه بك. الأساس القانوني هو موافقتك، ويمكنك سحبها في أي وقت من شاشة الخطة، وسحبها يوقف أي إرسال لاحق.',
+        'يطلب الخادم من نموذج ذكاء اصطناعي (انظر «نماذج الذكاء الاصطناعي») كتابة خطة قصيرة من هذه المعلومات، ويتحقق أن كل رقم في الخطة من الأرقام التي أُعطيت له. وبالموافقة نفسها، إذا ضغطت «بدائل أرخص»، تُرسل أسماء المحلات نفسها وعدد الزيارات فقط ليقترح الذكاء الاصطناعي طريقة أرخص لنفس الحاجة؛ لا تُعطى له أسعار، فيُحذف أي اقتراح فيه رقم، والاقتراحات أفكار تتحقق منها بنفسك وليست عروضًا. ما قد يفعله مزوّد الذكاء الاصطناعي بالطلب مبيّن في «نماذج الذكاء الاصطناعي». لا يحفظ بيزة شيئًا عن الطلب سوى عدد الخطط المطلوبة في ذلك اليوم، دون ربطه بك. الأساس القانوني هو موافقتك، ويمكنك سحبها في أي وقت من شاشة الخطة، وسحبها يوقف أي إرسال لاحق.',
       ],
     ),
     LegalSection(
@@ -174,7 +174,7 @@ const privacyNotice = LegalDocument(
       'AI savings plan (optional, separate consent)',
       [
         'Only if you agree on the AI plan screen, Beaza sends these totals, worked out on your phone, to its server: what you spent in the last 7 days and the 7 before, your daily limit and on how many days you passed it, how many small purchases you made and their total, a total and share per category, the names of up to 5 shops where you spent most in the last 7 days with what you spent there and how many times, each purchase of the last 7 days (up to 40) with its weekday, hour, amount, category and shop name, how many purchases you made late at night (10 pm to 3 am) and their total, what you spent on Friday and Saturday, and, if your limit is worked out from your income, the money left for the month and the days left (never the income itself). The screen shows you the exact list before you agree. Nothing that identifies you is sent: no bank message, account or card number, phone number, CPR, reference, calendar date or name of a person you transferred to (digits are removed from shop names and transfers are left out), and the server refuses any other field. No account is needed and none is linked to the request.',
-        'The server asks an AI model (see "Which AI models") to write a short plan from this information, and checks that every number in the plan is one it was given. What the AI provider may do with the request is set out under "Which AI models". Beaza stores nothing about the request except how many plans were asked for that day, with no link to you. The legal basis is your consent, which you can withdraw at any time on the plan screen; withdrawing stops any further sending.',
+        'The server asks an AI model (see "Which AI models") to write a short plan from this information, and checks that every number in the plan is one it was given. Under the same consent, if you tap "Cheaper options", the same shop names and visit counts (nothing else) are sent so the AI can suggest a cheaper way to meet the same need; it is not given prices, so any idea with a number in it is dropped, and the ideas are suggestions to check yourself, not offers. What the AI provider may do with the request is set out under "Which AI models". Beaza stores nothing about the request except how many plans were asked for that day, with no link to you. The legal basis is your consent, which you can withdraw at any time on the plan screen; withdrawing stops any further sending.',
       ],
     ),
     LegalSection(
