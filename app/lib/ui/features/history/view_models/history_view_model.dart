@@ -126,6 +126,21 @@ class HistoryViewModel extends ChangeNotifier {
 
   Future<void> remove(LedgerEntry entry) => _ledger.remove(entry);
 
+  /// Takes a swiped-away row out of the list at once (the Dismissible must
+  /// leave the tree), then deletes it; the ledger's change reloads the rest.
+  Future<void> dismiss(LedgerEntry entry) {
+    _days = [
+      for (final d in _days)
+        if (d.entries.any((e) => !identical(e, entry)))
+          HistoryDay(d.day, [
+            for (final e in d.entries)
+              if (!identical(e, entry)) e,
+          ], d.spentFils),
+    ];
+    if (!_disposed) notifyListeners();
+    return _ledger.remove(entry);
+  }
+
   /// Marks money received as paid back to the person (taken off spending),
   /// or as plain income. Either choice wins over the automatic one. Only
   /// that one transaction changes.

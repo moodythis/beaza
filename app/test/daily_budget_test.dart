@@ -159,4 +159,112 @@ void main() {
       expect(c.daysOfLimit, 4);
     });
   });
+
+  group('savings profiles', () {
+    // 1 November 2026 is a Sunday; November has 30 days, 12 of them
+    // Thursday to Saturday.
+    const nov1 = Day(2026, 11, 1);
+    BudgetPlan p(BudgetProfile profile, {int fixed = 0, int custom = 0}) =>
+        BudgetPlan.withProfile(
+            incomeFils: 300000,
+            fixedFils: fixed,
+            profile: profile,
+            customSavingsFils: custom);
+
+    test('no savings keeps the old limit: 300 BHD gives 10 BHD a day', () {
+      expect(safeDailyLimitFils(p(BudgetProfile.none), const [], nov1), 10000);
+    });
+
+    test('pay yourself first: 60 BHD set aside, 8 BHD a day', () {
+      final plan = p(BudgetProfile.payYourselfFirst);
+      expect(plan.savingsFils, 60000);
+      expect(plan.freeFils, 240000);
+      expect(safeDailyLimitFils(plan, const [], nov1), 8000);
+    });
+
+    test('50/30/20: 20% saved, warning when commitments pass half', () {
+      expect(p(BudgetProfile.fiftyThirtyTwenty).savingsFils, 60000);
+      expect(p(BudgetProfile.fiftyThirtyTwenty, fixed: 150000).commitmentsOverHalf,
+          isFalse);
+      final heavy = p(BudgetProfile.fiftyThirtyTwenty, fixed: 160000);
+      expect(heavy.commitmentsOverHalf, isTrue);
+      expect(safeDailyLimitFils(heavy, const [], nov1), 2666); // 80000 / 30
+    });
+
+    test('70/20/10 and kakeibo set 30% aside: 7 BHD a day', () {
+      for (final profile in [
+        BudgetProfile.seventyTwentyTen,
+        BudgetProfile.kakeibo,
+      ]) {
+        final plan = p(profile);
+        expect(plan.savingsFils, 90000);
+        expect(safeDailyLimitFils(plan, const [], nov1), 7000);
+      }
+    });
+
+    test('custom: the typed amount', () {
+      final plan = p(BudgetProfile.custom, custom: 50000);
+      expect(plan.savingsFils, 50000);
+      expect(safeDailyLimitFils(plan, const [], nov1), 8333);
+    });
+
+    test('commitments plus savings over the income are refused', () {
+      expect(p(BudgetProfile.payYourselfFirst, fixed: 240000).isValid, isFalse);
+      expect(p(BudgetProfile.custom, custom: 300000).isValid, isFalse);
+      expect(p(BudgetProfile.payYourselfFirst, fixed: 239999).isValid, isTrue);
+    });
+
+    test('weekend weighted: Thursday to Saturday get 1.35 times a weekday', () {
+      final plan = p(BudgetProfile.weekendWeighted);
+      // 18 weekdays x 100 + 12 weekend days x 135 = 3420.
+      expect(safeDailyLimitFils(plan, const [], nov1), 240000 * 100 ~/ 3420);
+      // Thursday 5 November, nothing spent yet: 14 x 100 + 12 x 135 = 3020.
+      expect(safeDailyLimitFils(plan, const [], const Day(2026, 11, 5)),
+          240000 * 135 ~/ 3020);
+    });
+
+    test('spending each day exactly its limit never passes the free money', () {
+      for (final profile in BudgetProfile.values) {
+        final plan = p(profile, custom: 45000);
+        final ledger = <ExtractionResult>[];
+        var spent = 0;
+        for (var d = 1; d <= 30; d++) {
+          final day = Day(2026, 11, d);
+          final entries = const Reconciler().reconcile(ledger, OwnAccounts());
+          final limit = safeDailyLimitFils(plan, entries, day);
+          ledger.add(purchase(limit, bh(d, 12)));
+          spent += limit;
+        }
+        expect(spent, lessThanOrEqualTo(plan.freeFils), reason: profile.name);
+        // Rounding down loses at most a few fils a day.
+        expect(spent, greaterThan(plan.freeFils - 30 * 3), reason: profile.name);
+      }
+    });
+
+    test('the plan and its profile are saved and read back', () async {
+      final prefs = MemoryPreferencesStore();
+      await writeBudgetPlan(prefs, p(BudgetProfile.custom, fixed: 20000, custom: 45000));
+      final back = (await readBudgetPlan(prefs))!;
+      expect(back.profile, BudgetProfile.custom);
+      expect(back.savingsFils, 45000);
+      expect(back.fixedFils, 20000);
+      await writeBudgetPlan(prefs, p(BudgetProfile.kakeibo));
+      expect((await readBudgetPlan(prefs))!.savingsFils, 90000);
+      await clearBudgetPlan(prefs);
+      expect(await readBudgetPlan(prefs), isNull);
+    });
+
+    test('"Can I buy it?" never treats savings as money to spend', () {
+      final check = checkPurchase(
+        itemFils: 250000,
+        dailyLimitFils: 8000,
+        spentTodayFils: 0,
+        entries: const [],
+        today: nov1,
+        plan: p(BudgetProfile.payYourselfFirst),
+      );
+      expect(check.monthLeftFils, 240000);
+      expect(check.beyondMonth, isTrue);
+    });
+  });
 }

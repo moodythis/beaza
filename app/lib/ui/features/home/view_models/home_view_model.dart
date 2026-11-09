@@ -337,8 +337,6 @@ class HomeViewModel extends ChangeNotifier {
     return prefs == null ? null : daily.readBudgetPlan(prefs);
   }
 
-  static const _incomeKey = daily.kBudgetIncomeKey;
-  static const _fixedKey = daily.kBudgetFixedKey;
 
   /// "Can I buy it?" for [itemFils]: today's room and, with a budget plan,
   /// the limit from tomorrow with and without it. Nothing is saved.
@@ -356,22 +354,26 @@ class HomeViewModel extends ChangeNotifier {
 
   /// Turns on the worked-out limit.
   Future<void> setBudget(BudgetPlan plan) async {
-    await _prefs?.write(_incomeKey, '${plan.incomeFils}');
-    await _prefs?.write(_fixedKey, '${plan.fixedFils}');
+    final prefs = _prefs;
+    if (prefs != null) await daily.writeBudgetPlan(prefs, plan);
     await load();
   }
 
   /// Back to a limit set by hand; the last worked-out value stays as it is.
   Future<void> clearBudget() async {
-    await _prefs?.write(_incomeKey, null);
-    await _prefs?.write(_fixedKey, null);
+    final prefs = _prefs;
+    if (prefs != null) await daily.clearBudgetPlan(prefs);
     await load();
   }
 
+  /// Today's limit [plan] would give, for the setup screen's preview.
+  Future<int> previewLimit(BudgetPlan plan) async =>
+      safeDailyLimitFils(plan, await _ledger.entries(), Day.of(_clock()));
+
   Future<void> setDailyLimit(int fils) async {
     // A hand-set limit replaces the worked-out one.
-    await _prefs?.write(_incomeKey, null);
-    await _prefs?.write(_fixedKey, null);
+    final prefs = _prefs;
+    if (prefs != null) await daily.clearBudgetPlan(prefs);
     final current = await _settings.load();
     await _settings.save(current.copyWith(dailyLimitFils: fils));
   }

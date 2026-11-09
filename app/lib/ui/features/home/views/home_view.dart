@@ -407,7 +407,8 @@ class HomeView extends StatelessWidget {
       );
 
   Future<void> _editBudget(BuildContext context) async {
-    final choice = await showBudgetDialog(context, current: viewModel.budget);
+    final choice = await showBudgetDialog(context,
+        current: viewModel.budget, preview: viewModel.previewLimit);
     if (choice == null || !context.mounted) return;
     final plan = choice.plan;
     if (plan != null) {

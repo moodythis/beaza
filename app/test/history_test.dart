@@ -189,4 +189,51 @@ void main() {
     await vm.load();
     expect(vm.days.single.spentFils, 2000);
   });
+
+  for (final lang in ['en', 'ar']) {
+    testWidgets('a left-to-right drag deletes after asking ($lang)',
+        (tester) async {
+      final ledger = InMemoryLedgerRepository(initial: [
+        spend(2050, bh(2, 9), shop: 'Waleed Al Kabah', ref: 'a'),
+        spend(3000, bh(2, 10), shop: 'Jasmis', ref: 'b'),
+      ]);
+      final vm = HomeViewModel(
+        ledger: ledger,
+        settings: InMemorySettingsRepository(
+            const GuardrailSettings(dailyLimitFils: 10000)),
+        clock: () => bh(2, 12),
+      );
+      await vm.load();
+      await tester.pumpWidget(BeazaApp(homeViewModel: vm, locale: Locale(lang)));
+      await tester.pumpAndSettle();
+      await tester.tap(find.byKey(const Key('historyButton')));
+      await tester.pumpAndSettle();
+
+      // A right-to-left drag does nothing, whatever the language.
+      await tester.drag(find.text('Jasmis'), const Offset(-300, 0));
+      await tester.pumpAndSettle();
+      expect(find.byKey(const Key('confirmDelete')), findsNothing);
+
+      // Left to right, then "cancel": the row springs back.
+      await tester.drag(find.text('Jasmis'), const Offset(300, 0));
+      await tester.pumpAndSettle();
+      expect(find.byKey(const Key('confirmDelete')), findsOneWidget);
+      expect(find.textContaining('Jasmis'), findsNWidgets(2)); // row + dialog
+      await tester.tap(find.byType(TextButton).last);
+      await tester.pumpAndSettle();
+      expect(find.text('Jasmis'), findsOneWidget);
+      expect(await ledger.entries(), hasLength(2));
+
+      // Left to right, then delete.
+      await tester.drag(find.text('Jasmis'), const Offset(300, 0));
+      await tester.pumpAndSettle();
+      await tester.tap(find.byKey(const Key('confirmDelete')));
+      await tester.pumpAndSettle();
+      expect(find.text('Jasmis'), findsNothing);
+      expect((await ledger.entries()).single.result.merchantRaw,
+          'Waleed Al Kabah');
+      expect(find.byType(SnackBar), findsOneWidget);
+    });
+  }
 }
+

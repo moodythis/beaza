@@ -84,13 +84,17 @@ class HistoryView extends StatelessWidget {
                   ),
                 ),
                 for (final e in d.entries)
-                  EntryTile(
-                    entry: e,
-                    // Sorting is the common job, so the unsorted list goes
-                    // straight to the categories.
-                    onTap: viewModel.unsortedOnly
-                        ? () => _choose(context, e)
-                        : () => _actions(context, e),
+                  _swipeToDelete(
+                    context,
+                    e,
+                    EntryTile(
+                      entry: e,
+                      // Sorting is the common job, so the unsorted list goes
+                      // straight to the categories.
+                      onTap: viewModel.unsortedOnly
+                          ? () => _choose(context, e)
+                          : () => _actions(context, e),
+                    ),
                   ),
               ],
             ],
@@ -245,13 +249,55 @@ class HistoryView extends StatelessWidget {
         amountFils: input.fils, merchant: input.merchant);
   }
 
-  Future<void> _delete(BuildContext context, LedgerEntry entry) async {
+  /// A drag from the left edge to the right deletes, in Arabic and in
+  /// English alike: Dismissible's start-to-end follows the text direction,
+  /// so in right-to-left it is end-to-start. Asks first; a "no" springs back.
+  Widget _swipeToDelete(BuildContext context, LedgerEntry e, Widget child) {
+    final l10n = AppLocalizations.of(context);
+    final theme = Theme.of(context);
+    final rtl = Directionality.of(context) == TextDirection.rtl;
+    return Dismissible(
+      key: ValueKey('swipe_${e.index}_${e.result.timestamp}_${e.result.amountFils}'),
+      direction:
+          rtl ? DismissDirection.endToStart : DismissDirection.startToEnd,
+      // A clear drag, but not across the whole screen.
+      dismissThresholds: {
+        rtl ? DismissDirection.endToStart : DismissDirection.startToEnd: 0.3,
+      },
+      background: Container(
+        color: theme.colorScheme.error,
+        // Physically on the left, where the drag starts.
+        alignment: Alignment.centerLeft,
+        padding: const EdgeInsets.symmetric(horizontal: 16),
+        child: Row(
+          mainAxisSize: MainAxisSize.min,
+          textDirection: TextDirection.ltr,
+          children: [
+            Icon(Icons.delete_outline, color: theme.colorScheme.onError),
+            const SizedBox(width: 8),
+            Text(l10n.entryDelete,
+                style: TextStyle(color: theme.colorScheme.onError)),
+          ],
+        ),
+      ),
+      confirmDismiss: (_) => _confirmDelete(context, e),
+      onDismissed: (_) async {
+        final messenger = ScaffoldMessenger.of(context);
+        await viewModel.dismiss(e);
+        messenger.showSnackBar(SnackBar(content: Text(l10n.entryDeleted)));
+      },
+      child: child,
+    );
+  }
+
+  Future<bool> _confirmDelete(BuildContext context, LedgerEntry entry) async {
     final l10n = AppLocalizations.of(context);
     final ok = await showDialog<bool>(
       context: context,
       builder: (d) => AlertDialog(
         title: Text(l10n.entryDeleteTitle),
-        content: Text(l10n.entryDeleteBody),
+        content: Text(
+            '${entryTitle(l10n, entry.result)} · ${l10n.bhd(formatFils(entry.result.amountFils ?? 0))}\n\n${l10n.entryDeleteBody}'),
         actions: [
           TextButton(
             onPressed: () => Navigator.of(d).pop(false),
@@ -265,7 +311,11 @@ class HistoryView extends StatelessWidget {
         ],
       ),
     );
-    if (ok == true) await viewModel.remove(entry);
+    return ok == true;
+  }
+
+  Future<void> _delete(BuildContext context, LedgerEntry entry) async {
+    if (await _confirmDelete(context, entry)) await viewModel.remove(entry);
   }
 
   Future<void> _choose(BuildContext context, LedgerEntry entry) async {
