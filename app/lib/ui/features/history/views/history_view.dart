@@ -8,7 +8,7 @@ import 'package:beaza/ui/core/formatting.dart';
 import 'package:beaza/ui/features/history/view_models/history_view_model.dart';
 import 'package:beaza_extraction/beaza_extraction.dart';
 import 'package:flutter/material.dart';
-import 'package:intl/intl.dart';
+import 'package:intl/intl.dart' hide TextDirection;
 
 /// All transactions, grouped by day. Tap a purchase to change its category.
 class HistoryView extends StatelessWidget {
