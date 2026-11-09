@@ -361,6 +361,9 @@ void main() {
     );
     await vm.load();
     await vm.checkMessages();
+    tester.view.physicalSize = const Size(800, 2400);
+    tester.view.devicePixelRatio = 1.0;
+    addTearDown(tester.view.reset);
     await tester.pumpWidget(BeazaApp(homeViewModel: vm, locale: const Locale('en')));
     await tester.pumpAndSettle();
 

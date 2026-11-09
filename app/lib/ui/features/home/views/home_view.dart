@@ -208,7 +208,6 @@ class HomeView extends StatelessWidget {
               key: const Key('insightsList'),
               padding: const EdgeInsets.fromLTRB(16, 16, 16, 24),
               children: <Widget>[
-                MicroCard(today: state.summary.micro, week: state.weekMicro),
               if (state.tips.isNotEmpty ||
                   adviceText(l10n, state.summary.level) != null) ...[
                 const SizedBox(height: 12),
@@ -264,6 +263,8 @@ class HomeView extends StatelessWidget {
                 challenge: viewModel.challenge,
                 onOpen: () => onTab?.call(2),
               ),
+              const SizedBox(height: 12),
+              MicroCard(today: state.summary.micro, week: state.weekMicro),
               const SizedBox(height: 12),
               CategoryCard(
                 totals: state.weekByCategory,
