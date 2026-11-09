@@ -1,5 +1,6 @@
 import 'dart:convert';
 
+import 'package:beaza/data/services/hold_reminders.dart';
 import 'package:beaza/data/repositories/preferences_store.dart';
 import 'package:flutter/foundation.dart';
 
@@ -98,8 +99,11 @@ class Goal {
 /// Holds and the goal, on this phone only (in the encrypted local
 /// database's preferences; not synced).
 class SavingsRepository extends ChangeNotifier {
-  SavingsRepository(this._prefs, {DateTime Function()? clock})
+  SavingsRepository(this._prefs, {DateTime Function()? clock, this.reminders})
       : _clock = clock ?? DateTime.now;
+
+  /// Reminds when a hold's 24 hours are up; null in tests.
+  final HoldReminders? reminders;
 
   static const String holdsKey = 'holds.v1';
   static const String goalKey = 'goal.v1';
@@ -136,6 +140,11 @@ class SavingsRepository extends ChangeNotifier {
       createdAt: now,
     );
     await _saveHolds([...await holds(), hold]);
+    try {
+      await reminders?.schedule(hold);
+    } on Object {
+      // A reminder that cannot be set never stops the hold.
+    }
     return hold;
   }
 
@@ -146,6 +155,9 @@ class SavingsRepository extends ChangeNotifier {
     }
     final now = _clock();
     final list = await holds();
+    for (final h in list) {
+      if (h.id == id) await _cancel(h);
+    }
     await _saveHolds([
       for (final h in list)
         if (h.id == id && h.decision == null && h.readyAt(now))
@@ -155,8 +167,21 @@ class SavingsRepository extends ChangeNotifier {
     ]);
   }
 
-  Future<void> removeHold(String id) async =>
-      _saveHolds([for (final h in await holds()) if (h.id != id) h]);
+  Future<void> removeHold(String id) async {
+    final list = await holds();
+    for (final h in list) {
+      if (h.id == id) await _cancel(h);
+    }
+    await _saveHolds([for (final h in list) if (h.id != id) h]);
+  }
+
+  Future<void> _cancel(Hold h) async {
+    try {
+      await reminders?.cancel(h);
+    } on Object {
+      // Nothing to cancel, or no platform: fine.
+    }
+  }
 
   Future<Goal?> goal() async {
     final raw = await _prefs.read(goalKey);

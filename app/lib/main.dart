@@ -1,5 +1,6 @@
 import 'dart:async';
 
+import 'package:beaza/data/services/hold_reminders.dart';
 import 'package:beaza/app.dart';
 import 'package:beaza/data/repositories/account_repository.dart';
 import 'package:beaza/data/repositories/rewards_repository.dart';
@@ -111,7 +112,14 @@ Future<void> main() async {
         settings: storage.settings,
       )..load(),
       savings: SavingsViewModel(
-        repo: SavingsRepository(storage.preferences),
+        repo: SavingsRepository(
+          storage.preferences,
+          reminders: PlatformHoldReminders(
+            () => effectiveLanguage(language.code,
+                WidgetsBinding.instance.platformDispatcher.locale),
+            askPermission: notifier.requestPermission,
+          ),
+        ),
         ledger: storage.ledger,
         rewards: RewardsRepository(storage.preferences),
         settings: storage.settings,

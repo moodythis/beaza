@@ -89,6 +89,20 @@ object Channels {
                     )
                     result.success(null)
                 }
+                "schedule" -> {
+                    Reminders.schedule(
+                        context,
+                        call.argument<Number>("id")?.toInt() ?: 2,
+                        call.argument<Number>("atMs")?.toLong() ?: 0L,
+                        call.argument<String>("title") ?: "",
+                        call.argument<String>("body") ?: "",
+                    )
+                    result.success(null)
+                }
+                "cancel" -> {
+                    Reminders.cancel(context, call.argument<Number>("id")?.toInt() ?: 2)
+                    result.success(null)
+                }
                 else -> result.notImplemented()
             }
         }

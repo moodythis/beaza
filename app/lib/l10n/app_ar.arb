@@ -581,5 +581,6 @@
   "challengeTileDays": "{days, plural, =1{باقي يوم} =2{باقي يومين} other{باقي {days} أيام}}",
   "buyHold": "انتظر 24 ساعة",
   "buyHoldDone": "انحط بالانتظار. قرّر من التوفير بعد 24 ساعة.",
-  "buyHoldDefault": "شي أبيه"
+  "buyHoldDefault": "شي أبيه",
+  "askEntryHint": "كم صرفت هالأسبوع، وين راحت، كم باقي اليوم"
 }

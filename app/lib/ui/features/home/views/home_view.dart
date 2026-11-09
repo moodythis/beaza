@@ -126,23 +126,6 @@ class HomeView extends StatelessWidget {
                     : 'ar',
               ),
             ),
-          IconButton(
-            key: const Key('askButton'),
-            tooltip: l10n.askTitle,
-            icon: const Icon(Icons.chat_bubble_outline),
-            onPressed: () => Navigator.of(context).push(
-              MaterialPageRoute<void>(
-                builder: (_) => AskView(
-                  viewModel: AskViewModel(
-                    ledger: viewModel.ledger,
-                    settings: viewModel.settings,
-                    addDrafts: viewModel.addDrafts,
-                    clock: viewModel.now,
-                  ),
-                ),
-              ),
-            ),
-          ),
           if (account != null)
             ListenableBuilder(
               listenable: Listenable.merge([account!, if (sync != null) sync!]),
@@ -223,6 +206,28 @@ class HomeView extends StatelessWidget {
               key: const Key('insightsList'),
               padding: const EdgeInsets.fromLTRB(16, 16, 16, 24),
               children: <Widget>[
+              Card(
+                margin: EdgeInsets.zero,
+                child: ListTile(
+                  key: const Key('askButton'),
+                  leading: const Icon(Icons.chat_bubble_outline),
+                  title: Text(l10n.askTitle),
+                  subtitle: Text(l10n.askEntryHint),
+                  trailing: const Icon(Icons.chevron_right),
+                  onTap: () => Navigator.of(context).push(
+                    MaterialPageRoute<void>(
+                      builder: (_) => AskView(
+                        viewModel: AskViewModel(
+                          ledger: viewModel.ledger,
+                          settings: viewModel.settings,
+                          addDrafts: viewModel.addDrafts,
+                          clock: viewModel.now,
+                        ),
+                      ),
+                    ),
+                  ),
+                ),
+              ),
               if (state.tips.isNotEmpty ||
                   adviceText(l10n, state.summary.level) != null) ...[
                 const SizedBox(height: 12),

@@ -73,6 +73,8 @@ void main() {
     await tester.pumpWidget(BeazaApp(homeViewModel: vm, locale: const Locale('en')));
     await tester.pumpAndSettle();
 
+    await tester.tap(find.byKey(const Key('tabInsights')));
+    await tester.pumpAndSettle();
     await tester.tap(find.byKey(const Key('askButton')));
     await tester.pumpAndSettle();
     expect(find.text('Ask about your spending'), findsOneWidget);

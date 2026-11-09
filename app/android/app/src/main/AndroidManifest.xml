@@ -52,6 +52,11 @@
                 <action android:name="android.provider.Telephony.SMS_RECEIVED" />
             </intent-filter>
         </receiver>
+        <!-- Shows the "did you decide?" reminder when a 24-hour hold ends.
+             Not exported: only Beaza's own alarm reaches it. -->
+        <receiver
+            android:name=".ReminderReceiver"
+            android:exported="false" />
         <!-- Lets the camera app write one receipt photo into Beaza's cache. -->
         <provider
             android:name="androidx.core.content.FileProvider"
