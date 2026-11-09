@@ -49,10 +49,16 @@ class OwnAccounts {
   }
 }
 
-/// The category the person gives money received that pays back something
-/// they paid for (a friend's share of a meal they covered). Such money is
-/// taken off spending on the day it arrives.
+/// Money received that pays back something the person paid for (a friend's
+/// share of a meal they covered, a shop's refund). Taken off spending on the
+/// day it arrives. Set by the person, or found by [Reconciler] (see there).
 const String kRepaymentCategory = 'repayment';
+
+/// The person said money received is not a repayment: plain income.
+const String kReceivedCategory = 'received';
+
+/// How far back spending can be paid back by a transfer found on its own.
+const Duration kRepaymentWindow = Duration(days: 7);
 
 enum EntryRole {
   /// Money the user spent: counts toward the daily limit (if in BHD).
@@ -171,6 +177,8 @@ class Reconciler {
       maybeDupOf[i] = _possibleDuplicate(results, roles, i);
     }
 
+    _findRepayments(results, roles);
+
     return [
       for (var i = 0; i < n; i++)
         LedgerEntry(
@@ -181,6 +189,47 @@ class Reconciler {
           possibleDuplicateOf: maybeDupOf[i],
         ),
     ];
+  }
+
+  /// Money received that the person did not label is a repayment when the
+  /// bank message shows it can only be one of two things and the amount fits:
+  /// a shop's refund always; a transfer from someone when it is no more than
+  /// what the person spent in the 7 days before it, less what was already
+  /// paid back in that time. A salary or an allowance is usually more than a
+  /// week's spending, so it stays income. The person can undo either way
+  /// ([kReceivedCategory], [kRepaymentCategory]).
+  static void _findRepayments(
+      List<ExtractionResult> results, List<EntryRole> roles) {
+    final candidates = <int>[
+      for (var i = 0; i < results.length; i++)
+        if (roles[i] == EntryRole.income &&
+            results[i].category == null &&
+            results[i].currency == 'BHD' &&
+            results[i].timestamp != null &&
+            (results[i].amountFils ?? 0) > 0 &&
+            (results[i].type == TxnType.refund || _isTransfer(results[i])))
+          i,
+    ]..sort((a, b) => results[a].timestamp!.compareTo(results[b].timestamp!));
+    for (final i in candidates) {
+      final r = results[i];
+      if (r.type == TxnType.refund) {
+        roles[i] = EntryRole.repayment;
+        continue;
+      }
+      final t = r.timestamp!;
+      final from = t.subtract(kRepaymentWindow);
+      var room = 0;
+      for (var j = 0; j < results.length; j++) {
+        final o = results[j];
+        final ot = o.timestamp;
+        if (ot == null || ot.isBefore(from) || ot.isAfter(t)) continue;
+        if (o.currency != 'BHD' || j == i) continue;
+        final a = o.amountFils ?? 0;
+        if (roles[j] == EntryRole.spending) room += a;
+        if (roles[j] == EntryRole.repayment) room -= a;
+      }
+      if (r.amountFils! <= room) roles[i] = EntryRole.repayment;
+    }
   }
 
   /// Sum of spending in BHD fils. Foreign-currency entries are left out.
