@@ -49,6 +49,11 @@ class OwnAccounts {
   }
 }
 
+/// The category the person gives money received that pays back something
+/// they paid for (a friend's share of a meal they covered). Such money is
+/// taken off spending on the day it arrives.
+const String kRepaymentCategory = 'repayment';
+
 enum EntryRole {
   /// Money the user spent: counts toward the daily limit (if in BHD).
   spending,
@@ -64,6 +69,10 @@ enum EntryRole {
 
   /// Not a usable transaction (non-transaction or unparsed).
   notCounted,
+
+  /// Money received that the person marked as paid back to them
+  /// ([kRepaymentCategory]): taken off spending.
+  repayment,
 }
 
 class LedgerEntry {
@@ -89,6 +98,19 @@ class LedgerEntry {
 
   bool get countsTowardSpending =>
       role == EntryRole.spending && result.currency == 'BHD';
+
+  /// Money paid back to the person, in BHD.
+  bool get isRepayment =>
+      role == EntryRole.repayment && result.currency == 'BHD';
+
+  /// What this entry adds to spending: the amount for spending, minus the
+  /// amount for money paid back, 0 for anything else.
+  int get countedFils {
+    final a = result.amountFils ?? 0;
+    if (countsTowardSpending) return a;
+    if (isRepayment) return -a;
+    return 0;
+  }
 }
 
 /// Decides the role of every extracted result. Pure: the same input gives the
@@ -140,7 +162,9 @@ class Reconciler {
       if (r.direction == TxDirection.outgoing) {
         roles[i] = EntryRole.spending;
       } else if (r.direction == TxDirection.incoming) {
-        roles[i] = EntryRole.income;
+        roles[i] = r.category == kRepaymentCategory
+            ? EntryRole.repayment
+            : EntryRole.income;
       } else {
         continue;
       }
@@ -163,6 +187,10 @@ class Reconciler {
   static int spentFils(Iterable<LedgerEntry> entries) => entries
       .where((e) => e.countsTowardSpending)
       .fold(0, (sum, e) => sum + (e.result.amountFils ?? 0));
+
+  /// Spending minus money paid back (can be below 0 when more came back).
+  static int netFils(Iterable<LedgerEntry> entries) =>
+      entries.fold(0, (sum, e) => sum + e.countedFils);
 
   static int? _earlier(
     List<ExtractionResult> results,
@@ -192,7 +220,9 @@ class Reconciler {
   ) {
     final r = results[i];
     for (var j = i - 1; j >= 0; j--) {
-      if (roles[j] != EntryRole.spending && roles[j] != EntryRole.income) {
+      if (roles[j] != EntryRole.spending &&
+          roles[j] != EntryRole.income &&
+          roles[j] != EntryRole.repayment) {
         continue;
       }
       final o = results[j];

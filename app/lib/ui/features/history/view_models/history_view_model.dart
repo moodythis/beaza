@@ -94,6 +94,7 @@ class HistoryViewModel extends ChangeNotifier {
       if (t == null) continue;
       if (e.role != EntryRole.spending &&
           e.role != EntryRole.income &&
+          e.role != EntryRole.repayment &&
           e.role != EntryRole.internalTransfer) {
         continue;
       }
@@ -108,7 +109,8 @@ class HistoryViewModel extends ChangeNotifier {
           dayOf[k]!,
           (byDay[k]!..sort((a, b) =>
                   b.result.timestamp!.compareTo(a.result.timestamp!))),
-          Reconciler.spentFils(byDay[k]!.where((e) => e.countsTowardSpending)),
+          // Spending minus money paid back that day, never below 0.
+          Reconciler.netFils(byDay[k]!).clamp(0, 1 << 52),
         ),
     ];
     _loaded = true;
@@ -123,6 +125,12 @@ class HistoryViewModel extends ChangeNotifier {
       customCategoriesIn(await _ledger.entries());
 
   Future<void> remove(LedgerEntry entry) => _ledger.remove(entry);
+
+  /// Marks money received as paid back to the person (taken off spending),
+  /// or takes the mark off. Only that one transaction changes.
+  Future<void> setRepayment(LedgerEntry entry, bool repaid) =>
+      _ledger.setCategory(entry, repaid ? kRepaymentCategory : '',
+          sameShop: false);
 
   Future<void> edit(LedgerEntry entry,
           {required int amountFils, String? merchant}) =>

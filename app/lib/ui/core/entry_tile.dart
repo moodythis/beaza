@@ -34,6 +34,7 @@ class EntryTile extends StatelessWidget {
           child: Icon(
             switch (entry.role) {
               EntryRole.income => Icons.south_west,
+              EntryRole.repayment => Icons.reply,
               EntryRole.internalTransfer => Icons.swap_horiz,
               _ => categoryIcon(bucketOf(r)),
             },
@@ -42,9 +43,15 @@ class EntryTile extends StatelessWidget {
         ),
       ),
       title: Text(entryTitle(l10n, r)),
-      subtitle: subtitle.isEmpty ? null : Text(subtitle),
+      subtitle: entry.role == EntryRole.repayment
+          ? Text(subtitle.isEmpty
+              ? l10n.repaidNote
+              : '$subtitle · ${l10n.repaidNote}')
+          : subtitle.isEmpty
+              ? null
+              : Text(subtitle),
       trailing: Text(
-        '${entry.role == EntryRole.income ? '+' : ''}${l10n.bhd(formatFils(r.amountFils ?? 0))}',
+        '${entry.role == EntryRole.income || entry.role == EntryRole.repayment ? '+' : ''}${l10n.bhd(formatFils(r.amountFils ?? 0))}',
         style: Theme.of(context).textTheme.titleSmall,
       ),
     );

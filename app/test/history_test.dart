@@ -166,4 +166,29 @@ void main() {
     expect(find.text('Waleed Al Kabah'), findsNothing);
     expect((await ledger.entries()).single.result.merchantRaw, 'Jasmis Riffa');
   });
+
+  test('money paid back comes off the day it arrived, and can be undone',
+      () async {
+    final ledger = InMemoryLedgerRepository(initial: [
+      spend(8000, bh(2, 13), ref: 'meal'),
+      received(5000, bh(2, 18)),
+    ]);
+    final vm = HistoryViewModel(ledger: ledger);
+    await vm.load();
+    expect(vm.days.single.spentFils, 8000);
+    final money = vm.days.single.entries.firstWhere(
+        (e) => e.role == EntryRole.income);
+    await vm.setRepayment(money, true);
+    await Future<void>.delayed(Duration.zero);
+    await vm.load();
+    expect(vm.days.single.spentFils, 3000);
+    final repaid = vm.days.single.entries.firstWhere(
+        (e) => e.role == EntryRole.repayment);
+    await vm.setRepayment(repaid, false);
+    await Future<void>.delayed(Duration.zero);
+    await vm.load();
+    expect(vm.days.single.spentFils, 8000);
+    expect(vm.days.single.entries.where((e) => e.role == EntryRole.income),
+        hasLength(1));
+  });
 }

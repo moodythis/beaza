@@ -218,8 +218,18 @@ class Guardrail {
     return out;
   }
 
+  /// Money paid back to the person on [day] (marked by them), in fils.
+  int repaidOn(Iterable<LedgerEntry> entries, Day day) => entries
+      .where((e) {
+        final t = e.result.timestamp;
+        return e.isRepayment && t != null && day.contains(t);
+      })
+      .fold(0, (sum, e) => sum + (e.result.amountFils ?? 0));
+
+  /// Spending on [day] minus money paid back that day. Below 0 when more
+  /// came back than was spent, so month sums stay right.
   int spentOn(Iterable<LedgerEntry> entries, Day day) =>
-      Reconciler.spentFils(spendingOn(entries, day));
+      Reconciler.spentFils(spendingOn(entries, day)) - repaidOn(entries, day);
 
   /// Yesterday's unspent part of the base limit, capped. Only one day is
   /// carried, so rollover never compounds over a week.
@@ -243,7 +253,9 @@ class Guardrail {
   DaySummary summarize(Iterable<LedgerEntry> entries, Day day) {
     final all = entries.toList();
     final spending = spendingOn(all, day);
-    final spent = Reconciler.spentFils(spending);
+    // Money paid back today comes off today's spending, never below 0.
+    final net = Reconciler.spentFils(spending) - repaidOn(all, day);
+    final spent = net < 0 ? 0 : net;
     final micro = spending.where(isMicro).toList();
     final rollover = rolloverFor(all, day);
     return DaySummary(

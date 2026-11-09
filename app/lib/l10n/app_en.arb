@@ -778,5 +778,8 @@
   "cheaperTitle": "Cheaper options for your shops",
   "cheaperNoShops": "No shop stands out in the last 7 days yet. Try again after a few purchases.",
   "cheaperNone": "The AI had no ideas this time. Try again later.",
-  "cheaperNote": "Ideas from AI for the shops where you spent most this week. It does not know prices, so check before you switch."
+  "cheaperNote": "Ideas from AI for the shops where you spent most this week. It does not know prices, so check before you switch.",
+  "repaidSwitch": "Paid back to me",
+  "repaidHint": "Money someone returned for something you paid for. It comes off your spending today.",
+  "repaidNote": "paid back, taken off spending"
 }

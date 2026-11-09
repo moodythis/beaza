@@ -178,6 +178,17 @@ class HistoryView extends StatelessWidget {
                   style: Theme.of(sheet).textTheme.titleMedium),
               trailing: Text(l10n.bhd(formatFils(entry.result.amountFils ?? 0))),
             ),
+            if (entry.role == EntryRole.income ||
+                entry.role == EntryRole.repayment)
+              SwitchListTile(
+                key: const Key('entryRepaid'),
+                secondary: const Icon(Icons.reply),
+                title: Text(l10n.repaidSwitch),
+                subtitle: Text(l10n.repaidHint),
+                value: entry.role == EntryRole.repayment,
+                onChanged: (v) =>
+                    Navigator.of(sheet).pop(v ? 'repaid' : 'notRepaid'),
+              ),
             if (entry.role == EntryRole.spending)
               ListTile(
                 key: const Key('entryCategory'),
@@ -211,6 +222,10 @@ class HistoryView extends StatelessWidget {
         await _edit(context, entry);
       case 'delete':
         await _delete(context, entry);
+      case 'repaid':
+        await viewModel.setRepayment(entry, true);
+      case 'notRepaid':
+        await viewModel.setRepayment(entry, false);
     }
   }
 
