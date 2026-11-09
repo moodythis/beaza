@@ -58,7 +58,8 @@ const String kRepaymentCategory = 'repayment';
 const String kReceivedCategory = 'received';
 
 /// How far back spending can be paid back by a transfer found on its own.
-const Duration kRepaymentWindow = Duration(days: 7);
+/// Friends often pay back after more than a week.
+const Duration kRepaymentWindow = Duration(days: 30);
 
 enum EntryRole {
   /// Money the user spent: counts toward the daily limit (if in BHD).
@@ -194,9 +195,9 @@ class Reconciler {
   /// Money received that the person did not label is a repayment when the
   /// bank message shows it can only be one of two things and the amount fits:
   /// a shop's refund always; a transfer from someone when it is no more than
-  /// what the person spent in the 7 days before it, less what was already
-  /// paid back in that time. A salary or an allowance is usually more than a
-  /// week's spending, so it stays income. The person can undo either way
+  /// what the person spent in the 30 days before it, less what was already
+  /// paid back in that time. A salary is usually more than that, so it stays
+  /// income and is not counted twice with a budget worked out from income. The person can undo either way
   /// ([kReceivedCategory], [kRepaymentCategory]).
   static void _findRepayments(
       List<ExtractionResult> results, List<EntryRole> roles) {

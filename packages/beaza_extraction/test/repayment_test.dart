@@ -37,7 +37,7 @@ void main() {
   List<LedgerEntry> rec(List<ExtractionResult> r) =>
       reconciler.reconcile(r, OwnAccounts());
 
-  test('a transfer back within a week of spending is a repayment on its own',
+  test('a transfer back after spending is a repayment on its own',
       () {
     final e = rec([out(8000, bh(9, 13)), received(6000, bh(9, 16))]);
     expect(e[1].role, EntryRole.repayment);
@@ -47,7 +47,7 @@ void main() {
     expect(g.summarize(e, today).spentFils, 2000);
   });
 
-  test('more than the week spent (an allowance, a salary) stays income', () {
+  test('more than the month spent (a salary) stays income', () {
     final e = rec([out(8000, bh(9, 13)), received(50000, bh(9, 16))]);
     expect(e[1].role, EntryRole.income);
     expect(g.spentOn(e, today), 8000);
@@ -63,9 +63,13 @@ void main() {
     expect(e[2].role, EntryRole.income);
   });
 
-  test('spending older than 7 days is not paid back on its own', () {
-    final e = rec([out(8000, bh(1, 13)), received(6000, bh(9, 16))]);
-    expect(e[1].role, EntryRole.income);
+  test('paid back up to 30 days later counts; older spending does not', () {
+    final late = DateTime.utc(2026, 11, 30, 10);
+    expect(rec([out(8000, bh(1, 13)), received(6000, late)])[1].role,
+        EntryRole.repayment);
+    final tooLate = DateTime.utc(2026, 12, 5, 10);
+    expect(rec([out(8000, bh(1, 13)), received(6000, tooLate)])[1].role,
+        EntryRole.income);
   });
 
   test('a shop refund is always a repayment', () {
