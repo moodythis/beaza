@@ -821,5 +821,15 @@
   "profileCustomTitle": "My own amount",
   "profileCustomWho": "anyone who knows how much they want to save",
   "profileCustomHow": "Type how much to set aside each month. The rest after commitments is spread over the days left.",
-  "entryDeleted": "Deleted"
+  "entryDeleted": "Deleted",
+  "tabToday": "Today",
+  "tabInsights": "Insights",
+  "streakTitle": "Streak",
+  "streakHint": "days within your limit",
+  "challengeTileNone": "None yet",
+  "challengeTileStart": "Start one in Insights",
+  "streakValue": "{count, plural, =1{1 day} other{{count} days}}",
+  "@streakValue": {"placeholders": {"count": {"type": "int"}}},
+  "challengeTileDays": "{days, plural, =1{1 day left} other{{days} days left}}",
+  "@challengeTileDays": {"placeholders": {"days": {"type": "int"}}}
 }

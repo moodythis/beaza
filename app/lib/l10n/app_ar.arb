@@ -570,5 +570,13 @@
   "profileCustomTitle": "مبلغ أحدده بنفسي",
   "profileCustomWho": "اللي يعرف كم يبي يوفّر",
   "profileCustomHow": "اكتب كم تعزل كل شهر. الباقي بعد الالتزامات يتوزع على باقي الأيام.",
-  "entryDeleted": "انحذفت"
+  "entryDeleted": "انحذفت",
+  "tabToday": "اليوم",
+  "tabInsights": "تحليل",
+  "streakTitle": "السلسلة",
+  "streakHint": "أيام تحت حدك",
+  "challengeTileNone": "ما فيه",
+  "challengeTileStart": "ابدأ واحد من التحليل",
+  "streakValue": "{count, plural, =1{يوم} =2{يومين} other{{count} أيام}}",
+  "challengeTileDays": "{days, plural, =1{باقي يوم} =2{باقي يومين} other{باقي {days} أيام}}"
 }

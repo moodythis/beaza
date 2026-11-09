@@ -1,5 +1,6 @@
 import 'dart:async';
 
+import 'package:beaza/domain/use_cases/streak.dart';
 import 'package:beaza/domain/use_cases/custom_categories.dart';
 import 'package:beaza/data/repositories/ledger_repository.dart';
 import 'package:beaza/data/repositories/preferences_store.dart';
@@ -31,6 +32,7 @@ class HomeState {
     required this.weekMicro,
     this.weekByCategory = const [],
     this.tips = const [],
+    this.streakDays = 0,
   });
 
   final DaySummary summary;
@@ -44,6 +46,9 @@ class HomeState {
 
   /// Saving tips from rules on this phone (empty when there is too little).
   final List<SavingsTip> tips;
+
+  /// Days in a row, ending yesterday, within the limit.
+  final int streakDays;
 }
 
 class HomeViewModel extends ChangeNotifier {
@@ -235,6 +240,7 @@ class HomeViewModel extends ChangeNotifier {
         tips: savingsTips(entries, day,
             dailyLimitFils: settings.dailyLimitFils,
             microThresholdFils: settings.microThresholdFils),
+        streakDays: streakDays(entries, day, settings.dailyLimitFils),
       );
       _error = null;
     } on Exception catch (e) {

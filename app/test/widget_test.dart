@@ -68,6 +68,8 @@ void main() {
       purchase(3900, bh(9), merchant: 'BAKERY', category: 'food'),
       purchase(13200, bh(10), merchant: 'SHOP', category: 'shopping'),
     ]);
+    await tester.tap(find.byKey(const Key('tabInsights')));
+    await tester.pumpAndSettle();
     await tester.scrollUntilVisible(
       find.byKey(const Key('tipsCard')),
       300,
@@ -84,6 +86,8 @@ void main() {
     await pumpHome(tester, locale: const Locale('ar'), results: [
       purchase(13200, bh(10), merchant: 'SHOP', category: 'shopping'),
     ]);
+    await tester.tap(find.byKey(const Key('tabInsights')));
+    await tester.pumpAndSettle();
     await tester.scrollUntilVisible(
       find.byKey(const Key('tipsCard')),
       300,
@@ -96,6 +100,8 @@ void main() {
     await pumpHome(tester, results: [
       purchase(6000, bh(10), merchant: 'SHOP', category: 'bills'),
     ]);
+    await tester.tap(find.byKey(const Key('tabInsights')));
+    await tester.pumpAndSettle();
     await tester.scrollUntilVisible(
       find.byKey(const Key('tipsCard')),
       300,

@@ -4,7 +4,7 @@ import 'package:beaza/l10n/app_localizations.dart';
 import 'package:beaza/ui/core/language_controller.dart';
 import 'package:beaza/ui/core/theme.dart';
 import 'package:beaza/ui/features/home/view_models/home_view_model.dart';
-import 'package:beaza/ui/features/home/views/home_view.dart';
+import 'package:beaza/ui/features/home/views/home_shell.dart';
 import 'package:flutter/material.dart';
 
 class BeazaApp extends StatelessWidget {
@@ -48,7 +48,7 @@ class BeazaApp extends StatelessWidget {
         supportedLocales: AppLocalizations.supportedLocales,
         theme: buildTheme(Brightness.light),
         darkTheme: buildTheme(Brightness.dark),
-        home: HomeView(
+        home: HomeShell(
           viewModel: homeViewModel,
           language: language,
           account: account,

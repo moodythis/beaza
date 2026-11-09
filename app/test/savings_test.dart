@@ -135,6 +135,8 @@ void main() {
     await home.load();
     await tester.pumpWidget(BeazaApp(homeViewModel: home));
     await tester.pumpAndSettle();
+    await tester.tap(find.byKey(const Key('tabInsights')));
+    await tester.pumpAndSettle();
     await tester.scrollUntilVisible(find.byKey(const Key('savingsCard')), 300,
         scrollable: find.byType(Scrollable).first);
     expect(find.text('Subscriptions BHD 3.500 a month'), findsOneWidget);

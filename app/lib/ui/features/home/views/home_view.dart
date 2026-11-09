@@ -20,6 +20,7 @@ import 'package:beaza/ui/features/coach/views/coach_card.dart';
 import 'package:beaza/ui/features/history/view_models/history_view_model.dart';
 import 'package:beaza/ui/features/history/views/history_view.dart';
 import 'package:beaza/ui/features/home/view_models/home_view_model.dart';
+import 'package:beaza/ui/features/home/views/home_shell.dart';
 import 'package:beaza/ui/features/home/views/quick_add_sheet.dart';
 import 'package:beaza/ui/features/receipt/view_models/receipt_view_model.dart';
 import 'package:beaza/ui/features/receipt/views/receipt_sheet.dart';
@@ -37,9 +38,19 @@ class HomeView extends StatelessWidget {
     this.language,
     this.account,
     this.sync,
+    this.tab = 0,
+    this.onTab,
+    this.history,
   });
 
   final HomeViewModel viewModel;
+
+  /// 0 today, 1 history, 2 insights.
+  final int tab;
+  final ValueChanged<int>? onTab;
+
+  /// The history tab's view model, kept by [HomeShell].
+  final HistoryViewModel? history;
 
   /// Null hides the language button.
   final LanguageController? language;
@@ -53,7 +64,38 @@ class HomeView extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context);
+    final nav = NavigationBar(
+      selectedIndex: tab,
+      onDestinationSelected: onTab,
+      destinations: [
+        NavigationDestination(
+          key: const Key('tabToday'),
+          icon: const Icon(Icons.home_outlined),
+          selectedIcon: const Icon(Icons.home),
+          label: l10n.tabToday,
+        ),
+        NavigationDestination(
+          key: const Key('historyButton'),
+          icon: const Icon(Icons.history),
+          label: l10n.historyButton,
+        ),
+        NavigationDestination(
+          key: const Key('tabInsights'),
+          icon: const Icon(Icons.insights_outlined),
+          selectedIcon: const Icon(Icons.insights),
+          label: l10n.tabInsights,
+        ),
+      ],
+    );
+    final historyVm = history;
+    if (tab == 1 && historyVm != null) {
+      return Scaffold(
+        body: HistoryView(viewModel: historyVm),
+        bottomNavigationBar: nav,
+      );
+    }
     return Scaffold(
+      bottomNavigationBar: nav,
       appBar: AppBar(
         title: Text(l10n.appTitle),
         actions: [
@@ -86,12 +128,6 @@ class HomeView extends StatelessWidget {
               ),
             ),
           ),
-          IconButton(
-            key: const Key('historyButton'),
-            tooltip: l10n.historyButton,
-            icon: const Icon(Icons.history),
-            onPressed: () => _openHistory(context),
-          ),
           if (account != null)
             ListenableBuilder(
               listenable: Listenable.merge([account!, if (sync != null) sync!]),
@@ -116,7 +152,7 @@ class HomeView extends StatelessWidget {
             ),
         ],
       ),
-      floatingActionButton: Column(
+      floatingActionButton: tab != 0 ? null : Column(
         mainAxisSize: MainAxisSize.min,
         crossAxisAlignment: CrossAxisAlignment.end,
         children: [
@@ -167,9 +203,35 @@ class HomeView extends StatelessWidget {
                   : const CircularProgressIndicator(),
             );
           }
+          if (tab == 2) {
+            return ListView(
+              key: const Key('insightsList'),
+              padding: const EdgeInsets.fromLTRB(16, 16, 16, 24),
+              children: <Widget>[
+                MicroCard(today: state.summary.micro, week: state.weekMicro),
+              if (state.tips.isNotEmpty ||
+                  adviceText(l10n, state.summary.level) != null) ...[
+                const SizedBox(height: 12),
+                TipsCard(tips: state.tips, level: state.summary.level),
+              ],
+              if (viewModel.challenge != null) ...[
+                const SizedBox(height: 12),
+                ChallengeCard(viewModel: viewModel.challenge!),
+              ],
+              if (viewModel.savings != null) ...[
+                const SizedBox(height: 12),
+                SavingsHomeCard(viewModel: viewModel.savings!),
+              ],
+              if (viewModel.coach != null) ...[
+                const SizedBox(height: 12),
+                CoachCard(viewModel: viewModel.coach!),
+              ],
+              ].indexed.map((x) => Rise(index: x.$1, child: x.$2)).toList(),
+            );
+          }
           return ListView(
             padding: const EdgeInsets.fromLTRB(16, 16, 16, 96),
-            children: [
+            children: <Widget>[
               LimitCard(
                 summary: state.summary,
                 onEditLimit: () => _editLimit(context),
@@ -197,7 +259,11 @@ class HomeView extends StatelessWidget {
                 BatteryCard(onOpen: viewModel.openBatterySettings),
               ],
               const SizedBox(height: 12),
-              MicroCard(today: state.summary.micro, week: state.weekMicro),
+              TodayTiles(
+                streakDays: state.streakDays,
+                challenge: viewModel.challenge,
+                onOpen: () => onTab?.call(2),
+              ),
               const SizedBox(height: 12),
               CategoryCard(
                 totals: state.weekByCategory,
@@ -256,25 +322,7 @@ class HomeView extends StatelessWidget {
                     entry: entry,
                     onTap: () => _chooseCategory(context, entry),
                   ),
-              // Tips come after today's list, which matters most.
-              if (state.tips.isNotEmpty ||
-                  adviceText(l10n, state.summary.level) != null) ...[
-                const SizedBox(height: 12),
-                TipsCard(tips: state.tips, level: state.summary.level),
-              ],
-              if (viewModel.challenge != null) ...[
-                const SizedBox(height: 12),
-                ChallengeCard(viewModel: viewModel.challenge!),
-              ],
-              if (viewModel.savings != null) ...[
-                const SizedBox(height: 12),
-                SavingsHomeCard(viewModel: viewModel.savings!),
-              ],
-              if (viewModel.coach != null) ...[
-                const SizedBox(height: 12),
-                CoachCard(viewModel: viewModel.coach!),
-              ],
-            ],
+            ].indexed.map((x) => Rise(index: x.$1, child: x.$2)).toList(),
           );
         },
       ),
@@ -514,11 +562,20 @@ class LimitCard extends StatelessWidget {
             const SizedBox(height: 12),
             ClipRRect(
               borderRadius: BorderRadius.circular(6),
-              child: LinearProgressIndicator(
-                value: (summary.spentFils / summary.limitFils).clamp(0.0, 1.0),
-                minHeight: 10,
-                color: color,
-                backgroundColor: theme.colorScheme.surfaceContainerHighest,
+              child: TweenAnimationBuilder<double>(
+                tween: Tween<double>(
+                    begin: 0,
+                    end: (summary.spentFils / summary.limitFils)
+                        .clamp(0.0, 1.0)
+                        .toDouble()),
+                duration: motion(context, const Duration(milliseconds: 700)),
+                curve: Curves.easeOutCubic,
+                builder: (context, v, _) => LinearProgressIndicator(
+                  value: v,
+                  minHeight: 10,
+                  color: color,
+                  backgroundColor: theme.colorScheme.surfaceContainerHighest,
+                ),
               ),
             ),
             const SizedBox(height: 8),

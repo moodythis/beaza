@@ -320,6 +320,8 @@ void main() {
     await home.load();
     await tester.pumpWidget(BeazaApp(homeViewModel: home));
     await tester.pumpAndSettle();
+    await tester.tap(find.byKey(const Key('tabInsights')));
+    await tester.pumpAndSettle();
     await tester.scrollUntilVisible(find.byKey(const Key('coachAsk')), 300,
         scrollable: find.byType(Scrollable).first);
     await tester.ensureVisible(find.byKey(const Key('coachAsk')));
@@ -361,6 +363,8 @@ void main() {
     );
     await home.load();
     await tester.pumpWidget(BeazaApp(homeViewModel: home));
+    await tester.pumpAndSettle();
+    await tester.tap(find.byKey(const Key('tabInsights')));
     await tester.pumpAndSettle();
     await tester.scrollUntilVisible(find.byKey(const Key('coachAsk')), 300,
         scrollable: find.byType(Scrollable).first);
