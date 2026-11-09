@@ -410,4 +410,21 @@ void main() {
     expect(effectiveLanguage(null, const Locale('en', 'US')), 'en');
     expect(effectiveLanguage(null, const Locale('fr')), 'ar');
   });
+
+  testWidgets('Insights shows the week as a ring with each share', (tester) async {
+    await pumpHome(tester, results: [
+      purchase(3900, bh(9), merchant: 'BAKERY', category: 'food'),
+      purchase(13200, bh(10), merchant: 'SHOP', category: 'shopping'),
+    ]);
+    await tester.tap(find.byKey(const Key('tabInsights')));
+    await tester.pumpAndSettle();
+    expect(find.byKey(const Key('categoryDonut')), findsOneWidget);
+    expect(find.byKey(const Key('donut_shopping')), findsOneWidget);
+    expect(
+        find.descendant(
+            of: find.byKey(const Key('donut_shopping')),
+            matching: find.text('77%')),
+        findsOneWidget);
+    expect(find.text('17.100'), findsOneWidget); // the total in the middle
+  });
 }

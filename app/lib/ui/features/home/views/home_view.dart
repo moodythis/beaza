@@ -4,6 +4,7 @@ import 'package:beaza/domain/use_cases/savings_tips.dart';
 import 'package:beaza/domain/use_cases/spending_by_category.dart';
 import 'package:beaza/l10n/app_localizations.dart';
 import 'package:beaza/ui/features/home/views/budget_dialog.dart';
+import 'package:beaza/ui/features/home/views/category_donut.dart';
 import 'package:beaza/ui/core/alert_text.dart';
 import 'package:beaza/ui/core/amount_dialog.dart';
 import 'package:beaza/ui/core/category_picker.dart';
@@ -228,6 +229,10 @@ class HomeView extends StatelessWidget {
                   ),
                 ),
               ),
+              if (state.weekByCategory.isNotEmpty) ...[
+                const SizedBox(height: 12),
+                CategoryDonut(totals: state.weekByCategory),
+              ],
               if (state.tips.isNotEmpty ||
                   adviceText(l10n, state.summary.level) != null) ...[
                 const SizedBox(height: 12),

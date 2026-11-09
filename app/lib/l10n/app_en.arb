@@ -835,5 +835,6 @@
   "buyHold": "Wait 24 hours",
   "buyHoldDone": "On hold. Decide in Savings after 24 hours.",
   "buyHoldDefault": "Something I want",
-  "askEntryHint": "How much this week, where it went, what is left today"
+  "askEntryHint": "How much this week, where it went, what is left today",
+  "currencyShort": "BHD"
 }
