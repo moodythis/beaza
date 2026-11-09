@@ -578,5 +578,8 @@
   "challengeTileNone": "ما فيه",
   "challengeTileStart": "ابدأ واحد من التحليل",
   "streakValue": "{count, plural, =1{يوم} =2{يومين} other{{count} أيام}}",
-  "challengeTileDays": "{days, plural, =1{باقي يوم} =2{باقي يومين} other{باقي {days} أيام}}"
+  "challengeTileDays": "{days, plural, =1{باقي يوم} =2{باقي يومين} other{باقي {days} أيام}}",
+  "buyHold": "انتظر 24 ساعة",
+  "buyHoldDone": "انحط بالانتظار. قرّر من التوفير بعد 24 ساعة.",
+  "buyHoldDefault": "شي أبيه"
 }

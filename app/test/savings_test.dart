@@ -135,14 +135,9 @@ void main() {
     await home.load();
     await tester.pumpWidget(BeazaApp(homeViewModel: home));
     await tester.pumpAndSettle();
-    await tester.tap(find.byKey(const Key('tabInsights')));
-    await tester.pumpAndSettle();
-    await tester.scrollUntilVisible(find.byKey(const Key('savingsCard')), 300,
-        scrollable: find.byType(Scrollable).first);
-    expect(find.text('Subscriptions BHD 3.500 a month'), findsOneWidget);
-    await tester.ensureVisible(find.byKey(const Key('savingsCard')));
-    await tester.pumpAndSettle();
-    await tester.tap(find.byKey(const Key('savingsCard')));
+    // Savings is its own tab now, so the shield and the goal are one tap
+    // away.
+    await tester.tap(find.byKey(const Key('tabSavings')));
     await tester.pumpAndSettle();
 
     await tester.tap(find.byKey(const Key('goalSet')));
@@ -167,4 +162,38 @@ void main() {
         scrollable: find.byType(Scrollable).first);
     expect(find.text('Sample Stream'), findsOneWidget);
   });
+
+  testWidgets('"Can I buy it?" can put the thing on hold for 24 hours',
+      (tester) async {
+    final now = DateTime.utc(2026, 11, 4, 9);
+    final ledgerRepo = InMemoryLedgerRepository();
+    final repo = SavingsRepository(MemoryPreferencesStore(), clock: () => now);
+    final savings =
+        SavingsViewModel(repo: repo, ledger: ledgerRepo, clock: () => now);
+    await savings.load();
+    final home = HomeViewModel(
+      ledger: ledgerRepo,
+      settings: InMemorySettingsRepository(
+          const GuardrailSettings(dailyLimitFils: 10000)),
+      savings: savings,
+      clock: () => now,
+    );
+    await home.load();
+    await tester.pumpWidget(BeazaApp(homeViewModel: home));
+    await tester.pumpAndSettle();
+    await tester.tap(find.byKey(const Key('canIBuy')));
+    await tester.pumpAndSettle();
+    await tester.enterText(find.byKey(const Key('amountField')), '45');
+    await tester.tap(find.byKey(const Key('saveAmount')));
+    await tester.pumpAndSettle();
+    await tester.tap(find.byKey(const Key('buyHold')));
+    await tester.pumpAndSettle();
+    await tester.enterText(find.byKey(const Key('buyHoldName')), 'Sneakers');
+    await tester.tap(find.byKey(const Key('buyHoldSave')));
+    await tester.pumpAndSettle();
+    final holds = await repo.holds();
+    expect(holds.single.name, 'Sneakers');
+    expect(holds.single.amountFils, 45000);
+  });
 }
+

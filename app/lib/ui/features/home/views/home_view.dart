@@ -45,7 +45,7 @@ class HomeView extends StatelessWidget {
 
   final HomeViewModel viewModel;
 
-  /// 0 today, 1 history, 2 insights.
+  /// 0 today, 1 history, 2 insights, 3 savings (when there is one).
   final int tab;
   final ValueChanged<int>? onTab;
 
@@ -85,8 +85,22 @@ class HomeView extends StatelessWidget {
           selectedIcon: const Icon(Icons.insights),
           label: l10n.tabInsights,
         ),
+        if (viewModel.savings != null)
+          NavigationDestination(
+            key: const Key('tabSavings'),
+            icon: const Icon(Icons.savings_outlined),
+            selectedIcon: const Icon(Icons.savings),
+            label: l10n.savingsTitle,
+          ),
       ],
     );
+    final savingsVm = viewModel.savings;
+    if (tab == 3 && savingsVm != null) {
+      return Scaffold(
+        body: SavingsView(viewModel: savingsVm),
+        bottomNavigationBar: nav,
+      );
+    }
     final historyVm = history;
     if (tab == 1 && historyVm != null) {
       return Scaffold(
@@ -216,10 +230,6 @@ class HomeView extends StatelessWidget {
               if (viewModel.challenge != null) ...[
                 const SizedBox(height: 12),
                 ChallengeCard(viewModel: viewModel.challenge!),
-              ],
-              if (viewModel.savings != null) ...[
-                const SizedBox(height: 12),
-                SavingsHomeCard(viewModel: viewModel.savings!),
               ],
               if (viewModel.coach != null) ...[
                 const SizedBox(height: 12),
@@ -416,7 +426,7 @@ class HomeView extends StatelessWidget {
       if (c.monthLeftFils == null) l10n.buyNoPlan,
       l10n.buyDecide,
     ];
-    await showDialog<void>(
+    final hold = await showDialog<bool>(
       context: context,
       builder: (d) => AlertDialog(
         title: Text(l10n.canIBuyResult(money(c.itemFils))),
@@ -433,13 +443,61 @@ class HomeView extends StatelessWidget {
           ],
         ),
         actions: [
+          // The cooling-off shield, where the decision happens.
+          if (viewModel.savings != null)
+            TextButton.icon(
+              key: const Key('buyHold'),
+              icon: const Icon(Icons.shield_outlined),
+              onPressed: () => Navigator.of(d).pop(true),
+              label: Text(l10n.buyHold),
+            ),
           FilledButton(
-            onPressed: () => Navigator.of(d).pop(),
+            onPressed: () => Navigator.of(d).pop(false),
             child: Text(l10n.buyClose),
           ),
         ],
       ),
     );
+    if (hold != true || !context.mounted) return;
+    final name = await _askHoldName(context);
+    if (name == null || !context.mounted) return;
+    await viewModel.savings!.repo.addHold(name, c.itemFils);
+    if (!context.mounted) return;
+    ScaffoldMessenger.of(context)
+        .showSnackBar(SnackBar(content: Text(l10n.buyHoldDone)));
+  }
+
+  Future<String?> _askHoldName(BuildContext context) async {
+    final l10n = AppLocalizations.of(context);
+    final controller = TextEditingController();
+    final name = await showDialog<String>(
+      context: context,
+      builder: (d) => AlertDialog(
+        title: Text(l10n.holdAdd),
+        content: TextField(
+          key: const Key('buyHoldName'),
+          controller: controller,
+          autofocus: true,
+          maxLength: 40,
+          decoration: InputDecoration(labelText: l10n.holdName),
+          onSubmitted: (v) => Navigator.of(d).pop(v),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(d).pop(),
+            child: Text(l10n.cancel),
+          ),
+          FilledButton(
+            key: const Key('buyHoldSave'),
+            onPressed: () => Navigator.of(d).pop(controller.text),
+            child: Text(l10n.save),
+          ),
+        ],
+      ),
+    );
+    controller.dispose();
+    final t = name?.trim();
+    return t == null || t.isEmpty ? (name == null ? null : l10n.buyHoldDefault) : t;
   }
 
   Future<void> _openHistory(BuildContext context, {bool unsortedOnly = false}) =>
