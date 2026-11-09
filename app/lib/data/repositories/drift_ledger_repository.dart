@@ -93,7 +93,11 @@ class DriftLedgerRepository extends LedgerRepository implements Syncable {
         .get();
     for (final x in rows) {
       // "Paid back" is about one transfer, never the person's later ones.
-      if (x.category == kRepaymentCategory || x.category == '') continue;
+      if (x.category == kRepaymentCategory ||
+          x.category == kReceivedCategory ||
+          x.category == '') {
+        continue;
+      }
       if (shopKey(_toResult(x)) == key) return x.category;
     }
     return null;

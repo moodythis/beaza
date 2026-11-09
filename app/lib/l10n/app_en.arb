@@ -780,6 +780,6 @@
   "cheaperNone": "The AI had no ideas this time. Try again later.",
   "cheaperNote": "Ideas from AI for the shops where you spent most this week. It does not know prices, so check before you switch.",
   "repaidSwitch": "Paid back to me",
-  "repaidHint": "Money someone returned for something you paid for. It comes off your spending today.",
+  "repaidHint": "Money sent back for something you paid. A transfer up to what you spent in the 7 days before it, or a shop refund, is counted this way on its own; turn it off if it is not.",
   "repaidNote": "paid back, taken off spending"
 }

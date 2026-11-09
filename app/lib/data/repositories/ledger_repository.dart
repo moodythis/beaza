@@ -179,7 +179,9 @@ class InMemoryLedgerRepository extends LedgerRepository {
     final key = shopKey(r);
     if (key == null) return null;
     for (final other in _results.reversed) {
-      if (other.category == kRepaymentCategory || other.category == '') {
+      if (other.category == kRepaymentCategory ||
+          other.category == kReceivedCategory ||
+          other.category == '') {
         continue;
       }
       if (shopKey(other) == key && other.category != null) {

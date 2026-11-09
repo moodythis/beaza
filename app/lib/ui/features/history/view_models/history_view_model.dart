@@ -127,9 +127,11 @@ class HistoryViewModel extends ChangeNotifier {
   Future<void> remove(LedgerEntry entry) => _ledger.remove(entry);
 
   /// Marks money received as paid back to the person (taken off spending),
-  /// or takes the mark off. Only that one transaction changes.
+  /// or as plain income. Either choice wins over the automatic one. Only
+  /// that one transaction changes.
   Future<void> setRepayment(LedgerEntry entry, bool repaid) =>
-      _ledger.setCategory(entry, repaid ? kRepaymentCategory : '',
+      _ledger.setCategory(
+          entry, repaid ? kRepaymentCategory : kReceivedCategory,
           sameShop: false);
 
   Future<void> edit(LedgerEntry entry,

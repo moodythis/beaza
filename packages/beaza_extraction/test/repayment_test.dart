@@ -4,16 +4,29 @@ import 'package:test/test.dart';
 DateTime bh(int day, int hour) =>
     DateTime.utc(2026, 11, day, hour).subtract(kBahrainOffset);
 
-ExtractionResult tx(int fils, DateTime at, TxDirection dir,
-        {String? category, String? ref}) =>
+var _ref = 0;
+
+ExtractionResult out(int fils, DateTime at) => ExtractionResult(
+      status: ExtractionStatus.transaction,
+      amountFils: fils,
+      currency: 'BHD',
+      type: TxnType.purchase,
+      direction: TxDirection.outgoing,
+      reference: 'O${_ref++}',
+      timestamp: at,
+    );
+
+ExtractionResult received(int fils, DateTime at,
+        {String? category, TxnType type = TxnType.transferIn}) =>
     ExtractionResult(
       status: ExtractionStatus.transaction,
       amountFils: fils,
       currency: 'BHD',
-      type: dir == TxDirection.outgoing ? TxnType.purchase : TxnType.transferIn,
-      direction: dir,
+      type: type,
+      channel: type == TxnType.refund ? Channel.card : Channel.transfer,
+      direction: TxDirection.incoming,
       category: category,
-      reference: ref,
+      reference: 'I${_ref++}',
       timestamp: at,
     );
 
@@ -21,38 +34,63 @@ void main() {
   const reconciler = Reconciler();
   const g = Guardrail(GuardrailSettings(dailyLimitFils: 10000));
   const today = Day(2026, 11, 9);
+  List<LedgerEntry> rec(List<ExtractionResult> r) =>
+      reconciler.reconcile(r, OwnAccounts());
 
-  test('money received is income until the person marks it paid back', () {
-    final e = reconciler.reconcile([
-      tx(8000, bh(9, 13), TxDirection.outgoing, ref: 'A'),
-      tx(4000, bh(9, 18), TxDirection.incoming, ref: 'B'),
-    ], OwnAccounts());
+  test('a transfer back within a week of spending is a repayment on its own',
+      () {
+    final e = rec([out(8000, bh(9, 13)), received(6000, bh(9, 16))]);
+    expect(e[1].role, EntryRole.repayment);
+    expect(e[1].countsTowardSpending, isFalse);
+    expect(e[1].countedFils, -6000);
+    expect(g.spentOn(e, today), 2000);
+    expect(g.summarize(e, today).spentFils, 2000);
+  });
+
+  test('more than the week spent (an allowance, a salary) stays income', () {
+    final e = rec([out(8000, bh(9, 13)), received(50000, bh(9, 16))]);
     expect(e[1].role, EntryRole.income);
     expect(g.spentOn(e, today), 8000);
   });
 
-  test('a repayment comes off the day it arrives', () {
-    final e = reconciler.reconcile([
-      tx(8000, bh(9, 13), TxDirection.outgoing, ref: 'A'),
-      tx(4000, bh(9, 18), TxDirection.incoming,
-          category: kRepaymentCategory, ref: 'B'),
-    ], OwnAccounts());
+  test('two transfers cannot pay back the same spending twice', () {
+    final e = rec([
+      out(8000, bh(8, 13)),
+      received(6000, bh(9, 10)),
+      received(6000, bh(9, 11)),
+    ]);
     expect(e[1].role, EntryRole.repayment);
-    expect(e[1].countsTowardSpending, isFalse);
-    expect(e[1].countedFils, -4000);
-    expect(g.spentOn(e, today), 4000);
-    expect(g.summarize(e, today).spentFils, 4000);
-    expect(Reconciler.netFils(e), 4000);
+    expect(e[2].role, EntryRole.income);
+  });
+
+  test('spending older than 7 days is not paid back on its own', () {
+    final e = rec([out(8000, bh(1, 13)), received(6000, bh(9, 16))]);
+    expect(e[1].role, EntryRole.income);
+  });
+
+  test('a shop refund is always a repayment', () {
+    final e = rec([received(3000, bh(9, 16), type: TxnType.refund)]);
+    expect(e[0].role, EntryRole.repayment);
+  });
+
+  test('the person decides: received stays income, repayment always counts',
+      () {
+    final e = rec([
+      out(8000, bh(9, 13)),
+      received(6000, bh(9, 16), category: kReceivedCategory),
+      received(90000, bh(9, 17), category: kRepaymentCategory),
+    ]);
+    expect(e[1].role, EntryRole.income);
+    expect(e[2].role, EntryRole.repayment);
   });
 
   test('more paid back than spent today: the day shows 0, the sum stays exact',
       () {
-    final e = reconciler.reconcile([
-      tx(8000, bh(8, 21), TxDirection.outgoing, ref: 'A'), // yesterday
-      tx(6000, bh(9, 10), TxDirection.incoming,
-          category: kRepaymentCategory, ref: 'B'),
-      tx(1000, bh(9, 12), TxDirection.outgoing, ref: 'C'),
-    ], OwnAccounts());
+    final e = rec([
+      out(8000, bh(8, 21)),
+      received(6000, bh(9, 10)),
+      out(1000, bh(9, 12)),
+    ]);
     expect(g.summarize(e, today).spentFils, 0);
     expect(g.spentOn(e, today), -5000);
     expect(g.spentOn(e, today.previous) + g.spentOn(e, today), 3000);
