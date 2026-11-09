@@ -11,6 +11,7 @@ import 'package:beaza/ui/core/category_style.dart';
 import 'package:beaza/ui/core/entry_text.dart';
 import 'package:beaza/ui/core/entry_tile.dart';
 import 'package:beaza/ui/core/formatting.dart';
+import 'package:beaza/ui/core/text_dialog.dart';
 import 'package:beaza/ui/core/language_controller.dart';
 import 'package:beaza/ui/features/account/views/account_view.dart';
 import 'package:beaza/ui/features/ask/view_models/ask_view_model.dart';
@@ -469,35 +470,14 @@ class HomeView extends StatelessWidget {
 
   Future<String?> _askHoldName(BuildContext context) async {
     final l10n = AppLocalizations.of(context);
-    final controller = TextEditingController();
-    final name = await showDialog<String>(
-      context: context,
-      builder: (d) => AlertDialog(
-        title: Text(l10n.holdAdd),
-        content: TextField(
-          key: const Key('buyHoldName'),
-          controller: controller,
-          autofocus: true,
-          maxLength: 40,
-          decoration: InputDecoration(labelText: l10n.holdName),
-          onSubmitted: (v) => Navigator.of(d).pop(v),
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.of(d).pop(),
-            child: Text(l10n.cancel),
-          ),
-          FilledButton(
-            key: const Key('buyHoldSave'),
-            onPressed: () => Navigator.of(d).pop(controller.text),
-            child: Text(l10n.save),
-          ),
-        ],
-      ),
-    );
-    controller.dispose();
-    final t = name?.trim();
-    return t == null || t.isEmpty ? (name == null ? null : l10n.buyHoldDefault) : t;
+    final name = await askText(context,
+        title: l10n.holdAdd,
+        label: l10n.holdName,
+        fieldKey: const Key('buyHoldName'),
+        saveKey: const Key('buyHoldSave'));
+    if (name == null) return null;
+    final t = name.trim();
+    return t.isEmpty ? l10n.buyHoldDefault : t;
   }
 
   Future<void> _openHistory(BuildContext context, {bool unsortedOnly = false}) =>

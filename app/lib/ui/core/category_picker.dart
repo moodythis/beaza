@@ -1,6 +1,7 @@
 import 'package:beaza/domain/use_cases/custom_categories.dart';
 import 'package:beaza/l10n/app_localizations.dart';
 import 'package:beaza/ui/core/category_style.dart';
+import 'package:beaza/ui/core/text_dialog.dart';
 import 'package:beaza_extraction/beaza_extraction.dart' show kCategories;
 import 'package:flutter/material.dart';
 
@@ -77,32 +78,11 @@ const String _newCategory = '__new__';
 /// Asks for the name of a new category; null when cancelled or empty.
 Future<String?> askCategoryName(BuildContext context) async {
   final l10n = AppLocalizations.of(context);
-  final controller = TextEditingController();
-  final name = await showDialog<String>(
-    context: context,
-    builder: (d) => AlertDialog(
-      title: Text(l10n.newCategory),
-      content: TextField(
-        key: const Key('newCategoryField'),
-        controller: controller,
-        autofocus: true,
-        maxLength: kCustomCategoryMaxLength,
-        decoration: InputDecoration(labelText: l10n.newCategoryName),
-        onSubmitted: (v) => Navigator.of(d).pop(v),
-      ),
-      actions: [
-        TextButton(
-          onPressed: () => Navigator.of(d).pop(),
-          child: Text(l10n.cancel),
-        ),
-        FilledButton(
-          key: const Key('saveNewCategory'),
-          onPressed: () => Navigator.of(d).pop(controller.text),
-          child: Text(l10n.save),
-        ),
-      ],
-    ),
-  );
-  controller.dispose();
+  final name = await askText(context,
+      title: l10n.newCategory,
+      label: l10n.newCategoryName,
+      maxLength: kCustomCategoryMaxLength,
+      fieldKey: const Key('newCategoryField'),
+      saveKey: const Key('saveNewCategory'));
   return name == null ? null : customCategory(name);
 }
