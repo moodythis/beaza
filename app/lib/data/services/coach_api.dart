@@ -26,7 +26,11 @@ class CoachPlan {
 }
 
 class CoachException implements Exception {
-  const CoachException(this.code);
+  const CoachException(this.code, {this.detail});
+
+  /// What the phone's network layer said (no request data), so a failure
+  /// can be told apart on the phone: DNS, TLS, connection refused.
+  final String? detail;
 
   /// `coach_busy` (daily limit reached), `coach_disabled`, `network` (the
   /// server could not be reached), `timeout` (it took too long), or the
@@ -122,8 +126,10 @@ class HttpCoachApi implements CoachApi {
           .timeout(timeout);
     } on TimeoutException {
       throw const CoachException('timeout');
-    } on Exception {
-      throw const CoachException('network');
+    } on Exception catch (e) {
+      final text = e.toString().replaceAll(RegExp(r'\s+'), ' ');
+      throw CoachException('network',
+          detail: text.length > 160 ? text.substring(0, 160) : text);
     }
     Map<String, Object?> body;
     try {

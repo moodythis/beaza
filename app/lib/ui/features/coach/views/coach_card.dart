@@ -224,7 +224,9 @@ class _PlanSheet extends StatelessWidget {
                   Text(
                     switch (viewModel.error) {
                       'coach_busy' => l10n.coachBusy,
-                      'network' => l10n.coachNetwork,
+                      'network' => viewModel.errorDetail == null
+                          ? l10n.coachNetwork
+                          : '${l10n.coachNetwork} (${viewModel.errorDetail})',
                       'timeout' => l10n.coachTimeout,
                       _ => l10n.coachFailed,
                     },
@@ -293,7 +295,9 @@ class _CheaperSheet extends StatelessWidget {
                   Text(
                     switch (viewModel.error) {
                       'coach_busy' => l10n.coachBusy,
-                      'network' => l10n.coachNetwork,
+                      'network' => viewModel.errorDetail == null
+                          ? l10n.coachNetwork
+                          : '${l10n.coachNetwork} (${viewModel.errorDetail})',
                       'timeout' => l10n.coachTimeout,
                       _ => l10n.coachFailed,
                     },

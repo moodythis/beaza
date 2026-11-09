@@ -44,6 +44,10 @@ class CoachViewModel extends ChangeNotifier {
   String? _error;
   String? get error => _error;
 
+  /// The network layer's own words for the last failure, if any.
+  String? _errorDetail;
+  String? get errorDetail => _errorDetail;
+
   Future<void> load() async {
     _consented = await _prefs.read(prefName) == kCoachConsentVersion;
     notifyListeners();
@@ -91,6 +95,7 @@ class CoachViewModel extends ChangeNotifier {
     if (!_consented) return;
     _altStep = CoachStep.loading;
     _error = null;
+    _errorDetail = null;
     _noShops = false;
     notifyListeners();
     final request = alternativesRequest(await preview(language));
@@ -106,6 +111,7 @@ class CoachViewModel extends ChangeNotifier {
       _altStep = CoachStep.ready;
     } on CoachException catch (e) {
       _error = e.code;
+      _errorDetail = e.detail;
       _altStep = CoachStep.failed;
     }
     notifyListeners();
@@ -115,12 +121,14 @@ class CoachViewModel extends ChangeNotifier {
     if (!_consented) return;
     _step = CoachStep.loading;
     _error = null;
+    _errorDetail = null;
     notifyListeners();
     try {
       _plan = await _api.plan(await preview(language));
       _step = CoachStep.ready;
     } on CoachException catch (e) {
       _error = e.code;
+      _errorDetail = e.detail;
       _step = CoachStep.failed;
     }
     notifyListeners();
