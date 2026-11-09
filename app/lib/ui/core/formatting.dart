@@ -2,12 +2,22 @@
 library;
 
 import 'package:beaza_extraction/beaza_extraction.dart' show kBahrainOffset;
+import 'package:flutter/foundation.dart';
+
+/// Privacy mode (the eye button): amounts on screen show as [kMaskedAmount].
+/// Only display is affected; every sum stays in integer fils.
+final ValueNotifier<bool> amountsHidden = ValueNotifier(false);
+
+const String kMaskedAmount = '••••';
 
 final RegExp _thousands = RegExp(r'\B(?=(\d{3})+(?!\d))');
 
 /// 3500 -> "3.500", 1250000 -> "1,250.000". Western digits in both
-/// languages, as in Bahraini bank messages.
+/// languages, as in Bahraini bank messages. On screen ([group], the
+/// default) it gives [kMaskedAmount] while [amountsHidden] is on; text put in
+/// an input to edit ([group] false) is never masked.
 String formatFils(int fils, {bool group = true}) {
+  if (group && amountsHidden.value) return kMaskedAmount;
   final abs = fils.abs();
   var whole = (abs ~/ 1000).toString();
   if (group) whole = whole.replaceAll(_thousands, ',');

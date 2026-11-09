@@ -12,6 +12,7 @@ import 'package:beaza/ui/core/category_style.dart';
 import 'package:beaza/ui/core/entry_text.dart';
 import 'package:beaza/ui/core/entry_tile.dart';
 import 'package:beaza/ui/core/formatting.dart';
+import 'package:beaza/ui/core/privacy_button.dart';
 import 'package:beaza/ui/core/text_dialog.dart';
 import 'package:beaza/ui/core/language_controller.dart';
 import 'package:beaza/ui/features/account/views/account_view.dart';
@@ -25,6 +26,7 @@ import 'package:beaza/ui/features/home/view_models/home_view_model.dart';
 import 'package:beaza/ui/features/home/views/home_shell.dart';
 import 'package:beaza/ui/features/home/views/quick_add_sheet.dart';
 import 'package:beaza/ui/features/receipt/view_models/receipt_view_model.dart';
+import 'package:beaza/ui/features/report/weekly_report_view.dart';
 import 'package:beaza/ui/features/receipt/views/receipt_sheet.dart';
 import 'package:beaza/ui/features/savings/views/savings_view.dart';
 import 'package:beaza/ui/features/review/view_models/review_view_model.dart';
@@ -106,7 +108,8 @@ class HomeView extends StatelessWidget {
     final historyVm = history;
     if (tab == 1 && historyVm != null) {
       return Scaffold(
-        body: HistoryView(viewModel: historyVm),
+        body: HistoryView(
+            viewModel: historyVm, onReport: () => _openReport(context)),
         bottomNavigationBar: nav,
       );
     }
@@ -115,6 +118,7 @@ class HomeView extends StatelessWidget {
       appBar: AppBar(
         title: Text(l10n.appTitle),
         actions: [
+          const PrivacyButton(),
           if (language != null)
             TextButton.icon(
               key: const Key('languageButton'),
@@ -285,6 +289,18 @@ class HomeView extends StatelessWidget {
                 onOpen: () => onTab?.call(2),
               ),
               const SizedBox(height: 12),
+              Card(
+                margin: EdgeInsets.zero,
+                child: ListTile(
+                  key: const Key('reportOpen'),
+                  leading: const Icon(Icons.summarize_outlined),
+                  title: Text(l10n.weeklyReport),
+                  subtitle: Text(l10n.weeklyReportHint),
+                  trailing: const Icon(Icons.chevron_right),
+                  onTap: () => _openReport(context),
+                ),
+              ),
+              const SizedBox(height: 12),
               MicroCard(today: state.summary.micro, week: state.weekMicro),
               const SizedBox(height: 12),
               CategoryCard(
@@ -350,6 +366,18 @@ class HomeView extends StatelessWidget {
       ),
     );
   }
+
+  Future<void> _openReport(BuildContext context) =>
+      Navigator.of(context).push(MaterialPageRoute<void>(
+        builder: (_) => WeeklyReportView(
+          viewModel: WeeklyReportViewModel(
+            ledger: viewModel.ledger,
+            settings: viewModel.settings,
+            savings: viewModel.savings?.repo,
+            clock: viewModel.now,
+          )..load(),
+        ),
+      ));
 
   Future<void> _addExpense(BuildContext context) async {
     final l10n = AppLocalizations.of(context);

@@ -1,5 +1,6 @@
 import 'dart:async';
 
+import 'package:beaza/ui/core/privacy_button.dart';
 import 'package:beaza/data/services/hold_reminders.dart';
 import 'package:beaza/app.dart';
 import 'package:beaza/data/repositories/account_repository.dart';
@@ -82,6 +83,10 @@ Future<void> main() async {
     final storage = await openAppStorage();
     final language = LanguageController(storage.preferences);
     await language.load();
+    await loadPrivacyMode(storage.preferences);
+    unawaited(scheduleWeeklyReport(effectiveLanguage(
+            language.code, WidgetsBinding.instance.platformDispatcher.locale))
+        .catchError((Object _) {}));
     final notifier = PlatformAlertNotifier();
     final alerts = buildAlerts(storage, notifier, () => language.code);
     // Every change to the ledger or the limit re-checks the thresholds.

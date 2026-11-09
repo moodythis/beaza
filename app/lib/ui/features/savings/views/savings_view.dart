@@ -3,6 +3,7 @@ import 'package:beaza/ui/core/category_style.dart';
 import 'package:beaza/ui/core/formatting.dart';
 import 'package:beaza/ui/features/savings/view_models/savings_view_model.dart';
 import 'package:beaza_extraction/beaza_extraction.dart' show Day;
+import 'package:beaza/ui/core/privacy_button.dart';
 import 'package:flutter/material.dart';
 
 /// Goal, cooling-off shield (درع التريث) and repeating charges.
@@ -15,7 +16,10 @@ class SavingsView extends StatelessWidget {
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context);
     return Scaffold(
-      appBar: AppBar(title: Text(l10n.savingsTitle)),
+      appBar: AppBar(
+        title: Text(l10n.savingsTitle),
+        actions: const [PrivacyButton()],
+      ),
       body: ListenableBuilder(
         listenable: viewModel,
         builder: (context, _) => ListView(

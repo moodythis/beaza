@@ -48,3 +48,30 @@ class PlatformHoldReminders implements HoldReminders {
   Future<void> cancel(Hold hold) =>
       _channel.invokeMethod<void>('cancel', {'id': reminderId(hold)});
 }
+
+/// The next Saturday 21:00 Bahrain time (the end of Bahrain's week) after
+/// [now], as a UTC instant.
+DateTime nextWeekEnd(DateTime now) {
+  final local = now.toUtc().add(const Duration(hours: 3));
+  var d = DateTime.utc(local.year, local.month, local.day, 21);
+  while (d.weekday != DateTime.saturday || !d.isAfter(local)) {
+    d = d.add(const Duration(days: 1));
+  }
+  return d.subtract(const Duration(hours: 3));
+}
+
+/// "Your weekly report is ready", each Saturday at 21:00. Set again every
+/// time the app opens, so it moves to the next week by itself. The amounts
+/// are not in it: they are not known when the alarm is set, and the lock
+/// screen is no place for them.
+Future<void> scheduleWeeklyReport(String language, {DateTime? now}) async {
+  final ar = language == 'ar';
+  await const MethodChannel('beaza/notify').invokeMethod<void>('schedule', {
+    'id': 99,
+    'atMs': nextWeekEnd(now ?? DateTime.now()).millisecondsSinceEpoch,
+    'title': ar ? 'تقرير الأسبوع جاهز' : 'Your weekly report is ready',
+    'body': ar
+        ? 'شوف كم يوم التزمت بحدك ووين راحت فلوسك. افتح بيزة ← اليوم ← تقرير الأسبوع.'
+        : 'See how many days you kept to your limit and where it went. Open Beaza, Today, Weekly report.',
+  });
+}

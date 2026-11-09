@@ -5,6 +5,7 @@ import 'package:beaza/ui/core/category_picker.dart';
 import 'package:beaza/ui/core/entry_text.dart';
 import 'package:beaza/ui/core/entry_tile.dart';
 import 'package:beaza/ui/core/formatting.dart';
+import 'package:beaza/ui/core/privacy_button.dart';
 import 'package:beaza/ui/features/history/view_models/history_view_model.dart';
 import 'package:beaza_extraction/beaza_extraction.dart';
 import 'package:flutter/material.dart';
@@ -12,9 +13,12 @@ import 'package:intl/intl.dart' hide TextDirection;
 
 /// All transactions, grouped by day. Tap a purchase to change its category.
 class HistoryView extends StatelessWidget {
-  const HistoryView({super.key, required this.viewModel});
+  const HistoryView({super.key, required this.viewModel, this.onReport});
 
   final HistoryViewModel viewModel;
+
+  /// Opens the weekly report; null hides the button.
+  final VoidCallback? onReport;
 
   @override
   Widget build(BuildContext context) {
@@ -22,7 +26,19 @@ class HistoryView extends StatelessWidget {
     final locale = Localizations.localeOf(context).toString();
     final format = DateFormat.yMMMEd(locale);
     return Scaffold(
-      appBar: AppBar(title: Text(l10n.historyTitle)),
+      appBar: AppBar(
+        title: Text(l10n.historyTitle),
+        actions: [
+          if (onReport != null)
+            IconButton(
+              key: const Key('historyReport'),
+              tooltip: l10n.weeklyReport,
+              icon: const Icon(Icons.summarize_outlined),
+              onPressed: onReport,
+            ),
+          const PrivacyButton(),
+        ],
+      ),
       body: ListenableBuilder(
         listenable: viewModel,
         builder: (context, _) {
