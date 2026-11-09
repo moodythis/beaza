@@ -22,6 +22,7 @@ void main() {
     final repo = SavingsRepository(MemoryPreferencesStore(),
         clock: () => now, reminders: reminders);
     final a = await repo.addHold('Sneakers', 45000);
+    now = now.add(const Duration(minutes: 1)); // holds are named by time
     final b = await repo.addHold('Headphones', 30000);
     expect(reminders.scheduled, ['Sneakers', 'Headphones']);
     now = now.add(const Duration(hours: 25));
