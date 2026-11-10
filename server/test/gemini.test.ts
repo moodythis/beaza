@@ -1,6 +1,7 @@
 import assert from 'node:assert/strict';
 import { describe, it } from 'node:test';
-import { firstOf, GeminiAi, geminiBody, geminiText } from '../src/gemini.ts';
+import { beforeEach } from 'node:test';
+import { firstOf, GeminiAi, geminiBody, geminiText, modelDownUntil } from '../src/gemini.ts';
 
 function fakeFetch(status: number, body: unknown) {
   const calls: { url: string; init: any }[] = [];
@@ -14,6 +15,8 @@ function fakeFetch(status: number, body: unknown) {
 const reply = (text: string) => ({ candidates: [{ content: { parts: [{ text }] } }] });
 
 describe('Gemini first, Workers AI behind it', () => {
+  beforeEach(() => modelDownUntil.clear());
+
   it('chat messages become systemInstruction and contents', () => {
     const b = geminiBody({
       messages: [{ role: 'system', content: 'rules' }, { role: 'user', content: 'FACTS' }],
@@ -106,6 +109,52 @@ describe('Gemini first, Workers AI behind it', () => {
     };
     assert.deepEqual(await new GeminiAi('K', 'gemini-3.8-flash', f, 50).run('@cf/x', { messages: [] }), { response: '1. ok', provider: 'gemini' });
     assert.equal(calls.length, 3);
+  });
+
+  it('a model that does not work is skipped; the next one takes every call', async () => {
+    const calls: string[] = [];
+    const f = async (url: string) => {
+      calls.push(url);
+      const closed = url.includes('gemini-3.8-flash');
+      return { ok: !closed, status: closed ? 404 : 200, json: async () => (closed ? { error: { status: 'NOT_FOUND' } } : reply('1. ok')) };
+    };
+    let t = 1_000_000;
+    const g = new GeminiAi('K', 'gemini-3.8-flash', f, 50);
+    g.now = () => t;
+    await g.run('@cf/x', { messages: [] });
+    assert.equal(calls.length, 2);
+    calls.length = 0;
+    await g.run('@cf/x', { messages: [] });
+    await g.run('@cf/x', { messages: [] });
+    assert.deepEqual(calls.map((u) => /gemini-3\.5-flash-lite/.test(u)), [true, true]);
+    // A day later the first model is tried again.
+    t += 24 * 60 * 60 * 1000 + 1;
+    calls.length = 0;
+    await g.run('@cf/x', { messages: [] });
+    assert.match(calls[0], /gemini-3\.8-flash/);
+  });
+
+  it('a busy model is skipped for 5 minutes only', async () => {
+    const calls: string[] = [];
+    let busy = true;
+    const f = async (url: string) => {
+      calls.push(url);
+      const no = busy && url.includes('gemini-3.8-flash');
+      return { ok: !no, status: no ? 503 : 200, json: async () => (no ? {} : reply('1. ok')) };
+    };
+    let t = 5_000_000;
+    const g = new GeminiAi('K', 'gemini-3.8-flash', f, 50);
+    g.now = () => t;
+    await g.run('@cf/x', { messages: [] });
+    busy = false;
+    t += 4 * 60 * 1000;
+    calls.length = 0;
+    await g.run('@cf/x', { messages: [] });
+    assert.match(calls[0], /gemini-3\.5-flash-lite/);
+    t += 2 * 60 * 1000;
+    calls.length = 0;
+    await g.run('@cf/x', { messages: [] });
+    assert.match(calls[0], /gemini-3\.8-flash/);
   });
 
   it('a bad key is not retried on other models', async () => {

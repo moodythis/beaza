@@ -9,7 +9,7 @@ export const GEMINI_DEFAULT_MODEL = 'gemini-3.8-flash';
 /** Tried in order after the first model when it is busy (503), over quota
  * (429), or closed to the key (404): lighter free-tier Flash models. */
 export const GEMINI_BACKUP_MODELS = ['gemini-3.5-flash-lite', 'gemini-3.1-flash-lite'];
-const RETRY_STATUSES = new Set([404, 429, 500, 503, 504]);
+const RETRY_STATUSES = new Set([403, 404, 429, 500, 503, 504]);
 
 /** How long one model may take before the next is tried, so the phone
  * (which waits 75 s for a plan) gets an answer or a reason in time. */
@@ -20,6 +20,22 @@ export const GEMINI_CALL_MS = 20000;
  * it, so the extra call is rare; when the first model is slow the person
  * waits about this long plus a light model's answer, not 20 s. */
 export const GEMINI_HEDGE_MS = 6000;
+
+/** Models that failed, and until when they are skipped (ms since epoch).
+ * Kept in the Worker's memory: a model that does not work at all (closed
+ * to the key, out of quota, down) is not asked first on every request; the
+ * next one takes the whole load until the time is up. */
+export const modelDownUntil = new Map<string, number>();
+
+/** How long a failed model is skipped: a day when it is closed to the key
+ * (403, 404), 15 minutes when over quota (429), 5 minutes when busy, down
+ * or too slow (500, 503, 504). */
+export function skipFor(status: number | undefined): number {
+  if (status === 403 || status === 404) return 24 * 60 * 60 * 1000;
+  if (status === 429) return 15 * 60 * 1000;
+  if (status === 500 || status === 503 || status === 504) return 5 * 60 * 1000;
+  return 0;
+}
 
 const retryable = (e: unknown) => {
   const status = (e as { status?: number }).status;
@@ -104,6 +120,7 @@ export class GeminiAi implements AiLike {
   doFetch: FetchLike;
 
   hedgeMs: number;
+  now: () => number = Date.now;
 
   constructor(key: string, model: string = GEMINI_DEFAULT_MODEL, doFetch?: FetchLike, hedgeMs: number = GEMINI_HEDGE_MS) {
     this.key = key;
@@ -113,7 +130,11 @@ export class GeminiAi implements AiLike {
   }
 
   async run(_model: string, input: unknown): Promise<unknown> {
-    const [first, second, ...rest] = [this.model, ...GEMINI_BACKUP_MODELS.filter((m) => m !== this.model)];
+    const all = [this.model, ...GEMINI_BACKUP_MODELS.filter((m) => m !== this.model)];
+    const now = this.now();
+    const up = all.filter((m) => (modelDownUntil.get(m) ?? 0) <= now);
+    // All skipped: try them all again rather than give up.
+    const [first, second, ...rest] = up.length > 0 ? up : all;
     let last: unknown;
     try {
       return await this.hedged(first, second, input);
@@ -184,6 +205,18 @@ export class GeminiAi implements AiLike {
   }
 
   async runOn(model: string, input: unknown): Promise<unknown> {
+    try {
+      const r = await this.callModel(model, input);
+      modelDownUntil.delete(model);
+      return r;
+    } catch (e) {
+      const ms = skipFor((e as { status?: number }).status);
+      if (ms > 0) modelDownUntil.set(model, this.now() + ms);
+      throw e;
+    }
+  }
+
+  async callModel(model: string, input: unknown): Promise<unknown> {
     const i = (input ?? {}) as Record<string, unknown>;
     let res: Awaited<ReturnType<FetchLike>>;
     try {
