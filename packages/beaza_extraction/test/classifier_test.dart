@@ -13,6 +13,7 @@ void main() {
   test('Al Salam VISA prepaid card', () => expect(kindOf('Thank you for using your VISA PREPAID card XXXX1234 for BHD 3.500 at SAMPLE SHOP on 29-Apr ? 19:43 .Bal: AED 99.99'), tx));
   test('BisB debit card', () => expect(kindOf('Dear CLIENT, thank you for using your Debit card 7744 for BHD 0.300 at SAMPLE BAKERY - MAL BAH BH-000001 on 15/10 @16:31. Avail Bal BHD 9.999. Tel 17515151'), tx));
   // ila style
+  test('BisB Fawri in, second wording', () => expect(kindOf('Fawri payment BHD400.000 received from IBAN ending 5522 credited to IBAN ending 6633 ref. NBB101126TEST0A1 on 2026/11/10 15:09. Balance BHD9.999. Tel: 17515151'), tx));
   test('ila Fawri+ in', () => expect(kindOf('Success! Fawri+ transfer of BHD 50.000 from IBAN ****0777 credited to BHD Ac on 02/11/2026 12:11 Ref ALS103KAC000CCCC Balance BHD 9.999 Enquiry 17123456'), tx));
   test('ila Fawri+ out', () => expect(kindOf('Success! Fawri+ transfer of BHD 49.000 to IBAN ****9966 is completed on 01/11/2026 20:45 Ref ABCO260000000001 Balance BHD 9.999 Enquiry 17123456'), tx));
   test('ila purchase', () => expect(kindOf('Success! Purchase at SAMPLE TRADING CO W using card ****8855 for BHD 1.500 on 29/10/2026 15:42 debited from BHD Ac Balance BHD 9.999 Enquiry 17123456'), tx));

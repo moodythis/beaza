@@ -119,8 +119,10 @@ class Tier1Extractor {
       TxChannel.fawri,
       TxDirection.incoming,
       RegExp(
-        r'Fawri\+ payment BHD\s?' + _amt +
-            r' received from IBAN (?<cp>\d{4}) to IBAN (?<acct>\d{4}) ref\. (?<ref>\w+) on ' +
+        // Two wordings seen: "Fawri+ ... from IBAN 5522 to IBAN 6633" and
+        // "Fawri ... from IBAN ending 5522 credited to IBAN ending 6633".
+        r'Fawri\+? payment BHD\s?' + _amt +
+            r' received from IBAN (?:ending )?(?<cp>\d{4}) (?:credited )?to IBAN (?:ending )?(?<acct>\d{4}) ref\. (?<ref>\w+) on ' +
             _ymd,
         caseSensitive: false,
       ),

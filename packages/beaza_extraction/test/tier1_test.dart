@@ -31,6 +31,10 @@ void main() {
       '2900|outgoing|fawri|null|4411|BIB103KAA000AAAA|null|2026-10-29T21:59:00.000Z');
   check('BisB Fawri+ in', sum(ex.extract(bisbIn, family: SenderFamily.bisb)),
       '8800|incoming|fawri|6633|5522|BIB103KAB000BBBB|null|2026-10-25T03:15:00.000Z');
+  // The wording of a larger credit (a stipend): no "+", "ending", "credited to".
+  check('BisB Fawri in, "ending ... credited to" wording',
+      sum(ex.extract('Fawri payment BHD400.000 received from IBAN ending 5522 credited to IBAN ending 6633 ref. NBB101126TEST0A1 on 2026/11/10 15:09. Balance BHD9.999. Tel: 17515151', family: SenderFamily.bisb)),
+      '400000|incoming|fawri|6633|5522|NBB101126TEST0A1|null|2026-11-10T12:09:00.000Z');
   check('BisB card purchase',
       sum(ex.extract(bisbCard, family: SenderFamily.bisb, receivedAt: DateTime.utc(2026, 10, 15, 13, 40))),
       '300|outgoing|card|7744|null|null|SAMPLE BAKERY - MAL BAH BH-000001|2026-10-15T13:31:00.000Z');
