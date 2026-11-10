@@ -147,6 +147,8 @@ jobs:
       # Pictures of drawn widgets to look at (not compared with anything).
       - name: Screenshots
         run: flutter test --update-goldens screenshots
+      - name: Screenshots in the log (base64, one line each)
+        run: for f in screenshots/*.png; do echo "SHOT $(basename "$f") $(base64 -w0 "$f")"; done
       - name: Upload screenshots
         uses: actions/upload-artifact@v4
         with:
