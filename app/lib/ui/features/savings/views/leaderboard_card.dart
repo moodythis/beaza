@@ -109,20 +109,24 @@ class StreakRow extends StatelessWidget {
                   ],
                 ),
               ),
-              if (viewModel.freezeHeld)
-                Chip(
-                  key: const Key('freezeHeld'),
-                  avatar: const Icon(Icons.ac_unit, size: 18),
-                  label: Text(l10n.freezeHeld),
-                )
-              else
-                FilledButton.tonalIcon(
-                  key: const Key('freezeBuy'),
-                  icon: const Icon(Icons.ac_unit, size: 18),
-                  label: Text(l10n.freezeBuy(kFreezeCost)),
-                  onPressed: canBuy ? viewModel.buyFreeze : null,
-                ),
             ],
+          ),
+          const SizedBox(height: 8),
+          // On its own line: next to the title it ran off narrow screens.
+          Align(
+            alignment: AlignmentDirectional.centerStart,
+            child: viewModel.freezeHeld
+                ? Chip(
+                    key: const Key('freezeHeld'),
+                    avatar: const Icon(Icons.ac_unit, size: 18),
+                    label: Text(l10n.freezeHeld),
+                  )
+                : FilledButton.tonalIcon(
+                    key: const Key('freezeBuy'),
+                    icon: const Icon(Icons.ac_unit, size: 18),
+                    label: Text(l10n.freezeBuy(kFreezeCost)),
+                    onPressed: canBuy ? viewModel.buyFreeze : null,
+                  ),
           ),
           const SizedBox(height: 4),
           Text(l10n.freezeHow, style: theme.textTheme.bodySmall),
