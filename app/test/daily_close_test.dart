@@ -249,6 +249,10 @@ void main() {
     tearDown(() => amountsHidden.value = false);
 
     Future<Rig> open(WidgetTester tester) async {
+      // Tall enough for both buttons to sit above the bottom bar.
+      tester.view.physicalSize = const Size(800, 1200);
+      tester.view.devicePixelRatio = 1;
+      addTearDown(tester.view.reset);
       final r = Rig(bh(4, 20, 30), [tx(3000, bh(4, 10))]);
       await r.repo.setGoal('Laptop', 300000);
       await r.load();
