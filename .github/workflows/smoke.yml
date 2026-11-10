@@ -20,4 +20,6 @@ jobs:
         with:
           node-version: "22"
       - name: Run
-        run: node scripts/smoke.ts "${{ inputs.url }}"
+        env:
+          URL: ${{ inputs.url }}
+        run: node scripts/smoke.ts "$URL"

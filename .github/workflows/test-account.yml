@@ -40,7 +40,9 @@ jobs:
           printf '%s' "$PASSWORD" > "$RUNNER_TEMP/password"
       - name: Register on the server
         working-directory: server
-        run: node scripts/register.ts "${{ inputs.url }}" "$RUNNER_TEMP/account.json"
+        env:
+          URL: ${{ inputs.url }}
+        run: node scripts/register.ts "$URL" "$RUNNER_TEMP/account.json"
       - name: Lock the password and recovery key for the requester
         env:
           PUBLIC_KEY: ${{ inputs.public_key }}

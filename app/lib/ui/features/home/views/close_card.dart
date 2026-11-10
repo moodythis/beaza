@@ -38,7 +38,7 @@ class CloseCard extends StatelessWidget {
     final overlay = Overlay.maybeOf(context, rootOverlay: true);
     final media = MediaQuery.of(context);
     final rtl = Directionality.of(context) == TextDirection.rtl;
-    final duration = motion(context, CoinFlight.duration);
+    final duration = motion(context, CoinFlight.flightTime);
     final box = context.findRenderObject();
     final from = box is RenderBox && box.hasSize
         ? box.localToGlobal(Offset.zero) & box.size

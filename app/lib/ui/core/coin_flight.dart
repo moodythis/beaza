@@ -16,7 +16,7 @@ class CoinFlight extends StatefulWidget {
   });
 
   /// How long the whole flight takes with motion on.
-  static const Duration duration = Duration(milliseconds: 800);
+  static const Duration flightTime = Duration(milliseconds: 800);
 
   /// How many coins fly.
   static const int coins = 6;
@@ -213,7 +213,9 @@ class CoinFlightPainter extends CustomPainter {
       final center = to + Offset(0, away * (34 + 22 * q));
       final w = tp.width + 20;
       final h = tp.height + 10;
-      final left = (center.dx - w / 2).clamp(8.0, math.max(8.0, size.width - w - 8));
+      final left = (center.dx - w / 2)
+          .clamp(8.0, math.max(8.0, size.width - w - 8))
+          .toDouble();
       final rect = Rect.fromLTWH(left, center.dy - h / 2, w, h);
       canvas.saveLayer(
           rect.inflate(2), Paint()..color = Color.fromRGBO(0, 0, 0, opacity));
