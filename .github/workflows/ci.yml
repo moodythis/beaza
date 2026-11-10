@@ -175,12 +175,25 @@ jobs:
       - name: Test signing key from the secret
         env:
           KEYSTORE_B64: ${{ secrets.BEAZA_KEYSTORE_B64 }}
+          KEYSTORE_PASSWORD: ${{ secrets.BEAZA_KEYSTORE_PASSWORD }}
         run: |
-          if [ -n "$KEYSTORE_B64" ]; then
-            printf '%s' "$KEYSTORE_B64" | base64 -d > android/keystore/beaza-test.jks
-          else
+          KS=android/keystore/beaza-test.jks
+          if [ -z "$KEYSTORE_B64" ]; then
             echo "::warning::BEAZA_KEYSTORE_B64 is not set: the APK is signed with the debug key and will not install over earlier builds."
+            exit 0
           fi
+          # Pasted on a phone it can pick up spaces and line breaks: drop them.
+          if ! printf '%s' "$KEYSTORE_B64" | tr -d ' \r\n\t' | base64 -d > "$KS" 2>/dev/null; then
+            rm -f "$KS"
+            echo "::warning::BEAZA_KEYSTORE_B64 is not valid base64 (cut short when copied?): the APK is signed with the debug key."
+            exit 0
+          fi
+          if ! keytool -list -keystore "$KS" -storepass "$KEYSTORE_PASSWORD" -alias beaza >/dev/null 2>&1; then
+            rm -f "$KS"
+            echo "::warning::The test key or its password is wrong: the APK is signed with the debug key."
+            exit 0
+          fi
+          echo "Test signing key OK ($(wc -c < "$KS") bytes)"
       - name: Build APK (arm64)
         env:
           BEAZA_KEYSTORE_PASSWORD: ${{ secrets.BEAZA_KEYSTORE_PASSWORD }}
