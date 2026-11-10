@@ -292,20 +292,16 @@ void main() {
       expect(ev.overall.messages, 30);
     });
 
-    test('B1 reads every real NBB message exactly', () {
-      final real = parseGold(File('eval/real_nbb.jsonl').readAsStringSync(),
-          name: 'real_nbb.jsonl');
-      expect(real, hasLength(33));
-      final ev = evaluate(RulesSystem(), real);
+    // The 33 NBB and 1 KFH formats taken from real messages, with every
+    // account, reference and balance made up (eval/formats.jsonl).
+    test('B1 reads every message format exactly', () {
+      final formats = parseGold(File('eval/formats.jsonl').readAsStringSync(),
+          name: 'formats.jsonl');
+      expect(formats, hasLength(34));
+      expect(formats.where((m) => m.id.startsWith('f-nbb-')), hasLength(33));
+      final ev = evaluate(RulesSystem(), formats);
       expect(ev.errors.map((e) => '${e.id} ${e.field}'), isEmpty);
       expect(ev.overall.acceptedRate, 1.0);
-    });
-
-    test('B1 reads the other real messages exactly', () {
-      final real = parseGold(File('eval/real_other.jsonl').readAsStringSync(),
-          name: 'real_other.jsonl');
-      final ev = evaluate(RulesSystem(), real);
-      expect(ev.errors.map((e) => '${e.id} ${e.field}'), isEmpty);
     });
 
     test('report has the summary and every section', () {

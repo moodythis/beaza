@@ -7,3 +7,6 @@ pubspec.lock
 .vscode/
 .DS_Store
 app/screenshots/*.png
+
+# The test signing key comes from a GitHub Actions secret; never commit it.
+app/android/keystore/*.jks

@@ -29,20 +29,27 @@ android {
         versionName = flutter.versionName
     }
 
-    // TEST ONLY key, committed so every CI build installs over the last one.
-    // See ../keystore/README.md. Never use it for a store release.
+    // The test key that signs CI builds, so each one installs over the last.
+    // It is not in the repository: CI writes it from the BEAZA_KEYSTORE_B64
+    // secret and reads the password from BEAZA_KEYSTORE_PASSWORD. Without
+    // them the build uses the debug key. Never use it for a store release.
+    val testKey = file("../keystore/beaza-test.jks")
+    val testKeyPassword = System.getenv("BEAZA_KEYSTORE_PASSWORD")
+    val hasTestKey = testKey.exists() && !testKeyPassword.isNullOrEmpty()
     signingConfigs {
-        create("beazaTest") {
-            storeFile = file("../keystore/beaza-test.jks")
-            storePassword = "removed-from-repo"
-            keyAlias = "beaza"
-            keyPassword = "removed-from-repo"
+        if (hasTestKey) {
+            create("beazaTest") {
+                storeFile = testKey
+                storePassword = testKeyPassword
+                keyAlias = "beaza"
+                keyPassword = testKeyPassword
+            }
         }
     }
 
     buildTypes {
         release {
-            signingConfig = signingConfigs.getByName("beazaTest")
+            signingConfig = if (hasTestKey) signingConfigs.getByName("beazaTest") else signingConfigs.getByName("debug")
             // R8 renamed ML Kit's internal classes and broke the receipt
             // reader on a real phone (NullPointerException inside ML Kit).
             // The app is small, so it is not shrunk or renamed.

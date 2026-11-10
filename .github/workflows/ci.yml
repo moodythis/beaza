@@ -28,9 +28,8 @@ jobs:
           dart run bin/evaluate.dart --data eval/seed.jsonl --check
           dart run bin/evaluate.dart --data eval/seed.jsonl --system B1,B2,B3 --out eval/results
           cat eval/results/report.md >> "$GITHUB_STEP_SUMMARY"
-          dart run bin/evaluate.dart --data eval/real_nbb.jsonl --out eval/results/real_nbb
-          cat eval/results/real_nbb/report.md >> "$GITHUB_STEP_SUMMARY"
-          dart run bin/evaluate.dart --data eval/real_other.jsonl --out eval/results/real_other
+          dart run bin/evaluate.dart --data eval/formats.jsonl --out eval/results/formats
+          cat eval/results/formats/report.md >> "$GITHUB_STEP_SUMMARY"
       - name: Upload evaluation report
         uses: actions/upload-artifact@v4
         with:
@@ -173,7 +172,18 @@ jobs:
       # Release build signed with the debug key: installable for testing, no
       # INTERNET permission (the template adds it only to debug builds).
       # The permission list below is printed so every run documents it.
+      - name: Test signing key from the secret
+        env:
+          KEYSTORE_B64: ${{ secrets.BEAZA_KEYSTORE_B64 }}
+        run: |
+          if [ -n "$KEYSTORE_B64" ]; then
+            printf '%s' "$KEYSTORE_B64" | base64 -d > android/keystore/beaza-test.jks
+          else
+            echo "::warning::BEAZA_KEYSTORE_B64 is not set: the APK is signed with the debug key and will not install over earlier builds."
+          fi
       - name: Build APK (arm64)
+        env:
+          BEAZA_KEYSTORE_PASSWORD: ${{ secrets.BEAZA_KEYSTORE_PASSWORD }}
         run: flutter build apk --release --no-shrink --target-platform android-arm64
       - name: List APK permissions
         run: |
