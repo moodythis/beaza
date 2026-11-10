@@ -195,9 +195,11 @@ class Reconciler {
   /// Money received that the person did not label is a repayment when the
   /// bank message shows it can only be one of two things and the amount fits:
   /// a shop's refund always; a transfer from someone when it is no more than
-  /// what the person spent in the 30 days before it, less what was already
-  /// paid back in that time. A salary is usually more than that, so it stays
-  /// income and is not counted twice with a budget worked out from income. The person can undo either way
+  /// the largest single purchase of the 30 days before it, and no more than
+  /// what was spent in that time less what was already paid back. A salary
+  /// or a stipend is more than any one purchase, so it stays income and is
+  /// not counted twice with a budget worked out from income, even when the
+  /// month's spending adds up to as much. The person can undo either way
   /// ([kReceivedCategory], [kRepaymentCategory]).
   static void _findRepayments(
       List<ExtractionResult> results, List<EntryRole> roles) {
@@ -220,16 +222,25 @@ class Reconciler {
       final t = r.timestamp!;
       final from = t.subtract(kRepaymentWindow);
       var room = 0;
+      var largest = 0;
       for (var j = 0; j < results.length; j++) {
         final o = results[j];
         final ot = o.timestamp;
         if (ot == null || ot.isBefore(from) || ot.isAfter(t)) continue;
         if (o.currency != 'BHD' || j == i) continue;
         final a = o.amountFils ?? 0;
-        if (roles[j] == EntryRole.spending) room += a;
+        if (roles[j] == EntryRole.spending) {
+          room += a;
+          if (a > largest) largest = a;
+        }
         if (roles[j] == EntryRole.repayment) room -= a;
       }
-      if (r.amountFils! <= room) roles[i] = EntryRole.repayment;
+      // Someone pays back for one thing the person paid for, so it is never
+      // more than the largest single purchase; a stipend or a salary is,
+      // even when the month's spending adds up to as much.
+      if (r.amountFils! <= room && r.amountFils! <= largest) {
+        roles[i] = EntryRole.repayment;
+      }
     }
   }
 

@@ -53,6 +53,32 @@ void main() {
     expect(g.spentOn(e, today), 8000);
   });
 
+  test('a stipend stays income even when the month\'s spending adds up to it',
+      () {
+    // 45 purchases of 9.000 = 405.000 spent; 400.000 arrives.
+    final e = rec([
+      for (var i = 0; i < 45; i++) out(9000, bh(1 + i % 8, 10 + i % 10)),
+      received(400000, bh(9, 16)),
+    ]);
+    expect(e.last.role, EntryRole.income);
+    // A friend's 9.000 the same day is still money paid back.
+    final f = rec([
+      for (var i = 0; i < 45; i++) out(9000, bh(1 + i % 8, 10 + i % 10)),
+      received(400000, bh(9, 16)),
+      received(9000, bh(9, 17)),
+    ]);
+    expect(f.last.role, EntryRole.repayment);
+  });
+
+  test('no more than the largest single purchase', () {
+    final e = rec([
+      out(5000, bh(8, 13)),
+      out(5000, bh(8, 14)),
+      received(8000, bh(9, 10)),
+    ]);
+    expect(e[2].role, EntryRole.income);
+  });
+
   test('two transfers cannot pay back the same spending twice', () {
     final e = rec([
       out(8000, bh(8, 13)),
