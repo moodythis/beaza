@@ -641,5 +641,16 @@
   "subsLastPaid": "آخر دفعة: {date}",
   "subsManualLine": "{every} · أضفته بنفسك · الجاية {date}",
   "subsRemove": "شيل",
-  "subsReminderOnly": "للتذكير بس: الخصم الحقيقي ينحسب من رسالة البنك."
+  "subsReminderOnly": "للتذكير بس: الخصم الحقيقي ينحسب من رسالة البنك.",
+  "paceTitle": "وتيرة اليوم",
+  "paceBasis": "{days, plural, =1{من يوم واحد} =2{من يومين} few{من {days} أيام} other{من {days} يوم}}",
+  "paceToday": "اليوم",
+  "paceUsual": "يومك العادي",
+  "paceLimit": "الحد {amount}",
+  "paceOnTrack": "في يومك العادي تصرف {more} بعد هالوقت. بتخلّص اليوم وباقي لك {left}.",
+  "paceTight": "باقي يومك العادي ({more}) يدخل في الحد، بس بيظل لك {left} بس.",
+  "paceWillPass": "انتبه: لو كمّلت يومك مثل العادة ({more})، بتعدّي حد اليوم بـ {over}.",
+  "paceWillPassAt": "انتبه: لو كمّلت يومك مثل العادة ({more})، بتعدّي حد اليوم بـ {over} تقريباً الساعة {time}.",
+  "pacePassed": "عدّيت حد اليوم. عادةً تصرف {more} بعد هالوقت، ولو وقفت الحين توفّرها.",
+  "paceLate": "منها {amount} عادةً بعد الساعة 10 بالليل."
 }

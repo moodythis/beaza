@@ -24,6 +24,7 @@ import 'package:beaza/ui/features/history/view_models/history_view_model.dart';
 import 'package:beaza/ui/features/history/views/history_view.dart';
 import 'package:beaza/ui/features/home/view_models/home_view_model.dart';
 import 'package:beaza/ui/features/home/views/home_shell.dart';
+import 'package:beaza/ui/features/home/views/pace_card.dart';
 import 'package:beaza/ui/features/home/views/quick_add_sheet.dart';
 import 'package:beaza/ui/features/receipt/view_models/receipt_view_model.dart';
 import 'package:beaza/ui/features/report/weekly_report_view.dart';
@@ -263,6 +264,10 @@ class HomeView extends StatelessWidget {
                 fromBudget: viewModel.budget != null,
                 onCanIBuy: () => _canIBuy(context),
               ),
+              if (state.pace != null) ...[
+                const SizedBox(height: 12),
+                PaceCard(pace: state.pace!),
+              ],
               if (viewModel.smsAllowed == false) ...[
                 const SizedBox(height: 12),
                 SmsCard(

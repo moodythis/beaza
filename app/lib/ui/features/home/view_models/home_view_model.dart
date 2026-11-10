@@ -21,6 +21,7 @@ import 'package:beaza/domain/use_cases/savings_tips.dart';
 import 'package:beaza/domain/use_cases/spending_by_category.dart';
 import 'package:beaza_assistant/beaza_assistant.dart' show DraftTransaction, ExpenseParser;
 import 'package:beaza_extraction/beaza_extraction.dart';
+import 'package:beaza/domain/use_cases/day_pace.dart';
 import 'package:flutter/foundation.dart';
 
 /// What the home screen shows for one Bahrain day. Immutable snapshot.
@@ -33,7 +34,11 @@ class HomeState {
     this.weekByCategory = const [],
     this.tips = const [],
     this.streakDays = 0,
+    this.pace,
   });
+
+  /// Today against the person's usual day; null with too little history.
+  final DayPace? pace;
 
   final DaySummary summary;
 
@@ -232,8 +237,10 @@ class HomeViewModel extends ChangeNotifier {
       }
       final guardrail = Guardrail(settings);
       final day = Day.of(_clock());
+      final summary = guardrail.summarize(entries, day);
       _state = HomeState(
-        summary: guardrail.summarize(entries, day),
+        summary: summary,
+        pace: dayPace(entries, _clock(), limitFils: summary.limitFils),
         today: guardrail.spendingOn(entries, day).reversed.toList(),
         weekMicro: guardrail.weeklyMicro(entries, day),
         weekByCategory: spendingByCategory(entries, day.addDays(-6), day),
