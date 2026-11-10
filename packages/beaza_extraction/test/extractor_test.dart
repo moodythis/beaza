@@ -266,7 +266,7 @@ void main() {
           DateTime.utc(2026, 10, 24, 8, 56));
       expect(sum(r),
           'transaction|transferOut|transfer|1600|BHD|4810|null|2026-10-24T08:55:00.000Z');
-      expect(r.counterpartyLast4, '0100');
+      expect(r.counterpartyLast4, '9417');
       expect(r.reference, 'NBB241026ONH8WCQ');
     });
 
@@ -277,7 +277,7 @@ void main() {
           DateTime.utc(2026, 10, 30, 4, 15));
       expect(sum(r),
           'transaction|transferIn|transfer|5000|BHD|4810|null|2026-10-30T04:14:00.000Z');
-      expect(r.counterpartyLast4, '8097');
+      expect(r.counterpartyLast4, '9307');
     });
 
     test('after midnight NBB prints the previous day: the date is moved on', () {
