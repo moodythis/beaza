@@ -1,4 +1,5 @@
 import 'package:beaza/data/repositories/savings_repository.dart';
+import 'package:beaza/domain/use_cases/daily_close.dart';
 import 'package:flutter/services.dart';
 
 /// "Did you decide?" when a 24-hour hold ends. Scheduled on the phone with
@@ -73,5 +74,23 @@ Future<void> scheduleWeeklyReport(String language, {DateTime? now}) async {
     'body': ar
         ? 'شوف كم يوم التزمت بحدك ووين راحت فلوسك. افتح بيزة ← اليوم ← تقرير الأسبوع.'
         : 'See how many days you kept to your limit and where it went. Open Beaza, Today, Weekly report.',
+  });
+}
+
+/// "Time to close your day", at 21:30 Bahrain time on the next day that is
+/// not closed yet. Set again when the app opens and after a close. No
+/// amount is in it: the lock screen is no place for one, and what is left
+/// can still change after the alarm is set.
+Future<void> scheduleDailyClose(String language,
+    {required bool closedToday, DateTime? now}) async {
+  final ar = language == 'ar';
+  await const MethodChannel('beaza/notify').invokeMethod<void>('schedule', {
+    'id': 98,
+    'atMs': nextCloseReminder(now ?? DateTime.now(), closedToday: closedToday)
+        .millisecondsSinceEpoch,
+    'title': ar ? 'وقت تقفيلة اليوم' : 'Time to close your day',
+    'body': ar
+        ? 'إذا بقى شي من حد اليوم، افتح بيزة وودّه لهدف التوفير أو رحّله لباجر.'
+        : 'If some of today\'s limit is left, open Beaza and send it to your goal or carry it to tomorrow.',
   });
 }

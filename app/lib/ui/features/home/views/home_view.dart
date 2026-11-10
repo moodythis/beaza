@@ -23,6 +23,7 @@ import 'package:beaza/ui/features/coach/views/coach_card.dart';
 import 'package:beaza/ui/features/history/view_models/history_view_model.dart';
 import 'package:beaza/ui/features/history/views/history_view.dart';
 import 'package:beaza/ui/features/home/view_models/home_view_model.dart';
+import 'package:beaza/ui/features/home/views/close_card.dart';
 import 'package:beaza/ui/features/home/views/home_shell.dart';
 import 'package:beaza/ui/features/home/views/pace_card.dart';
 import 'package:beaza/ui/features/home/views/quick_add_sheet.dart';
@@ -264,6 +265,16 @@ class HomeView extends StatelessWidget {
                 fromBudget: viewModel.budget != null,
                 onCanIBuy: () => _canIBuy(context),
               ),
+              if (state.close != null) ...[
+                const SizedBox(height: 12),
+                CloseCard(
+                  offer: state.close!,
+                  goalName: viewModel.savings?.goal?.name,
+                  baseLimitFils: state.summary.baseLimitFils,
+                  onClose: (kind) => viewModel.closeDay(state.close!, kind),
+                  onSetGoal: () => onTab?.call(3),
+                ),
+              ],
               if (state.pace != null) ...[
                 const SizedBox(height: 12),
                 PaceCard(pace: state.pace!),

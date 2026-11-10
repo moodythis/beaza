@@ -15,6 +15,7 @@ class GuardrailAlerts {
     required SettingsRepository settings,
     required AlertLogStore logs,
     required AlertPresenter present,
+    this.boost,
     DateTime Function()? clock,
   })  : _ledger = ledger,
         _settings = settings,
@@ -27,6 +28,10 @@ class GuardrailAlerts {
   final AlertLogStore _logs;
   final AlertPresenter _present;
   final DateTime Function() _clock;
+
+  /// The one-day addition to [day]'s limit carried over by the daily
+  /// close, given the day's own limit; null when there is none.
+  final Future<int> Function(Day day, int baseLimitFils)? boost;
 
   Future<void> _queue = Future.value();
 
@@ -44,7 +49,8 @@ class GuardrailAlerts {
       final settings = await _settings.load();
       final entries = await _ledger.entries();
       final day = Day.of(now);
-      final summary = Guardrail(settings).summarize(entries, day);
+      final summary = Guardrail(settings).summarize(entries, day,
+          boostFils: await boost?.call(day, settings.dailyLimitFils) ?? 0);
       final decision = AlertPlanner(settings)
           .decide(summary, await _logs.load(day), now: now);
       await _logs.save(decision.log);

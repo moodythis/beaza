@@ -11,7 +11,7 @@
 // Drafted for a graduation project; a lawyer should review them before a
 // public release.
 
-export const PRIVACY_VERSION = '2026-11-06.1';
+export const PRIVACY_VERSION = '2026-11-10.1';
 export const TERMS_VERSION = '2026-11-03';
 
 type Section = { title: string; body: string[] };
@@ -27,7 +27,7 @@ const en: Section[] = [
     title: 'What never leaves your phone',
     body: [
       'The text of bank messages is never stored or sent anywhere. The app reads it, keeps only the amount, merchant, time and type, and stores those in an encrypted database on your phone.',
-      'Without an account, nothing leaves your phone, except what you choose to say by voice and the spending details you choose to send for an AI savings plan (next sections).',
+      'Without an account, nothing leaves your phone, except what you choose to say by voice, the spending details you choose to send for an AI savings plan, and your points and streak if you join the online leaderboard (next sections).',
     ],
   },
   {
@@ -40,7 +40,8 @@ const en: Section[] = [
   {
     title: 'Demo points and offers',
     body: [
-      'Points are counted on your phone from your own data (days within your limit and purchases skipped after waiting). The partners, offers and codes are invented for this prototype; no real shop, bank or brand takes part, and no data is shared with anyone.',
+      'Points are counted on your phone from your own data (days within your limit, purchases skipped after waiting and unspent money you sent to your goal when closing a day). The partners, offers and codes are invented for this prototype; no real shop, bank or brand takes part, and no data is shared with anyone.',
+      'The streak, the streak freeze and the practice leaderboard also work on your phone only. The other names on the practice leaderboard are examples written into the app, not people.',
     ],
   },
   {
@@ -60,6 +61,14 @@ const en: Section[] = [
     title: 'Receipt photos and voice read with AI (optional, separate consent)',
     body: [
       'Only if you turn it on in the receipt or quick add screen: a receipt photo (made smaller on your phone) or a voice recording of up to 60 seconds is sent to Beaza\'s server, which asks an AI model to read it (see "Which AI models"). A photo can show whatever is on the receipt, such as the last digits of a card, so crop or cover anything you do not want to send. Beaza does not store the photo, the recording or the text: you see what was read and change it before anything is saved. Without this, photos are read on your phone and speech goes to your phone\'s own speech service. You can turn it off at any time in the same place.',
+    ],
+  },
+  {
+    title: 'Online leaderboard (optional, separate consent)',
+    body: [
+      'Only if you join on the leaderboard card, Beaza sends its server four things: a random id your phone made up for the board, how you want to be shown (a persona title or a nickname you typed), your points of the last 30 days, and your streak in days. Nothing else is sent: no amount, no shop, no bank, no message text, no e-mail address and no account. The id is linked to nothing, and the server keeps only a one-way hash of it.',
+      'A nickname is public: everyone who opens the board sees it. It can hold only letters and spaces (3 to 15), so a phone number, a CPR number, an e-mail address or a social handle cannot be typed in; do not use your full real name. The server keeps the 50 best rows and deletes a row that was not updated for 30 days. Points and streaks are reported by each phone and are not verified.',
+      'You can leave at any time on the same card: your row is deleted from the server at once and your phone makes a new id if you join again.',
     ],
   },
   {
@@ -139,7 +148,7 @@ const ar: Section[] = [
     title: 'ما لا يغادر هاتفك أبدًا',
     body: [
       'نص رسائل البنك لا يُحفظ ولا يُرسل إلى أي مكان. يقرؤه التطبيق ويحتفظ فقط بالمبلغ والتاجر والوقت والنوع، ويخزنها في قاعدة بيانات مشفرة على هاتفك.',
-      'بدون حساب، لا يغادر هاتفك أي شيء، إلا ما تختار أن تقوله بصوتك، وتفاصيل الصرف التي تختار إرسالها لخطة التوفير بالذكاء الاصطناعي (القسمان التاليان).',
+      'بدون حساب، لا يغادر هاتفك أي شيء، إلا ما تختار أن تقوله بصوتك، وتفاصيل الصرف التي تختار إرسالها لخطة التوفير بالذكاء الاصطناعي، ونقاطك وشعلتك إذا انضممت إلى لوحة الصدارة على الإنترنت (الأقسام التالية).',
     ],
   },
   {
@@ -152,7 +161,8 @@ const ar: Section[] = [
   {
     title: 'النقاط والعروض التجريبية',
     body: [
-      'تُحسب النقاط على هاتفك من بياناتك أنت (الأيام التي بقيت فيها تحت حدك، والمشتريات التي تركتها بعد الانتظار). المحلات والعروض والأكواد وهمية لهذا النموذج التجريبي؛ لا يشارك أي محل أو بنك أو علامة تجارية حقيقية، ولا تُشارك أي بيانات مع أحد.',
+      'تُحسب النقاط على هاتفك من بياناتك أنت (الأيام التي بقيت فيها تحت حدك، والمشتريات التي تركتها بعد الانتظار، والفائض الذي أرسلته لهدفك عند تقفيل اليوم). المحلات والعروض والأكواد وهمية لهذا النموذج التجريبي؛ لا يشارك أي محل أو بنك أو علامة تجارية حقيقية، ولا تُشارك أي بيانات مع أحد.',
+      'الشعلة ودرع تجميدها ولوحة الصدارة التشجيعية تعمل أيضًا على هاتفك فقط. الأسماء الأخرى في اللوحة التشجيعية أمثلة مكتوبة في التطبيق وليست أشخاصًا.',
     ],
   },
   {
@@ -172,6 +182,14 @@ const ar: Section[] = [
     title: 'قراءة صور الإيصالات والصوت بالذكاء الاصطناعي (اختيارية، بموافقة منفصلة)',
     body: [
       'فقط إذا شغّلتها من شاشة الإيصال أو الإضافة السريعة: تُرسل صورة الإيصال (بعد تصغيرها على هاتفك) أو تسجيل صوتي حتى 60 ثانية إلى خادم بيزة، الذي يطلب من نموذج ذكاء اصطناعي قراءتها (انظر «نماذج الذكاء الاصطناعي»). قد تُظهر الصورة كل ما في الإيصال، مثل آخر أرقام البطاقة، فقص أو غطِّ ما لا تريد إرساله. لا يحفظ بيزة الصورة ولا التسجيل ولا النص: ترى ما قُرئ وتعدّله قبل الحفظ. بدون هذا الخيار، تُقرأ الصور على هاتفك ويذهب الكلام إلى خدمة الكلام في هاتفك. ويمكنك إيقافها في أي وقت من المكان نفسه.',
+    ],
+  },
+  {
+    title: 'لوحة الصدارة على الإنترنت (اختيارية، بموافقة منفصلة)',
+    body: [
+      'فقط إذا انضممت من بطاقة لوحة الصدارة، يرسل بيزة إلى خادمه أربعة أشياء: معرّفًا عشوائيًا أنشأه هاتفك للوحة، وطريقة ظهورك (لقب رمزي أو اسم مستعار كتبته)، ونقاطك في آخر 30 يومًا، وعدد أيام شعلتك. لا يُرسل أي شيء آخر: لا مبلغ، ولا محل، ولا بنك، ولا نص رسالة، ولا بريد إلكتروني، ولا حساب. المعرّف غير مرتبط بأي شيء، والخادم يحتفظ ببصمة له باتجاه واحد فقط.',
+      'الاسم المستعار علني: يراه كل من يفتح اللوحة. يقبل الحروف والمسافات فقط (من 3 إلى 15)، فلا يمكن كتابة رقم هاتف أو رقم شخصي أو بريد إلكتروني أو اسم حساب؛ ولا تستخدم اسمك الحقيقي الكامل. يحتفظ الخادم بأفضل 50 صفًا ويحذف الصف الذي لم يُحدَّث منذ 30 يومًا. النقاط والشعلات يرسلها كل هاتف عن نفسه ولا يتم التحقق منها.',
+      'يمكنك الخروج في أي وقت من البطاقة نفسها: يُحذف صفك من الخادم فورًا، وينشئ هاتفك معرّفًا جديدًا إذا انضممت مرة أخرى.',
     ],
   },
   {

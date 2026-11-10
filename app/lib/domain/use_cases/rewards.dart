@@ -1,4 +1,5 @@
 import 'package:beaza/data/repositories/savings_repository.dart';
+import 'package:beaza/domain/use_cases/daily_close.dart';
 import 'package:beaza/domain/use_cases/spending_by_category.dart';
 import 'package:beaza_extraction/beaza_extraction.dart';
 
@@ -78,13 +79,17 @@ const List<DemoOffer> kDemoOffers = [
 /// Points: 10 for each finished day of the last 30 that stayed within the
 /// daily limit (only days with some spending, and only when a limit is
 /// set), plus 20 for each purchase skipped after the cooling-off wait.
+/// and [kClosePoints] for each day of the last 30 whose unspent money was
+/// sent to the goal ([sweeps]).
 int pointsEarned(
   Iterable<LedgerEntry> entries,
   GuardrailSettings settings,
   List<Hold> holds,
-  Day today,
-) {
-  var points = 20 * holds.where((h) => h.decision == 'skipped').length;
+  Day today, {
+  int sweeps = 0,
+}) {
+  var points = 20 * holds.where((h) => h.decision == 'skipped').length +
+      kClosePoints * sweeps;
   if (settings.dailyLimitFils <= 0) return points;
   final list = entries.toList();
   for (var i = 1; i <= 30; i++) {

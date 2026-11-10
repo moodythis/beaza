@@ -2,6 +2,7 @@ import 'package:beaza/l10n/app_localizations.dart';
 import 'package:beaza/ui/core/category_style.dart';
 import 'package:beaza/ui/core/formatting.dart';
 import 'package:beaza/ui/features/savings/view_models/savings_view_model.dart';
+import 'package:beaza/ui/features/savings/views/leaderboard_card.dart';
 import 'package:beaza_extraction/beaza_extraction.dart' show Day;
 import 'package:beaza/ui/core/privacy_button.dart';
 import 'package:flutter/material.dart';
@@ -33,6 +34,8 @@ class SavingsView extends StatelessWidget {
             if (viewModel.rewards != null) ...[
               const SizedBox(height: 12),
               RewardsCard(viewModel: viewModel),
+              const SizedBox(height: 12),
+              LeaderboardCard(viewModel: viewModel),
             ],
           ],
         ),
@@ -577,8 +580,10 @@ class RewardsCard extends StatelessWidget {
               ],
             ),
           ),
+          StreakRow(viewModel: viewModel),
+          const Divider(height: 24),
           Padding(
-            padding: const EdgeInsets.fromLTRB(16, 8, 16, 0),
+            padding: const EdgeInsets.fromLTRB(16, 0, 16, 0),
             child: Text(l10n.rewardsHow, style: theme.textTheme.bodySmall),
           ),
           SwitchListTile(

@@ -123,11 +123,15 @@ int dayShareFils(int leftFils, Day day, {bool weighted = false}) {
 /// the rest of the month without any extra rule. Savings are never part of
 /// it. Pure and integer-only, so the same ledger always gives the same
 /// number.
+///
+/// [setAsideFils] is unspent money the person already sent to their goal
+/// this month (the daily close): it is no longer there to spend.
 int safeDailyLimitFils(
   BudgetPlan plan,
   Iterable<LedgerEntry> entries,
-  Day today,
-) {
+  Day today, {
+  int setAsideFils = 0,
+}) {
   final guardrail = Guardrail(const GuardrailSettings(dailyLimitFils: 0));
   var spentBefore = 0;
   for (var d = Day(today.year, today.month, 1);
@@ -135,7 +139,7 @@ int safeDailyLimitFils(
       d = d.addDays(1)) {
     spentBefore += guardrail.spentOn(entries, d);
   }
-  return dayShareFils(plan.freeFils - spentBefore, today,
+  return dayShareFils(plan.freeFils - spentBefore - setAsideFils, today,
       weighted: plan.weekendWeighted);
 }
 
@@ -183,6 +187,7 @@ PurchaseCheck checkPurchase({
   required Iterable<LedgerEntry> entries,
   required Day today,
   BudgetPlan? plan,
+  int setAsideFils = 0,
 }) {
   assert(itemFils > 0);
   final days = dailyLimitFils > 0
@@ -202,7 +207,7 @@ PurchaseCheck checkPurchase({
       d = d.addDays(1)) {
     spent += guardrail.spentOn(entries, d);
   }
-  final monthLeft = plan.freeFils - spent;
+  final monthLeft = plan.freeFils - spent - setAsideFils;
   final daysInMonth = Day(today.year, today.month + 1, 1).addDays(-1).day;
   final daysAfter = daysInMonth - today.day;
   int perDay(int left) =>

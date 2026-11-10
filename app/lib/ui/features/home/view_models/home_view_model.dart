@@ -21,6 +21,7 @@ import 'package:beaza/domain/use_cases/savings_tips.dart';
 import 'package:beaza/domain/use_cases/spending_by_category.dart';
 import 'package:beaza_assistant/beaza_assistant.dart' show DraftTransaction, ExpenseParser;
 import 'package:beaza_extraction/beaza_extraction.dart';
+import 'package:beaza/domain/use_cases/daily_close.dart';
 import 'package:beaza/domain/use_cases/day_pace.dart';
 import 'package:flutter/foundation.dart';
 
@@ -35,7 +36,12 @@ class HomeState {
     this.tips = const [],
     this.streakDays = 0,
     this.pace,
+    this.close,
   });
+
+  /// A day that can be closed now (its unspent money sent to the goal or
+  /// carried to the next day); null when there is none.
+  final CloseOffer? close;
 
   /// Today against the person's usual day; null with too little history.
   final DayPace? pace;
@@ -226,10 +232,16 @@ class HomeViewModel extends ChangeNotifier {
       var settings = await _settings.load();
       _budget = await _readBudget();
       final plan = _budget;
+      final closeRepo = savings?.repo;
+      final closes =
+          closeRepo == null ? const <DayClose>[] : await closeRepo.closes();
+      _closes = closes;
       if (plan != null) {
         // The limit follows the month: each day it is worked out again from
-        // what is left, so yesterday's overspending is already in it.
-        final fils = safeDailyLimitFils(plan, entries, Day.of(_clock()));
+        // what is left, so yesterday's overspending is already in it. Money
+        // already sent to the goal this month is no longer there to spend.
+        final fils = safeDailyLimitFils(plan, entries, Day.of(_clock()),
+            setAsideFils: sweptThisMonth(closes, Day.of(_clock())));
         if (fils != settings.dailyLimitFils) {
           settings = settings.copyWith(dailyLimitFils: fils);
           await _settings.save(settings);
@@ -237,9 +249,24 @@ class HomeViewModel extends ChangeNotifier {
       }
       final guardrail = Guardrail(settings);
       final day = Day.of(_clock());
-      final summary = guardrail.summarize(entries, day);
+      final summary = guardrail.summarize(entries, day,
+          boostFils: boostFor(closes, day, settings.dailyLimitFils));
+      // The limit shown each day is remembered, so yesterday can be closed
+      // against the limit it really had.
+      final limits = closeRepo == null
+          ? const <Day, int>{}
+          : await closeRepo.recordLimit(day, summary.limitFils);
       _state = HomeState(
         summary: summary,
+        close: closeRepo == null
+            ? null
+            : closeOffer(
+                entries: entries,
+                now: _clock(),
+                todayLimitFils: summary.limitFils,
+                yesterdayLimitFils: limits[day.previous],
+                closes: closes,
+              ),
         pace: dayPace(entries, _clock(), limitFils: summary.limitFils),
         today: guardrail.spendingOn(entries, day).reversed.toList(),
         weekMicro: guardrail.weeklyMicro(entries, day),
@@ -351,6 +378,40 @@ class HomeViewModel extends ChangeNotifier {
   }
 
 
+  List<DayClose> _closes = const [];
+
+  /// Tells Android when to remind about the daily close; null in tests.
+  Future<void> Function({required bool closedToday})? closeReminder;
+
+  /// Closes [offer]'s day: its unspent money goes to the savings goal
+  /// ([CloseKind.goal], which also earns [kClosePoints]) or is carried to
+  /// the next day's limit, capped at half of it ([CloseKind.rollover]).
+  /// Returns the fils moved, or 0 when the day was closed already or there
+  /// is no goal to send it to.
+  Future<int> closeDay(CloseOffer offer, CloseKind kind) async {
+    final repo = savings?.repo;
+    if (repo == null) return 0;
+    final int fils;
+    if (kind == CloseKind.goal) {
+      if (await repo.goal() == null) return 0;
+      fils = offer.surplusFils;
+    } else {
+      final base = (await _settings.load()).dailyLimitFils;
+      fils = offer.rolloverFils(base);
+    }
+    if (fils <= 0) return 0;
+    if (!await repo.addClose(DayClose(offer.day, kind, fils))) return 0;
+    if (kind == CloseKind.goal) await repo.addToGoal(fils);
+    final today = Day.of(_clock());
+    try {
+      await closeReminder?.call(closedToday: offer.day == today);
+    } on Exception {
+      // A reminder that cannot be set must not undo the close.
+    }
+    await load();
+    return fils;
+  }
+
   /// "Can I buy it?" for [itemFils]: today's room and, with a budget plan,
   /// the limit from tomorrow with and without it. Nothing is saved.
   Future<PurchaseCheck> checkPurchase(int itemFils) async {
@@ -362,6 +423,7 @@ class HomeViewModel extends ChangeNotifier {
       entries: await _ledger.entries(),
       today: Day.of(_clock()),
       plan: _budget,
+      setAsideFils: sweptThisMonth(_closes, Day.of(_clock())),
     );
   }
 

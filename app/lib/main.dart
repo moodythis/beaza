@@ -13,11 +13,13 @@ import 'package:beaza/data/services/coach_api.dart';
 import 'package:beaza/data/services/device_service.dart';
 import 'package:beaza/data/services/google_auth.dart';
 import 'package:beaza/data/services/key_store.dart';
+import 'package:beaza/data/services/leaderboard_api.dart';
 import 'package:beaza/data/services/receipt_scanner.dart';
 import 'package:beaza/data/services/sms_source.dart';
 import 'package:beaza/data/services/storage.dart';
 import 'package:beaza/data/services/sync_api.dart';
 import 'package:beaza/data/services/voice_input.dart';
+import 'package:beaza/domain/use_cases/daily_close.dart';
 import 'package:beaza/domain/use_cases/data_export.dart';
 import 'package:beaza/domain/use_cases/guardrail_alerts.dart';
 import 'package:beaza/domain/use_cases/message_intake.dart';
@@ -30,7 +32,9 @@ import 'package:beaza/domain/use_cases/auto_categorize.dart';
 import 'package:beaza/ui/features/challenge/view_models/challenge_view_model.dart';
 import 'package:beaza/ui/features/coach/view_models/coach_view_model.dart';
 import 'package:beaza/ui/features/home/view_models/home_view_model.dart';
+import 'package:beaza/ui/features/savings/view_models/leaderboard_sync.dart';
 import 'package:beaza/ui/features/savings/view_models/savings_view_model.dart';
+import 'package:beaza_extraction/beaza_extraction.dart' show Day;
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:path_provider/path_provider.dart';
@@ -59,6 +63,9 @@ GuardrailAlerts buildAlerts(
       ledger: storage.ledger,
       settings: storage.settings,
       logs: storage.alertLogs,
+      // A surplus carried over by the daily close raises today's limit.
+      boost: (day, base) async => boostFor(
+          await SavingsRepository(storage.preferences).closes(), day, base),
       present: (alert) {
         final text =
             alertText(notificationLocalizations(chosenLanguage()), alert);
@@ -127,6 +134,10 @@ Future<void> main() async {
         ),
         ledger: storage.ledger,
         rewards: RewardsRepository(storage.preferences),
+        board: LeaderboardSync(
+          api: HttpLeaderboardApi(),
+          preferences: storage.preferences,
+        ),
         settings: storage.settings,
       )..load(),
       coach: CoachViewModel(
@@ -141,6 +152,18 @@ Future<void> main() async {
         device: device,
       ),
     )..load();
+    // The daily close reminder (21:30, no amounts), set again after a close.
+    String lang() => effectiveLanguage(
+        language.code, WidgetsBinding.instance.platformDispatcher.locale);
+    homeViewModel.closeReminder = ({required bool closedToday}) =>
+        scheduleDailyClose(lang(), closedToday: closedToday);
+    unawaited(() async {
+      final today = Day.of(DateTime.now());
+      final closes = await SavingsRepository(storage.preferences).closes();
+      await scheduleDailyClose(lang(),
+          closedToday: closes.any((c) => c.day == today));
+    }()
+        .catchError((Object _) {}));
     // The sync account. Nothing is sent anywhere until the user creates an
     // account or logs in.
     final api = SyncApi();

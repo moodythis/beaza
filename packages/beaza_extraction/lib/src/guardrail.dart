@@ -250,14 +250,17 @@ class Guardrail {
     return AlertLevel.normal;
   }
 
-  DaySummary summarize(Iterable<LedgerEntry> entries, Day day) {
+  /// [boostFils] is a one-day addition to the limit the app worked out
+  /// (unspent money the person chose to carry over from the day before).
+  DaySummary summarize(Iterable<LedgerEntry> entries, Day day,
+      {int boostFils = 0}) {
     final all = entries.toList();
     final spending = spendingOn(all, day);
     // Money paid back today comes off today's spending, never below 0.
     final net = Reconciler.spentFils(spending) - repaidOn(all, day);
     final spent = net < 0 ? 0 : net;
     final micro = spending.where(isMicro).toList();
-    final rollover = rolloverFor(all, day);
+    final rollover = rolloverFor(all, day) + (boostFils < 0 ? 0 : boostFils);
     return DaySummary(
       day: day,
       baseLimitFils: settings.dailyLimitFils,

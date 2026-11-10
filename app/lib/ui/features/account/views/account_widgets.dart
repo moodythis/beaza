@@ -171,6 +171,9 @@ Future<void> openLegal(
 const int kPrivacyCoachSection = 4;
 const int kPrivacyMediaSection = 6;
 
+/// Where the online leaderboard is explained.
+const int kPrivacyBoardSection = 7;
+
 /// The full text of the privacy notice or the terms, in the app's language.
 /// Readable before agreeing, without internet.
 class LegalView extends StatefulWidget {

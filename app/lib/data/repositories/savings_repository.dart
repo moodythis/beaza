@@ -2,6 +2,7 @@ import 'dart:convert';
 
 import 'package:beaza/data/services/hold_reminders.dart';
 import 'package:beaza/data/repositories/preferences_store.dart';
+import 'package:beaza/domain/use_cases/daily_close.dart';
 import 'package:beaza/domain/use_cases/subscriptions.dart';
 import 'package:beaza_extraction/beaza_extraction.dart' show Day;
 import 'package:flutter/foundation.dart';
@@ -110,6 +111,11 @@ class SavingsRepository extends ChangeNotifier {
   static const String holdsKey = 'holds.v1';
   static const String goalKey = 'goal.v1';
   static const String subsKey = 'subs.manual.v1';
+  static const String closesKey = 'closes.v1';
+  static const String limitsKey = 'limits.v1';
+
+  /// Days kept in the close list and the limit history.
+  static const int keptDays = 90;
 
   final PreferencesStore _prefs;
   final DateTime Function() _clock;
@@ -225,6 +231,62 @@ class SavingsRepository extends ChangeNotifier {
   Future<void> clearGoal() async {
     await _prefs.write(goalKey, null);
     notifyListeners();
+  }
+
+  /// Closed days (the daily close), oldest first.
+  Future<List<DayClose>> closes() async {
+    final raw = await _prefs.read(closesKey);
+    if (raw == null) return [];
+    try {
+      return [
+        for (final j in jsonDecode(raw) as List)
+          DayClose.fromJson((j as Map).cast<String, Object?>()),
+      ];
+    } on Object {
+      return [];
+    }
+  }
+
+  /// Records that [close.day] was closed. A day is closed once: a second
+  /// close of the same day is ignored and returns false.
+  Future<bool> addClose(DayClose close) async {
+    final list = await closes();
+    if (list.any((c) => c.day == close.day)) return false;
+    list.add(close);
+    final from = Day.of(_clock()).addDays(-keptDays);
+    list.removeWhere((c) => c.day.compareTo(from) < 0);
+    await _prefs.write(
+        closesKey, jsonEncode([for (final c in list) c.toJson()]));
+    notifyListeners();
+    return true;
+  }
+
+  /// The limit the app showed on each of the last [keptDays] days it was
+  /// opened.
+  Future<Map<Day, int>> limitHistory() async {
+    final raw = await _prefs.read(limitsKey);
+    if (raw == null) return {};
+    try {
+      return {
+        for (final MapEntry(:key, :value) in (jsonDecode(raw) as Map).entries)
+          parseDayKey(key as String): value as int,
+      };
+    } on Object {
+      return {};
+    }
+  }
+
+  /// Remembers [day]'s limit and returns the history. Does not notify:
+  /// nothing on screen depends on it by itself.
+  Future<Map<Day, int>> recordLimit(Day day, int limitFils) async {
+    final map = await limitHistory();
+    if (limitFils <= 0 || map[day] == limitFils) return map;
+    map[day] = limitFils;
+    final from = day.addDays(-keptDays);
+    map.removeWhere((d, _) => d.compareTo(from) < 0);
+    await _prefs.write(limitsKey,
+        jsonEncode({for (final e in map.entries) dayKey(e.key): e.value}));
+    return map;
   }
 
   Future<List<ManualSubscription>> manualSubscriptions() async {

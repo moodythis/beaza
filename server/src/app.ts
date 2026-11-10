@@ -23,6 +23,7 @@ import { fetchGoogleKeys, verifyGoogleIdToken } from './google.ts';
 import { coach } from './coach.ts';
 import { alternatives } from './alternatives.ts';
 import { categorize } from './categorize.ts';
+import { leaveBoard, postBoard, readBoard } from './leaderboard.ts';
 import { firstOf, GeminiAi } from './gemini.ts';
 import { readExpenses, readReceipt, readVoice } from './media.ts';
 import type { AiLike } from './coach.ts';
@@ -170,6 +171,13 @@ async function dispatch(route: string, url: URL, ctx: Ctx): Promise<Record<strin
       return readVoice(await readJson(ctx.request, MAX_MEDIA_BODY), ctx.db, ctx.ai, ctx.now, ctx.coachCap);
     case 'POST /v1/expenses':
       return readExpenses(await readJson(ctx.request), ctx.db, ctx.ai, ctx.now, ctx.coachCap);
+    case 'GET /v1/leaderboard':
+      return readBoard(ctx.db);
+    case 'POST /v1/leaderboard':
+      // No account: a random id the phone made up, points and streak only.
+      return postBoard(await readJson(ctx.request), ctx.db, ctx.now);
+    case 'POST /v1/leaderboard/leave':
+      return leaveBoard(await readJson(ctx.request), ctx.db);
     default:
       throw new HttpError(404, 'not_found');
   }
