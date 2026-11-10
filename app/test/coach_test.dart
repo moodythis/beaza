@@ -397,6 +397,60 @@ void main() {
     expect(vm.altStep, CoachStep.ready);
   });
 
+  test('the same totals give the last AI plan at once, without the server',
+      () async {
+    final (vm, api, prefs) = await make();
+    await vm.agree();
+    await vm.requestPlan('ar');
+    await vm.requestPlan('ar');
+    expect(api.sent, hasLength(1));
+    expect(vm.plan!.text, '1. خفّف التسوق.');
+    expect(vm.plan!.fromModel, isTrue);
+    // Another language is another request.
+    await vm.requestPlan('en');
+    expect(api.sent, hasLength(2));
+    // A plan written by rules is not kept.
+    prefs.values.remove(CoachViewModel.planCacheKey);
+    final rules = _RulesCoach();
+    final vm2 = CoachViewModel(
+      api: rules,
+      preferences: prefs,
+      ledger: InMemoryLedgerRepository(initial: sample()),
+      settings: InMemorySettingsRepository(
+          const GuardrailSettings(dailyLimitFils: 10000)),
+      clock: () => now,
+    );
+    await vm2.load();
+    await vm2.requestPlan('ar');
+    await vm2.requestPlan('ar');
+    expect(rules.calls, 2);
+  });
+
+  test('cheaper options are kept a week for the same shops', () async {
+    var at = now;
+    final api = FakeCoach();
+    final prefs = MemoryPreferencesStore();
+    final vm = CoachViewModel(
+      api: api,
+      preferences: prefs,
+      ledger: InMemoryLedgerRepository(initial: sample()),
+      settings: InMemorySettingsRepository(
+          const GuardrailSettings(dailyLimitFils: 10000)),
+      clock: () => at,
+    );
+    await vm.load();
+    await vm.agree();
+    await vm.requestAlternatives('en');
+    await vm.requestAlternatives('en');
+    expect(api.altSent, hasLength(1));
+    expect(vm.alternatives!.options.single.idea, 'Try a cheaper outlet.');
+    at = now.add(const Duration(days: 8));
+    await vm.requestAlternatives('en');
+    expect(api.altSent, hasLength(2));
+    await vm.withdraw();
+    expect(prefs.values.containsKey(CoachViewModel.altCacheKey), isFalse);
+  });
+
   testWidgets('the plan tile on Today asks for the AI plan in one tap',
       (tester) async {
     final (coach, api, _) = await make();
@@ -423,3 +477,13 @@ void main() {
   });
 }
 
+
+class _RulesCoach extends FakeCoach {
+  int calls = 0;
+
+  @override
+  Future<CoachPlan> plan(Map<String, Object> request) async {
+    calls++;
+    return const CoachPlan(text: '1. rules', fromModel: false);
+  }
+}

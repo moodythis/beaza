@@ -1,3 +1,5 @@
+import 'dart:convert';
+
 import 'package:beaza/data/repositories/ledger_repository.dart';
 import 'package:beaza/data/repositories/preferences_store.dart';
 import 'package:beaza/data/repositories/settings_repository.dart';
@@ -25,6 +27,14 @@ class CoachViewModel extends ChangeNotifier {
         _clock = clock ?? DateTime.now;
 
   static const String prefName = 'coachConsent';
+
+  /// The last AI plan and the request it answered: the same totals give
+  /// the same plan at once, without asking the server again.
+  static const String planCacheKey = 'coach.lastPlan';
+
+  /// The last cheaper options and the shops they were for, kept a week.
+  static const String altCacheKey = 'coach.lastAlternatives';
+  static const Duration altCacheAge = Duration(days: 7);
 
   final CoachApi _api;
   final PreferencesStore _prefs;
@@ -71,6 +81,8 @@ class CoachViewModel extends ChangeNotifier {
   /// Withdraws the consent; nothing is sent again until the person agrees.
   Future<void> withdraw() async {
     await _prefs.write(prefName, null);
+    await _prefs.write(planCacheKey, null);
+    await _prefs.write(altCacheKey, null);
     _consented = false;
     _plan = null;
     _step = CoachStep.idle;
@@ -106,9 +118,30 @@ class CoachViewModel extends ChangeNotifier {
       notifyListeners();
       return;
     }
+    final shops = _shopKey(request);
+    final cached = await _cachedAlternatives(shops);
+    if (cached != null) {
+      _alternatives = cached;
+      _altStep = CoachStep.ready;
+      notifyListeners();
+      return;
+    }
     try {
       _alternatives = await _api.alternatives(request);
       _altStep = CoachStep.ready;
+      if (_alternatives!.options.isNotEmpty) {
+        await _prefs.write(
+            altCacheKey,
+            jsonEncode({
+              'shops': shops,
+              'at': _clock().toUtc().millisecondsSinceEpoch,
+              'provider': _alternatives!.provider,
+              'options': [
+                for (final o in _alternatives!.options)
+                  {'shop': o.shop, 'idea': o.idea},
+              ],
+            }));
+      }
     } on CoachException catch (e) {
       _error = e.code;
       _errorDetail = e.detail;
@@ -123,14 +156,81 @@ class CoachViewModel extends ChangeNotifier {
     _error = null;
     _errorDetail = null;
     notifyListeners();
-    try {
-      _plan = await _api.plan(await preview(language));
+    final request = await preview(language);
+    final key = jsonEncode(request);
+    final cached = await _cachedPlan(key);
+    if (cached != null) {
+      _plan = cached;
       _step = CoachStep.ready;
+      notifyListeners();
+      return;
+    }
+    try {
+      _plan = await _api.plan(request);
+      _step = CoachStep.ready;
+      // Only the AI's plans are kept: a plan written by rules is asked
+      // again next time, when the AI may answer.
+      if (_plan!.fromModel) {
+        await _prefs.write(planCacheKey,
+            jsonEncode({'request': key, 'text': _plan!.text, 'provider': _plan!.provider}));
+      }
     } on CoachException catch (e) {
       _error = e.code;
       _errorDetail = e.detail;
       _step = CoachStep.failed;
     }
     notifyListeners();
+  }
+
+  Future<CoachPlan?> _cachedPlan(String request) async {
+    try {
+      final raw = await _prefs.read(planCacheKey);
+      if (raw == null) return null;
+      final m = jsonDecode(raw) as Map<String, dynamic>;
+      if (m['request'] != request || m['text'] is! String) return null;
+      return CoachPlan(
+          text: m['text'] as String,
+          fromModel: true,
+          provider: m['provider'] as String?);
+    } on FormatException {
+      return null;
+    } on TypeError {
+      return null;
+    }
+  }
+
+  /// The shops asked about, in a fixed order and without the visit counts,
+  /// which change with every purchase while the ideas do not.
+  static String _shopKey(Map<String, Object> request) {
+    final shops = request['shops'];
+    final names = [
+      if (shops is List)
+        for (final s in shops)
+          if (s is Map && s['name'] is String) (s['name'] as String).toUpperCase(),
+    ]..sort();
+    return '${request['language']}|${names.join('|')}';
+  }
+
+  Future<CheaperOptions?> _cachedAlternatives(String shops) async {
+    try {
+      final raw = await _prefs.read(altCacheKey);
+      if (raw == null) return null;
+      final m = jsonDecode(raw) as Map<String, dynamic>;
+      if (m['shops'] != shops) return null;
+      final at = DateTime.fromMillisecondsSinceEpoch(m['at'] as int, isUtc: true);
+      final age = _clock().toUtc().difference(at);
+      if (age.isNegative || age > altCacheAge) return null;
+      return CheaperOptions(
+        options: [
+          for (final o in m['options'] as List)
+            CheaperOption(shop: o['shop'] as String, idea: o['idea'] as String),
+        ],
+        provider: m['provider'] as String?,
+      );
+    } on FormatException {
+      return null;
+    } on TypeError {
+      return null;
+    }
   }
 }

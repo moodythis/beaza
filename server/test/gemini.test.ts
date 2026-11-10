@@ -70,6 +70,44 @@ describe('Gemini first, Workers AI behind it', () => {
     assert.equal(calls.length, 2);
   });
 
+  it('a slow first model: the backup is asked too and its answer wins', async () => {
+    const calls: string[] = [];
+    const f = async (url: string) => {
+      calls.push(url);
+      const slow = url.includes('gemini-3.8-flash');
+      await new Promise((r) => setTimeout(r, slow ? 300 : 5));
+      return { ok: true, status: 200, json: async () => reply(slow ? '1. slow' : '1. fast') };
+    };
+    const g = new GeminiAi('K', 'gemini-3.8-flash', f, 20);
+    const t0 = Date.now();
+    assert.deepEqual(await g.run('@cf/x', { messages: [{ role: 'user', content: 'hi' }] }), { response: '1. fast', provider: 'gemini' });
+    assert.ok(Date.now() - t0 < 250);
+    assert.equal(calls.length, 2);
+    assert.match(calls[1], /gemini-3\.5-flash-lite/);
+  });
+
+  it('a quick first model: no second call', async () => {
+    const calls: string[] = [];
+    const f = async (url: string) => {
+      calls.push(url);
+      return { ok: true, status: 200, json: async () => reply('1. ok') };
+    };
+    await new GeminiAi('K', 'gemini-3.8-flash', f, 50).run('@cf/x', { messages: [{ role: 'user', content: 'hi' }] });
+    await new Promise((r) => setTimeout(r, 80));
+    assert.equal(calls.length, 1);
+  });
+
+  it('both first models busy: the third is tried', async () => {
+    const calls: string[] = [];
+    const f = async (url: string) => {
+      calls.push(url);
+      const last = url.includes('gemini-3.1-flash-lite');
+      return { ok: last, status: last ? 200 : 503, json: async () => (last ? reply('1. ok') : { error: { status: 'UNAVAILABLE' } }) };
+    };
+    assert.deepEqual(await new GeminiAi('K', 'gemini-3.8-flash', f, 50).run('@cf/x', { messages: [] }), { response: '1. ok', provider: 'gemini' });
+    assert.equal(calls.length, 3);
+  });
+
   it('a bad key is not retried on other models', async () => {
     const { f, calls } = fakeFetch(400, { error: { status: 'INVALID_ARGUMENT', message: 'API key not valid' } });
     await assert.rejects(new GeminiAi('K', 'gemini-3.8-flash', f).run('@cf/x', { messages: [] }), /gemini 400/);

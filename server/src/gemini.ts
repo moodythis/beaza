@@ -15,6 +15,17 @@ const RETRY_STATUSES = new Set([404, 429, 500, 503, 504]);
  * (which waits 75 s for a plan) gets an answer or a reason in time. */
 export const GEMINI_CALL_MS = 20000;
 
+/** When the first model has not answered in this time, the first backup is
+ * asked too and the first good answer wins. Most answers come well inside
+ * it, so the extra call is rare; when the first model is slow the person
+ * waits about this long plus a light model's answer, not 20 s. */
+export const GEMINI_HEDGE_MS = 6000;
+
+const retryable = (e: unknown) => {
+  const status = (e as { status?: number }).status;
+  return status !== undefined && RETRY_STATUSES.has(status);
+};
+
 type FetchLike = (url: string, init: { method: string; headers: Record<string, string>; body: string }) =>
   Promise<{ ok: boolean; status: number; json(): Promise<unknown> }>;
 
@@ -92,25 +103,84 @@ export class GeminiAi implements AiLike {
   model: string;
   doFetch: FetchLike;
 
-  constructor(key: string, model: string = GEMINI_DEFAULT_MODEL, doFetch?: FetchLike) {
+  hedgeMs: number;
+
+  constructor(key: string, model: string = GEMINI_DEFAULT_MODEL, doFetch?: FetchLike, hedgeMs: number = GEMINI_HEDGE_MS) {
     this.key = key;
     this.model = model;
+    this.hedgeMs = hedgeMs;
     this.doFetch = doFetch ?? ((url, init) => fetch(url, { ...init, signal: AbortSignal.timeout(GEMINI_CALL_MS) }));
   }
 
   async run(_model: string, input: unknown): Promise<unknown> {
-    const models = [this.model, ...GEMINI_BACKUP_MODELS.filter((m) => m !== this.model)];
+    const [first, second, ...rest] = [this.model, ...GEMINI_BACKUP_MODELS.filter((m) => m !== this.model)];
     let last: unknown;
-    for (const model of models) {
+    try {
+      return await this.hedged(first, second, input);
+    } catch (e) {
+      last = e;
+      if (!retryable(e)) throw e;
+    }
+    for (const model of rest) {
       try {
         return await this.runOn(model, input);
       } catch (e) {
         last = e;
-        const status = (e as { status?: number }).status;
-        if (status === undefined || !RETRY_STATUSES.has(status)) throw e;
+        if (!retryable(e)) throw e;
       }
     }
     throw last;
+  }
+
+  /** [a]; [b] as well when [a] fails in a way worth retrying, or has not
+   * answered in [hedgeMs]. The first answer wins. A plain refusal from [a]
+   * (400: a bad request) ends it, as before, unless [b] is already asked. */
+  hedged(a: string, b: string | undefined, input: unknown): Promise<unknown> {
+    if (!b) return this.runOn(a, input);
+    return new Promise((resolve, reject) => {
+      let settled = false;
+      let running = 0;
+      let bStarted = false;
+      let timer: ReturnType<typeof setTimeout> | undefined;
+      const finish = () => {
+        settled = true;
+        if (timer !== undefined) clearTimeout(timer);
+      };
+      const start = (model: string) => {
+        running++;
+        const t0 = Date.now();
+        this.runOn(model, input).then(
+          (r) => {
+            // Model and time only, never the request or the reply.
+            console.log(JSON.stringify({ ai: model, ms: Date.now() - t0, ok: true }));
+            if (settled) return;
+            finish();
+            resolve(r);
+          },
+          (e) => {
+            console.log(JSON.stringify({ ai: model, ms: Date.now() - t0, ok: false, status: (e as { status?: number }).status }));
+            running--;
+            if (settled) return;
+            if (!bStarted && retryable(e)) {
+              startB();
+              return;
+            }
+            if (running === 0) {
+              finish();
+              reject(e);
+            }
+          },
+        );
+      };
+      const startB = () => {
+        if (bStarted || settled) return;
+        bStarted = true;
+        if (timer !== undefined) clearTimeout(timer);
+        start(b);
+      };
+      start(a);
+      if (!settled && !bStarted) timer = setTimeout(startB, this.hedgeMs);
+    });
   }
 
   async runOn(model: string, input: unknown): Promise<unknown> {
