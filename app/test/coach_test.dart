@@ -396,4 +396,30 @@ void main() {
     expect(vm.alternatives!.options.single.shop, 'REDTAG MANAMA');
     expect(vm.altStep, CoachStep.ready);
   });
+
+  testWidgets('the plan tile on Today asks for the AI plan in one tap',
+      (tester) async {
+    final (coach, api, _) = await make();
+    final home = HomeViewModel(
+      ledger: InMemoryLedgerRepository(initial: sample()),
+      settings: InMemorySettingsRepository(
+          const GuardrailSettings(dailyLimitFils: 10000)),
+      coach: coach,
+      clock: () => now,
+    );
+    await home.load();
+    await tester.pumpWidget(BeazaApp(homeViewModel: home));
+    await tester.pumpAndSettle();
+    expect(find.byKey(const Key('streakTile')), findsNothing);
+    await tester.ensureVisible(find.byKey(const Key('planTile')));
+    await tester.pumpAndSettle();
+    await tester.tap(find.byKey(const Key('planTile')));
+    await tester.pumpAndSettle();
+    await tester.ensureVisible(find.byKey(const Key('coachAgree')));
+    await tester.tap(find.byKey(const Key('coachAgree')));
+    await tester.pumpAndSettle();
+    expect(api.sent, hasLength(1));
+    expect(find.byKey(const Key('coachPlan')), findsOneWidget);
+  });
 }
+

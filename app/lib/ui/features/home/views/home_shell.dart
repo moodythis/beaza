@@ -103,37 +103,52 @@ class Rise extends StatelessWidget {
   }
 }
 
-/// Two reasons to open the app each day: the streak of days within the
-/// limit, and this week's challenge. Both open Insights.
+/// Two reasons to open the app each day: the AI savings plan, one tap
+/// away, and this week's challenge (which opens Insights).
 class TodayTiles extends StatelessWidget {
   const TodayTiles({
     super.key,
-    required this.streakDays,
     this.challenge,
     this.onOpen,
+    this.onPlan,
   });
 
-  final int streakDays;
   final ChallengeViewModel? challenge;
   final VoidCallback? onOpen;
+
+  /// Asks for the AI plan; null hides that tile.
+  final VoidCallback? onPlan;
 
   @override
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context);
     final c = challenge;
-    Widget tile(Key key, String title, String value, String hint) => Expanded(
+    Widget tile(Key key, String title, String value, String hint,
+            {VoidCallback? onTap, IconData? icon}) =>
+        Expanded(
           child: Card(
             margin: EdgeInsets.zero,
             child: InkWell(
               key: key,
               borderRadius: BorderRadius.circular(12),
-              onTap: onOpen,
+              onTap: onTap ?? onOpen,
               child: Padding(
                 padding: const EdgeInsets.all(16),
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Text(title, style: Theme.of(context).textTheme.bodySmall),
+                    Row(
+                      children: [
+                        if (icon != null) ...[
+                          Icon(icon, size: 16),
+                          const SizedBox(width: 6),
+                        ],
+                        Expanded(
+                          child: Text(title,
+                              style: Theme.of(context).textTheme.bodySmall),
+                        ),
+                      ],
+                    ),
                     const SizedBox(height: 4),
                     Text(value,
                         style: Theme.of(context)
@@ -164,9 +179,12 @@ class TodayTiles extends StatelessWidget {
     final row = Row(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        tile(const Key('streakTile'), l10n.streakTitle,
-            l10n.streakValue(streakDays), l10n.streakHint),
-        const SizedBox(width: 8),
+        if (onPlan != null) ...[
+          tile(const Key('planTile'), l10n.coachTitle, l10n.planTileValue,
+              l10n.planTileHint,
+              onTap: onPlan, icon: Icons.auto_awesome_outlined),
+          const SizedBox(width: 8),
+        ],
         if (c == null)
           const Spacer()
         else

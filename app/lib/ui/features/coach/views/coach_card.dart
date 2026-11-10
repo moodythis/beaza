@@ -14,37 +14,9 @@ class CoachCard extends StatelessWidget {
 
   final CoachViewModel viewModel;
 
-  Future<void> _ask(BuildContext context, {bool cheaper = false}) async {
-    final language = Localizations.localeOf(context).languageCode;
-    if (!viewModel.consented) {
-      final preview = await viewModel.preview(language);
-      if (!context.mounted) return;
-      final ok = await showModalBottomSheet<bool>(
-        context: context,
-        useSafeArea: true,
-        isScrollControlled: true,
-        showDragHandle: true,
-        builder: (_) => _ConsentSheet(request: preview),
-      );
-      if (ok != true) return;
-      await viewModel.agree();
-    }
-    if (!context.mounted) return;
-    if (cheaper) {
-      viewModel.requestAlternatives(language);
-    } else {
-      viewModel.requestPlan(language);
-    }
-    await showModalBottomSheet<void>(
-      context: context,
-      useSafeArea: true,
-      isScrollControlled: true,
-      showDragHandle: true,
-      builder: (_) => cheaper
-          ? _CheaperSheet(viewModel: viewModel)
-          : _PlanSheet(viewModel: viewModel),
-    );
-  }
+  Future<void> _ask(BuildContext context, {bool cheaper = false}) =>
+      askCoach(context, viewModel, cheaper: cheaper);
+
 
   @override
   Widget build(BuildContext context) {
@@ -87,6 +59,41 @@ class CoachCard extends StatelessWidget {
       ),
     );
   }
+}
+
+/// The AI plan (or, with [cheaper], cheaper options): asks for the
+/// consent first when needed, then shows the answer in a sheet.
+Future<void> askCoach(BuildContext context, CoachViewModel viewModel,
+  {bool cheaper = false}) async {
+  final language = Localizations.localeOf(context).languageCode;
+  if (!viewModel.consented) {
+    final preview = await viewModel.preview(language);
+    if (!context.mounted) return;
+    final ok = await showModalBottomSheet<bool>(
+      context: context,
+      useSafeArea: true,
+      isScrollControlled: true,
+      showDragHandle: true,
+      builder: (_) => _ConsentSheet(request: preview),
+    );
+    if (ok != true) return;
+    await viewModel.agree();
+  }
+  if (!context.mounted) return;
+  if (cheaper) {
+    viewModel.requestAlternatives(language);
+  } else {
+    viewModel.requestPlan(language);
+  }
+  await showModalBottomSheet<void>(
+    context: context,
+    useSafeArea: true,
+    isScrollControlled: true,
+    showDragHandle: true,
+    builder: (_) => cheaper
+        ? _CheaperSheet(viewModel: viewModel)
+        : _PlanSheet(viewModel: viewModel),
+  );
 }
 
 /// The lines a person reads to know exactly what is sent.

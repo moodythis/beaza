@@ -633,5 +633,7 @@
   "reportCopied": "انتسخ. فيه الأيام والنسب بس: لا مبالغ ولا محلات ولا بنوك.",
   "reportOlder": "أسبوع قبل",
   "reportNewer": "أسبوع بعد",
-  "reportThisWeek": "آخر 7 أيام"
+  "reportThisWeek": "آخر 7 أيام",
+  "planTileValue": "اطلب خطة",
+  "planTileHint": "من صرفك هالأسبوع"
 }

@@ -284,9 +284,11 @@ class HomeView extends StatelessWidget {
               ],
               const SizedBox(height: 12),
               TodayTiles(
-                streakDays: state.streakDays,
                 challenge: viewModel.challenge,
                 onOpen: () => onTab?.call(2),
+                onPlan: viewModel.coach == null
+                    ? null
+                    : () => askCoach(context, viewModel.coach!),
               ),
               const SizedBox(height: 12),
               Card(

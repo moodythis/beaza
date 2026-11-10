@@ -904,5 +904,7 @@
   "reportCopied": "Copied. It has days and shares only: no amounts, shops or banks.",
   "reportOlder": "Earlier week",
   "reportNewer": "Later week",
-  "reportThisWeek": "Last 7 days"
+  "reportThisWeek": "Last 7 days",
+  "planTileValue": "Get a plan",
+  "planTileHint": "From this week's spending"
 }
