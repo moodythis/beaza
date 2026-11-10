@@ -107,9 +107,12 @@ class PaceCard extends StatelessWidget {
             const SizedBox(height: 8),
             Wrap(spacing: 14, runSpacing: 4, children: [
               _Key(color: theme.colorScheme.primary, label: l10n.paceToday),
-              _Key(color: tone, label: l10n.paceAhead, dashed: true),
+              _Key(color: tone, label: l10n.paceAhead, dotted: true),
               _Key(color: theme.colorScheme.outline, label: l10n.paceUsual, dashed: true),
-              _Key(color: theme.colorScheme.error, label: l10n.paceLimit(money(pace.limitFils))),
+              _Key(
+                  color: theme.colorScheme.error,
+                  label: l10n.paceLimit(money(pace.limitFils)),
+                  dashed: true),
             ]),
             const SizedBox(height: 10),
             Text(line,
@@ -128,11 +131,17 @@ class PaceCard extends StatelessWidget {
 }
 
 class _Key extends StatelessWidget {
-  const _Key({required this.color, required this.label, this.dashed = false});
+  const _Key({
+    required this.color,
+    required this.label,
+    this.dashed = false,
+    this.dotted = false,
+  });
 
   final Color color;
   final String label;
   final bool dashed;
+  final bool dotted;
 
   @override
   Widget build(BuildContext context) => Row(
@@ -141,7 +150,7 @@ class _Key extends StatelessWidget {
           SizedBox(
             width: 16,
             height: 8,
-            child: CustomPaint(painter: _KeyPainter(color, dashed)),
+            child: CustomPaint(painter: _KeyPainter(color, dashed, dotted)),
           ),
           const SizedBox(width: 6),
           Text(label, style: Theme.of(context).textTheme.labelSmall),
@@ -150,9 +159,10 @@ class _Key extends StatelessWidget {
 }
 
 class _KeyPainter extends CustomPainter {
-  _KeyPainter(this.color, this.dashed);
+  _KeyPainter(this.color, this.dashed, this.dotted);
   final Color color;
   final bool dashed;
+  final bool dotted;
 
   @override
   void paint(Canvas canvas, Size size) {
@@ -161,6 +171,12 @@ class _KeyPainter extends CustomPainter {
       ..strokeWidth = 2.5
       ..strokeCap = StrokeCap.round;
     final y = size.height / 2;
+    if (dotted) {
+      for (var x = 1.5; x < size.width; x += 4.5) {
+        canvas.drawCircle(Offset(x, y), 1.4, Paint()..color = color);
+      }
+      return;
+    }
     if (!dashed) {
       canvas.drawLine(Offset(0, y), Offset(size.width, y), p);
       return;

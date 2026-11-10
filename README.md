@@ -25,6 +25,7 @@ for cashless micro-expenses in Bahrain. Flutter and Dart, Android first.
 | App: four tabs (Today, History, Insights, Saving), light theme by default, short motion that turns off with reduced motion | Done, tested |
 | Daily limit from income with no saving or one of six profiles (pay yourself first, 50/30/20, 70/20/10, weekend weighted, kakeibo, own amount) | Done, tested |
 | Today: limit card, "Can I buy it?" with "Wait 24 hours", AI plan tile, challenge tile, weekly report card, small purchases | Done, tested |
+| Today's pace: a forecast from the person's usual day (last 28 days, per Bahrain hour) that says before the limit is crossed whether a usual rest of the day fits or passes it, and when; drawn as a chart with the late-night hours shaded | Done, tested |
 | History: day list, unsorted filter, change category (own categories too), edit, delete, swipe to delete, "money came back" switch | Done, tested |
 | Insights: Ask (on the phone), category ring with percentages, rule tips, weekly challenge, AI plan, cheaper alternatives | Done, tested |
 | Saving: goal, 24-hour holds with a "Did you decide?" notification, subscriptions, demo points and offers | Done, tested; a reminder is lost if the phone restarts |
