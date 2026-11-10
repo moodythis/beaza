@@ -780,7 +780,7 @@
   "cheaperNone": "The AI had no ideas this time. Try again later.",
   "cheaperNote": "Ideas from AI for the shops where you spent most this week. It does not know prices, so check before you switch.",
   "repaidSwitch": "Money back to me",
-  "repaidHint": "Read from the bank message: a shop refund, or a transfer up to what you spent in the 30 days before it, goes back into today's budget on its own. Turn it off if it is not money back.",
+  "repaidHint": "Read from the bank message: a shop refund, or a transfer no larger than your biggest single purchase in the 30 days before it, goes back into today's budget on its own. Turn it off if it is not money back.",
   "repaidNote": "money back, added to your budget",
   "budgetHowToSave": "How do you want to save?",
   "budgetSavingsAmount": "Amount to save each month (BHD)",
