@@ -41,7 +41,7 @@ void main() {
     ('pace_ar_light', const Locale('ar'), Brightness.light),
   ]) {
     testWidgets(name, (tester) async {
-      tester.view.physicalSize = const Size(400, 340) * 2;
+      tester.view.physicalSize = const Size(400, 520) * 2;
       tester.view.devicePixelRatio = 2;
       addTearDown(tester.view.reset);
       await tester.pumpWidget(MaterialApp(
@@ -52,10 +52,12 @@ void main() {
         theme: ThemeData(
             colorSchemeSeed: const Color(0xFF13804C), brightness: brightness),
         home: Scaffold(
-          body: Padding(
+          body: SingleChildScrollView(
+            child: Padding(
             padding: const EdgeInsets.all(12),
             child: RepaintBoundary(
                 key: const Key('shot'), child: PaceCard(pace: pace)),
+            ),
           ),
         ),
       ));
