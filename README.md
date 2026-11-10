@@ -26,6 +26,8 @@ for cashless micro-expenses in Bahrain. Flutter and Dart, Android first.
 | Daily limit from income with no saving or one of six profiles (pay yourself first, 50/30/20, 70/20/10, weekend weighted, kakeibo, own amount) | Done, tested |
 | Today: limit card, "Can I buy it?" with "Wait 24 hours", AI plan tile, challenge tile, weekly report card, small purchases | Done, tested |
 | Today's pace: a forecast from the person's usual day (last 28 days, per Bahrain hour) that says before the limit is crossed whether a usual rest of the day fits or passes it, and when; drawn as a chart with the late-night hours shaded | Done, tested |
+| Daily close: from 20:00 (or the next morning) the unspent part of the limit goes to the savings goal (+10 points) or to the next day's limit (at most half of it); 21:30 reminder without amounts; coins fly to where it went | Done, tested |
+| Streak with a freeze (50 points, covers one day over the limit) and a leaderboard by points and streak only: a practice board of made-up personas on the phone, and an optional online board (`/v1/leaderboard`) under its own consent | Done, tested; online scores are self-reported and nicknames are checked for characters only |
 | History: day list, unsorted filter, change category (own categories too), edit, delete, swipe to delete, "money came back" switch | Done, tested |
 | Insights: Ask (on the phone), category ring with percentages, rule tips, weekly challenge, AI plan, cheaper alternatives | Done, tested |
 | Saving: goal, 24-hour holds with a "Did you decide?" notification, subscriptions, demo points and offers | Done, tested; a reminder is lost if the phone restarts |
