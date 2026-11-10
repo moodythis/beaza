@@ -226,18 +226,6 @@ class SavingsRepository extends ChangeNotifier {
     await _prefs.write(goalKey, null);
     notifyListeners();
   }
-}
-
-/// What the goal has so far: money put aside, plus purchases skipped after
-/// waiting since the goal was set.
-int goalSavedFils(Goal goal, List<Hold> holds) {
-  final skipped = holds
-      .where((h) =>
-          h.decision == 'skipped' &&
-          h.decidedAt != null &&
-          !h.decidedAt!.isBefore(goal.createdAt))
-      .fold<int>(0, (a, h) => a + h.amountFils);
-  return goal.addedFils + skipped;
 
   Future<List<ManualSubscription>> manualSubscriptions() async {
     final raw = await _prefs.read(subsKey);
@@ -274,6 +262,18 @@ int goalSavedFils(Goal goal, List<Hold> holds) {
         list.isEmpty ? null : jsonEncode([for (final m in list) m.toJson()]));
     notifyListeners();
   }
+}
+
+/// What the goal has so far: money put aside, plus purchases skipped after
+/// waiting since the goal was set.
+int goalSavedFils(Goal goal, List<Hold> holds) {
+  final skipped = holds
+      .where((h) =>
+          h.decision == 'skipped' &&
+          h.decidedAt != null &&
+          !h.decidedAt!.isBefore(goal.createdAt))
+      .fold<int>(0, (a, h) => a + h.amountFils);
+  return goal.addedFils + skipped;
 }
 
 /// Everything skipped after waiting: money not spent thanks to the timer.
