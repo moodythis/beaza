@@ -144,6 +144,15 @@ jobs:
         run: flutter analyze
       - name: Test
         run: flutter test --reporter expanded
+      # Pictures of drawn widgets to look at (not compared with anything).
+      - name: Screenshots
+        run: flutter test --update-goldens screenshots
+      - name: Upload screenshots
+        uses: actions/upload-artifact@v4
+        with:
+          name: screenshots
+          path: app/screenshots/*.png
+          retention-days: 14
       # The real phone code against the real server code, over HTTP: two
       # phones, real encryption and Argon2id. Catches what each side's own
       # tests (with their own pretend counterpart) cannot.
