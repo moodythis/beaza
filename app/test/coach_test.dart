@@ -427,7 +427,7 @@ void main() {
   });
 
   test('cheaper options are kept a week for the same shops', () async {
-    var at = now;
+    final at = now;
     final api = FakeCoach();
     final prefs = MemoryPreferencesStore();
     final vm = CoachViewModel(
@@ -444,7 +444,14 @@ void main() {
     await vm.requestAlternatives('en');
     expect(api.altSent, hasLength(1));
     expect(vm.alternatives!.options.single.idea, 'Try a cheaper outlet.');
-    at = now.add(const Duration(days: 8));
+    // Kept 8 days ago: too old, asked again.
+    final kept = jsonDecode(prefs.values[CoachViewModel.altCacheKey]!)
+        as Map<String, dynamic>;
+    kept['at'] = at
+        .subtract(const Duration(days: 8))
+        .toUtc()
+        .millisecondsSinceEpoch;
+    prefs.values[CoachViewModel.altCacheKey] = jsonEncode(kept);
     await vm.requestAlternatives('en');
     expect(api.altSent, hasLength(2));
     await vm.withdraw();
