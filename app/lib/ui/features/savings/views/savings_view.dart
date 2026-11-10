@@ -104,6 +104,125 @@ Future<(String, int)?> askNameAmount(
   );
 }
 
+/// Name, amount, monthly or weekly, and the day it was last paid. Null
+/// when cancelled.
+Future<(String, int, bool, Day)?> askSubscription(
+    BuildContext context, DateTime now) {
+  return showDialog<(String, int, bool, Day)>(
+    context: context,
+    builder: (context) => _SubscriptionDialog(today: Day.of(now)),
+  );
+}
+
+class _SubscriptionDialog extends StatefulWidget {
+  const _SubscriptionDialog({required this.today});
+
+  final Day today;
+
+  @override
+  State<_SubscriptionDialog> createState() => _SubscriptionDialogState();
+}
+
+class _SubscriptionDialogState extends State<_SubscriptionDialog> {
+  final _name = TextEditingController();
+  final _amount = TextEditingController();
+  bool _weekly = false;
+  late Day _last = widget.today;
+  bool _invalid = false;
+
+  @override
+  void dispose() {
+    _name.dispose();
+    _amount.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context);
+    final shown = MaterialLocalizations.of(context).formatMediumDate(
+        DateTime(_last.year, _last.month, _last.day));
+    return AlertDialog(
+      title: Text(l10n.subsAdd),
+      content: SingleChildScrollView(
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            TextField(
+              key: const Key('subName'),
+              controller: _name,
+              decoration: InputDecoration(labelText: l10n.subsName),
+            ),
+            TextField(
+              key: const Key('subAmount'),
+              controller: _amount,
+              keyboardType: const TextInputType.numberWithOptions(decimal: true),
+              decoration: InputDecoration(
+                labelText: l10n.receiptAmount,
+                errorText: _invalid ? l10n.receiptInvalid : null,
+              ),
+            ),
+            const SizedBox(height: 12),
+            SegmentedButton<bool>(
+              key: const Key('subEvery'),
+              segments: [
+                ButtonSegment(value: false, label: Text(l10n.subsMonth)),
+                ButtonSegment(
+                    value: true,
+                    label: Text(l10n.subsWeekly, key: const Key('subWeekly'))),
+              ],
+              selected: {_weekly},
+              onSelectionChanged: (v) => setState(() => _weekly = v.first),
+            ),
+            const SizedBox(height: 4),
+            ListTile(
+              key: const Key('subLastPaid'),
+              contentPadding: EdgeInsets.zero,
+              leading: const Icon(Icons.event_outlined),
+              title: Text(l10n.subsLastPaid(shown)),
+              onTap: () async {
+                final t = widget.today;
+                final picked = await showDatePicker(
+                  context: context,
+                  locale: Localizations.localeOf(context),
+                  initialDate: DateTime(_last.year, _last.month, _last.day),
+                  firstDate: DateTime(t.year - 1, t.month, t.day),
+                  lastDate: DateTime(t.year, t.month, t.day),
+                );
+                if (picked != null) {
+                  setState(() => _last = Day(picked.year, picked.month, picked.day));
+                }
+              },
+            ),
+            Text(l10n.subsReminderOnly,
+                style: Theme.of(context).textTheme.bodySmall),
+          ],
+        ),
+      ),
+      actions: [
+        TextButton(
+          onPressed: () => Navigator.of(context).pop(),
+          child: Text(l10n.coachNotNow),
+        ),
+        FilledButton(
+          key: const Key('subSave'),
+          onPressed: () {
+            final fils = parseBhdToFils(_amount.text);
+            final n = _name.text.trim();
+            if (fils == null || fils <= 0 || n.isEmpty) {
+              setState(() => _invalid = true);
+              return;
+            }
+            Navigator.of(context).pop((n, fils, _weekly, _last));
+          },
+          child: Text(l10n.receiptSave),
+        ),
+      ],
+    );
+  }
+}
+
 class GoalCard extends StatelessWidget {
   const GoalCard({super.key, required this.viewModel});
 
@@ -286,17 +405,47 @@ class SubscriptionsCard extends StatelessWidget {
               Text(l10n.subsEmpty, style: theme.textTheme.bodySmall),
             for (final s in subs)
               ListTile(
+                key: s.manual ? Key('sub_${s.manualId}') : null,
                 contentPadding: EdgeInsets.zero,
                 title: Text(s.name),
-                subtitle: Text(s.knownByName
-                    ? l10n.subsKnownOnce('${Day.of(s.next).day}/${Day.of(s.next).month}')
-                    : l10n.subsLine(
+                subtitle: Text(s.manual
+                    ? l10n.subsManualLine(
                         s.weekly ? l10n.subsWeekly : l10n.subsMonth,
-                        s.times,
-                        '${Day.of(s.next).day}/${Day.of(s.next).month}',
-                      )),
-                trailing: Text(money(s.amountFils)),
+                        '${Day.of(s.next).day}/${Day.of(s.next).month}')
+                    : s.knownByName
+                        ? l10n.subsKnownOnce('${Day.of(s.next).day}/${Day.of(s.next).month}')
+                        : l10n.subsLine(
+                            s.weekly ? l10n.subsWeekly : l10n.subsMonth,
+                            s.times,
+                            '${Day.of(s.next).day}/${Day.of(s.next).month}',
+                          )),
+                trailing: Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Text(money(s.amountFils)),
+                    if (s.manual)
+                      IconButton(
+                        key: Key('subRemove_${s.manualId}'),
+                        tooltip: l10n.subsRemove,
+                        icon: const Icon(Icons.close),
+                        onPressed: () => viewModel.removeSubscription(s.manualId!),
+                      ),
+                  ],
+                ),
               ),
+            Align(
+              alignment: AlignmentDirectional.centerStart,
+              child: TextButton.icon(
+                key: const Key('subsAdd'),
+                icon: const Icon(Icons.add),
+                label: Text(l10n.subsAdd),
+                onPressed: () async {
+                  final r = await askSubscription(context, viewModel.now());
+                  if (r == null) return;
+                  await viewModel.addSubscription(r.$1, r.$2, r.$3, r.$4);
+                },
+              ),
+            ),
           ],
         ),
       ),

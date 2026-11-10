@@ -398,7 +398,7 @@
       "amount": { "type": "String" }
     }
   },
-  "subsEmpty": "ما لقيت شي بعد. يحتاج عمليتين على الأقل من نفس المحل بينهم شهر أو أسبوع تقريباً.",
+  "subsEmpty": "ما لقيت شي بعد. يحتاج عمليتين على الأقل من نفس المحل بينهم شهر أو أسبوع تقريباً، أو أضفه بنفسك.",
   "subsLine": "{every} · {times} مرات · الجاية تقريباً {date}",
   "@subsLine": {
     "placeholders": {
@@ -635,5 +635,11 @@
   "reportNewer": "أسبوع بعد",
   "reportThisWeek": "آخر 7 أيام",
   "planTileValue": "اطلب خطة",
-  "planTileHint": "من صرفك هالأسبوع"
+  "planTileHint": "من صرفك هالأسبوع",
+  "subsAdd": "أضف اشتراك",
+  "subsName": "الاسم (مثل Netflix)",
+  "subsLastPaid": "آخر دفعة: {date}",
+  "subsManualLine": "{every} · أضفته بنفسك · الجاية {date}",
+  "subsRemove": "شيل",
+  "subsReminderOnly": "للتذكير بس: الخصم الحقيقي ينحسب من رسالة البنك."
 }

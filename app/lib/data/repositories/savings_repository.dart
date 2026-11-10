@@ -2,6 +2,8 @@ import 'dart:convert';
 
 import 'package:beaza/data/services/hold_reminders.dart';
 import 'package:beaza/data/repositories/preferences_store.dart';
+import 'package:beaza/domain/use_cases/subscriptions.dart';
+import 'package:beaza_extraction/beaza_extraction.dart' show Day;
 import 'package:flutter/foundation.dart';
 
 /// A purchase put on hold for [kCoolingOff] before deciding (درع التريث).
@@ -107,6 +109,7 @@ class SavingsRepository extends ChangeNotifier {
 
   static const String holdsKey = 'holds.v1';
   static const String goalKey = 'goal.v1';
+  static const String subsKey = 'subs.manual.v1';
 
   final PreferencesStore _prefs;
   final DateTime Function() _clock;
@@ -235,6 +238,42 @@ int goalSavedFils(Goal goal, List<Hold> holds) {
           !h.decidedAt!.isBefore(goal.createdAt))
       .fold<int>(0, (a, h) => a + h.amountFils);
   return goal.addedFils + skipped;
+
+  Future<List<ManualSubscription>> manualSubscriptions() async {
+    final raw = await _prefs.read(subsKey);
+    if (raw == null) return [];
+    try {
+      return [
+        for (final j in jsonDecode(raw) as List)
+          ManualSubscription.fromJson((j as Map).cast<String, Object?>()),
+      ];
+    } on Object {
+      return [];
+    }
+  }
+
+  Future<void> addSubscription(
+      String name, int amountFils, bool weekly, Day lastPaid) async {
+    if (amountFils <= 0) throw ArgumentError.value(amountFils, 'amountFils');
+    final list = await manualSubscriptions();
+    list.add(ManualSubscription(
+      id: _clock().microsecondsSinceEpoch.toString(),
+      name: name.trim(),
+      amountFils: amountFils,
+      weekly: weekly,
+      lastPaid: lastPaid,
+    ));
+    await _prefs.write(subsKey, jsonEncode([for (final m in list) m.toJson()]));
+    notifyListeners();
+  }
+
+  Future<void> removeSubscription(String id) async {
+    final list = await manualSubscriptions()
+      ..removeWhere((m) => m.id == id);
+    await _prefs.write(subsKey,
+        list.isEmpty ? null : jsonEncode([for (final m in list) m.toJson()]));
+    notifyListeners();
+  }
 }
 
 /// Everything skipped after waiting: money not spent thanks to the timer.

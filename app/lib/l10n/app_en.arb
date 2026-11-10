@@ -611,7 +611,7 @@
       "amount": { "type": "String" }
     }
   },
-  "subsEmpty": "None found yet. It needs at least two charges from the same shop about a month or a week apart.",
+  "subsEmpty": "None found yet. It needs at least two charges from the same shop about a month or a week apart, or add one yourself.",
   "subsLine": "{every} · {times} times · next about {date}",
   "@subsLine": {
     "placeholders": {
@@ -906,5 +906,13 @@
   "reportNewer": "Later week",
   "reportThisWeek": "Last 7 days",
   "planTileValue": "Get a plan",
-  "planTileHint": "From this week's spending"
+  "planTileHint": "From this week's spending",
+  "subsAdd": "Add a subscription",
+  "subsName": "Name (for example Netflix)",
+  "subsLastPaid": "Last paid: {date}",
+  "@subsLastPaid": {"placeholders": {"date": {"type": "String"}}},
+  "subsManualLine": "{every} · added by you · next {date}",
+  "@subsManualLine": {"placeholders": {"every": {"type": "String"}, "date": {"type": "String"}}},
+  "subsRemove": "Remove",
+  "subsReminderOnly": "A reminder only: the real charge still comes from your bank's message."
 }

@@ -10,7 +10,12 @@ class Subscription {
     required this.last,
     required this.next,
     this.knownByName = false,
+    this.manualId,
   });
+
+  /// Set when the person added it by hand: the id to remove it with.
+  final String? manualId;
+  bool get manual => manualId != null;
 
   /// Seen once only, but the shop is a known subscription service.
   final bool knownByName;
@@ -106,5 +111,88 @@ List<Subscription> findSubscriptions(Iterable<LedgerEntry> entries) {
     ));
   }
   out.sort((a, b) => b.monthlyFils.compareTo(a.monthlyFils));
+  return out;
+}
+
+/// A subscription the person added by hand: a name, an amount, how often,
+/// and the day it was last paid. It is a reminder only; the real charges
+/// still come from the bank messages.
+class ManualSubscription {
+  const ManualSubscription({
+    required this.id,
+    required this.name,
+    required this.amountFils,
+    required this.weekly,
+    required this.lastPaid,
+  });
+
+  final String id;
+  final String name;
+  final int amountFils;
+  final bool weekly;
+
+  /// The day of the last payment (Bahrain day, kept as a date).
+  final Day lastPaid;
+
+  Map<String, Object?> toJson() => {
+        'id': id,
+        'name': name,
+        'amount': amountFils,
+        'weekly': weekly,
+        'last': '${lastPaid.year}-${lastPaid.month}-${lastPaid.day}',
+      };
+
+  static ManualSubscription fromJson(Map<String, Object?> j) {
+    final d = (j['last']! as String).split('-').map(int.parse).toList();
+    return ManualSubscription(
+      id: j['id']! as String,
+      name: j['name']! as String,
+      amountFils: j['amount']! as int,
+      weekly: j['weekly']! as bool,
+      lastPaid: Day(d[0], d[1], d[2]),
+    );
+  }
+}
+
+/// [day] moved on by whole months, keeping its day of the month where the
+/// month has it (31 January, then 28 or 29 February, then 31 March).
+Day addMonths(Day day, int months) {
+  final m0 = day.month - 1 + months;
+  final y = day.year + (m0 ~/ 12);
+  final m = m0 % 12 + 1;
+  final last = DateTime.utc(y, m + 1, 0).day;
+  return Day(y, m, day.day > last ? last : day.day);
+}
+
+/// The first payment day on or after [today].
+Day nextDue(ManualSubscription s, Day today) {
+  var n = 1;
+  while (true) {
+    final d = s.weekly ? s.lastPaid.addDays(7 * n) : addMonths(s.lastPaid, n);
+    if (d.compareTo(today) >= 0) return d;
+    n++;
+  }
+}
+
+/// The ones found in the ledger plus the ones added by hand; when both
+/// have the same name, the person's own entry is shown. Largest monthly
+/// cost first.
+List<Subscription> withManual(
+    List<Subscription> found, List<ManualSubscription> manual, Day today) {
+  final names = {for (final m in manual) m.name.trim().toLowerCase()};
+  final out = [
+    for (final f in found)
+      if (!names.contains(f.name.trim().toLowerCase())) f,
+    for (final m in manual)
+      Subscription(
+        name: m.name,
+        amountFils: m.amountFils,
+        times: 0,
+        weekly: m.weekly,
+        last: m.lastPaid.startUtc,
+        next: nextDue(m, today).startUtc,
+        manualId: m.id,
+      ),
+  ]..sort((a, b) => b.monthlyFils.compareTo(a.monthlyFils));
   return out;
 }

@@ -112,6 +112,92 @@ void main() {
     });
   });
 
+  group('subscriptions added by hand', () {
+    test('next payment: monthly keeps the day, short months clamp; weekly steps 7', () {
+      expect(addMonths(const Day(2026, 1, 31), 1), const Day(2026, 2, 28));
+      expect(addMonths(const Day(2026, 12, 15), 1), const Day(2027, 1, 15));
+      const m = ManualSubscription(
+          id: '1', name: 'Gym', amountFils: 15000, weekly: false, lastPaid: Day(2026, 10, 31));
+      expect(nextDue(m, const Day(2026, 11, 4)), const Day(2026, 11, 30));
+      const w = ManualSubscription(
+          id: '2', name: 'Club', amountFils: 1000, weekly: true, lastPaid: Day(2026, 10, 20));
+      expect(nextDue(w, const Day(2026, 11, 4)), const Day(2026, 11, 10));
+      // Due today counts as today.
+      expect(nextDue(w, const Day(2026, 11, 3)), const Day(2026, 11, 3));
+    });
+
+    test('the person\'s own entry replaces a found one with the same name', () {
+      final found = findSubscriptions(ledger([
+        tx(3500, d(9, 4), 'Sample Stream'),
+        tx(3500, d(10, 5), 'Sample Stream'),
+      ]));
+      const own = ManualSubscription(
+          id: '9', name: 'sample stream', amountFils: 4000, weekly: false, lastPaid: Day(2026, 10, 5));
+      final all = withManual(found, [own], const Day(2026, 11, 4));
+      expect(all.single.manual, isTrue);
+      expect(all.single.amountFils, 4000);
+      expect(Day.of(all.single.next), const Day(2026, 11, 5));
+    });
+
+    test('kept on the phone; added and removed', () async {
+      final prefs = MemoryPreferencesStore();
+      final repo = SavingsRepository(prefs, clock: () => DateTime.utc(2026, 11, 4, 9));
+      await repo.addSubscription(' Gym ', 15000, false, const Day(2026, 11, 1));
+      final list = await repo.manualSubscriptions();
+      expect(list.single.name, 'Gym');
+      expect(list.single.lastPaid, const Day(2026, 11, 1));
+      expect(() => repo.addSubscription('x', 0, false, const Day(2026, 11, 1)), throwsArgumentError);
+      await repo.removeSubscription(list.single.id);
+      expect(await repo.manualSubscriptions(), isEmpty);
+      expect(prefs.values.containsKey(SavingsRepository.subsKey), isFalse);
+    });
+  });
+
+  testWidgets('a subscription can be added by hand and removed', (tester) async {
+    final now = DateTime.utc(2026, 11, 4, 9);
+    final ledgerRepo = InMemoryLedgerRepository();
+    final savings = SavingsViewModel(
+      repo: SavingsRepository(MemoryPreferencesStore(), clock: () => now),
+      ledger: ledgerRepo,
+      clock: () => now,
+    );
+    await savings.load();
+    final home = HomeViewModel(
+      ledger: ledgerRepo,
+      settings: InMemorySettingsRepository(
+          const GuardrailSettings(dailyLimitFils: 10000)),
+      savings: savings,
+      clock: () => now,
+    );
+    await home.load();
+    await tester.pumpWidget(BeazaApp(homeViewModel: home));
+    await tester.pumpAndSettle();
+    await tester.tap(find.byKey(const Key('tabSavings')));
+    await tester.pumpAndSettle();
+    await tester.scrollUntilVisible(find.byKey(const Key('subsAdd')), 300,
+        scrollable: find.byType(Scrollable).first);
+    await tester.tap(find.byKey(const Key('subsAdd')));
+    await tester.pumpAndSettle();
+    // Nothing typed: refused.
+    await tester.tap(find.byKey(const Key('subSave')));
+    await tester.pumpAndSettle();
+    expect(find.byKey(const Key('subSave')), findsOneWidget);
+    await tester.enterText(find.byKey(const Key('subName')), 'Gym');
+    await tester.enterText(find.byKey(const Key('subAmount')), '15');
+    await tester.tap(find.byKey(const Key('subWeekly')));
+    await tester.pumpAndSettle();
+    await tester.tap(find.byKey(const Key('subSave')));
+    await tester.pumpAndSettle();
+    expect(find.text('Gym'), findsOneWidget);
+    expect(find.textContaining('added by you'), findsOneWidget);
+    expect(find.byKey(const Key('subsTotal')), findsOneWidget);
+    final id = (await savings.repo.manualSubscriptions()).single.id;
+    expect(savings.subscriptions.single.weekly, isTrue);
+    await tester.tap(find.byKey(Key('subRemove_$id')));
+    await tester.pumpAndSettle();
+    expect(find.text('Gym'), findsNothing);
+  });
+
   testWidgets('from the home card: set a goal and put something on hold',
       (tester) async {
     final now = DateTime.utc(2026, 11, 4, 9);

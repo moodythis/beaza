@@ -62,7 +62,8 @@ class SavingsViewModel extends ChangeNotifier {
     holds = await repo.holds();
     goal = await repo.goal();
     final entries = await _ledger.entries();
-    subscriptions = findSubscriptions(entries);
+    subscriptions = withManual(findSubscriptions(entries),
+        await repo.manualSubscriptions(), Day.of(_clock()));
     final r = rewards;
     final s = _settings;
     if (r != null && s != null) {
@@ -78,6 +79,12 @@ class SavingsViewModel extends ChangeNotifier {
     loaded = true;
     if (!_disposed) notifyListeners();
   }
+
+  Future<void> addSubscription(
+          String name, int amountFils, bool weekly, Day lastPaid) =>
+      repo.addSubscription(name, amountFils, weekly, lastPaid);
+
+  Future<void> removeSubscription(String id) => repo.removeSubscription(id);
 
   List<Hold> get waiting => [for (final h in holds) if (h.decision == null) h];
   List<Hold> get decided => [for (final h in holds) if (h.decision != null) h];
