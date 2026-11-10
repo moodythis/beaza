@@ -87,12 +87,12 @@ void main() {
     expect(r.points, 20); // two days with spending within the limit
   });
 
-  test('late night uses Bahrain time; Friday and Saturday are the weekend', () {
+  test('late night uses Bahrain time; Thursday to Saturday is the weekend', () {
     final r = buildWeeklyReport(
         rec([
           buy(1000, bh(4, 23, 30)), // 23:30 Bahrain = 20:30 UTC: late
-          buy(1000, bh(5, 2, 59)), // 02:59: late
-          buy(1000, bh(5, 3, 0)), // 03:00: not late
+          buy(1000, bh(5, 2, 59)), // Thursday 02:59: late
+          buy(1000, bh(5, 3, 0)), // Thursday 03:00: not late
           buy(4000, bh(6, 13)), // Friday
           buy(3000, bh(7, 13)), // Saturday
         ]),
@@ -100,8 +100,9 @@ void main() {
         dailyLimitFils: 10000);
     expect(r.lateCount, 2);
     expect(r.lateFils, 2000);
-    expect(r.weekendFils, 7000);
-    expect(r.percentOf(r.weekendFils), 70);
+    // Thursday 2.000 + Friday 4.000 + Saturday 3.000.
+    expect(r.weekendFils, 9000);
+    expect(r.percentOf(r.weekendFils), 90);
     expect(r.peak, TimeSlot.afternoon);
   });
 

@@ -175,7 +175,7 @@ describe('POST /v1/coach (AI savings plan)', () => {
     }));
     assert.equal(res.status, 200);
     assert.ok(res.body.facts.includes('Late-night purchases (10 pm to 3 am): 3, together BHD 4.500'));
-    assert.ok(res.body.facts.includes('Friday and Saturday: BHD 9.575 (50% of the week)'));
+    assert.ok(res.body.facts.includes('Weekend (Thursday to Saturday): BHD 9.575 (50% of the week)'));
     assert.ok(res.body.facts.includes('Left until the end of the month: BHD 158.300 for 16 days, about BHD 9.893 a day'));
     assert.match(res.body.plan, /3 late-night purchases came to BHD 4\.500/);
   });

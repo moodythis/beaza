@@ -30,7 +30,7 @@ for cashless micro-expenses in Bahrain. Flutter and Dart, Android first.
 | Streak with a freeze (50 points, covers one day over the limit) and a leaderboard by points and streak only: a practice board of made-up personas on the phone, and an optional online board (`/v1/leaderboard`) under its own consent | Done, tested; online scores are self-reported and nicknames are checked for characters only |
 | History: day list, unsorted filter, change category (own categories too), edit, delete, swipe to delete, "money came back" switch | Done, tested |
 | Insights: Ask (on the phone), category ring with percentages, rule tips, weekly challenge, AI plan, cheaper alternatives | Done, tested |
-| Saving: goal, 24-hour holds with a "Did you decide?" notification, subscriptions, demo points and offers | Done, tested; a reminder is lost if the phone restarts |
+| Saving: goal, 24-hour holds with a "Did you decide?" notification, subscriptions, demo points and offers | Done, tested; reminders are set again after the phone restarts |
 | Weekly report (9 sections, week by week, Saturday 21:00 notification without amounts) and the privacy eye | Done, tested |
 | Manual expense, quick add by text or voice, receipt photo read on the phone | Done, tested |
 | Optional AI (Google Gemini through the Worker, key kept as a Worker secret): plan, cheaper ideas, sorting, receipt and voice reading, each with its own consent | Done, tested; falls back to rules or the phone when Gemini does not answer |

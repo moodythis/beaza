@@ -187,7 +187,7 @@ void main() {
     expect(t.map((x) => x.kind), isNot(contains(TipKind.lateNight)));
   });
 
-  test('Friday and Saturday taking half the week are called out', () {
+  test('a weekend (Thursday to Saturday) taking half the week is called out', () {
     // 13 Nov 2026 is a Friday, 14 Nov a Saturday.
     final t = savingsTips(
       ledger([

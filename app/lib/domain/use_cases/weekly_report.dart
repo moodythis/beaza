@@ -1,5 +1,6 @@
 import 'package:beaza/data/repositories/ledger_repository.dart';
 import 'package:beaza/data/repositories/savings_repository.dart';
+import 'package:beaza/domain/use_cases/daily_budget.dart';
 import 'package:beaza/domain/use_cases/savings_tips.dart';
 import 'package:beaza/domain/use_cases/spending_by_category.dart';
 import 'package:beaza/domain/use_cases/weekly_challenge.dart';
@@ -92,7 +93,7 @@ class WeeklyReport {
   final int microCount;
   final int microFils;
 
-  /// Friday and Saturday, Bahrain's weekend.
+  /// Thursday to Saturday ([isWeekendWeekday]).
   final int weekendFils;
   final int lateCount;
   final int lateFils;
@@ -225,7 +226,7 @@ WeeklyReport buildWeeklyReport(
       micro++;
       microFils += a;
     }
-    if (local.weekday == DateTime.friday || local.weekday == DateTime.saturday) {
+    if (isWeekendWeekday(local.weekday)) {
       weekend += a;
     }
     if (local.hour >= 22 || local.hour < 3) {

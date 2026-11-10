@@ -240,8 +240,8 @@ export function facts(x: CoachInput): { lines: string[]; trim?: { category: stri
   if (x.weekendFils > 0 && x.weekTotalFils > 0) {
     const pct = Math.round((x.weekendFils * 100) / x.weekTotalFils);
     lines.push(ar
-      ? `الجمعة والسبت: ${money(x.weekendFils, true)} (${pct}٪ من الأسبوع)`
-      : `Friday and Saturday: ${money(x.weekendFils, false)} (${pct}% of the week)`);
+      ? `الويكند (الخميس إلى السبت): ${money(x.weekendFils, true)} (${pct}٪ من الأسبوع)`
+      : `Weekend (Thursday to Saturday): ${money(x.weekendFils, false)} (${pct}% of the week)`);
   }
   if (x.month) {
     const perDay = Math.floor(x.month.leftFils / x.month.days);

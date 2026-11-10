@@ -223,6 +223,11 @@ void main() {
           240000 * 135 ~/ 3020);
     });
 
+    test('one weekend rule for the whole app: Thursday to Saturday', () {
+      expect([for (var w = 1; w <= 7; w++) if (isWeekendWeekday(w)) w],
+          [DateTime.thursday, DateTime.friday, DateTime.saturday]);
+    });
+
     test('spending each day exactly its limit never passes the free money', () {
       for (final profile in BudgetProfile.values) {
         final plan = p(profile, custom: 45000);

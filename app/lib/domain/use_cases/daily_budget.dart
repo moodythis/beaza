@@ -45,11 +45,17 @@ int savingsPercent(BudgetProfile p) => switch (p) {
 /// assumption, not a published number.
 const int kWeekendWeight = 135;
 
-/// Thursday, Friday and Saturday get the weekend weight.
-bool isWeightedWeekend(Day d) {
-  final w = DateTime.utc(d.year, d.month, d.day).weekday;
-  return w == DateTime.thursday || w == DateTime.friday || w == DateTime.saturday;
-}
+/// The weekend everywhere in Beaza: Thursday, Friday and Saturday (a
+/// [DateTime.weekday] number). The budget, the tips, the weekly report and
+/// the AI plan all use this one rule.
+bool isWeekendWeekday(int weekday) =>
+    weekday == DateTime.thursday ||
+    weekday == DateTime.friday ||
+    weekday == DateTime.saturday;
+
+/// Weekend days ([isWeekendWeekday]) get the weekend weight.
+bool isWeightedWeekend(Day d) =>
+    isWeekendWeekday(DateTime.utc(d.year, d.month, d.day).weekday);
 
 /// What the person earns in a month, what is already spoken for (rent,
 /// subscriptions, installments) and what is set aside to save. All in fils.

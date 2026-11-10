@@ -1,3 +1,4 @@
+import 'package:beaza/domain/use_cases/daily_budget.dart';
 import 'package:beaza/domain/use_cases/shop_name.dart';
 import 'package:beaza/domain/use_cases/spending_by_category.dart';
 import 'package:beaza_extraction/beaza_extraction.dart';
@@ -23,7 +24,7 @@ enum TipKind {
   /// Several purchases late at night (22:00 to 03:00, Bahrain time).
   lateNight,
 
-  /// Friday and Saturday (Bahrain's weekend) took half the week or more.
+  /// The weekend (Thursday to Saturday) took half the week or more.
   weekend,
 
   /// The same shop several times in the week.
@@ -175,7 +176,7 @@ List<SavingsTip> savingsTips(
   }
 
   // 4. Late at night, when buying is easiest and least needed.
-  // 5. Friday and Saturday against the whole week.
+  // 5. The weekend (Thursday to Saturday) against the whole week.
   final (:lateCount, :lateFils, :weekendFils) = weekPatterns(list, today);
   if (lateCount >= kTipsMinLateCount && lateFils >= kTipsMinLateFils) {
     tips.add(SavingsTip(TipKind.lateNight, fils: lateFils, count: lateCount));
@@ -219,7 +220,7 @@ List<SavingsTip> savingsTips(
 }
 
 /// Over the 7 Bahrain days ending on [today]: purchases late at night
-/// (22:00 to 03:00) and spending on Friday and Saturday, Bahrain's weekend.
+/// (22:00 to 03:00) and weekend spending (Thursday to Saturday, [isWeekendWeekday]).
 ({int lateCount, int lateFils, int weekendFils}) weekPatterns(
     Iterable<LedgerEntry> entries, Day today) {
   final weekStart = today.addDays(-6).startUtc;
@@ -239,7 +240,7 @@ List<SavingsTip> savingsTips(
     }
     final d = Day.of(t);
     final weekday = DateTime.utc(d.year, d.month, d.day).weekday;
-    if (weekday == DateTime.friday || weekday == DateTime.saturday) {
+    if (isWeekendWeekday(weekday)) {
       weekendFils += a;
     }
   }
