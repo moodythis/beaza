@@ -29,6 +29,8 @@ class PaceCard extends StatelessWidget {
     String money(int f) => l10n.bhd(formatFils(f));
     String clock(int minute) => DateFormat.jm(locale)
         .format(DateTime.utc(2026, 1, 1, minute ~/ 60, minute % 60));
+    String hour(int h) =>
+        DateFormat.j(locale).format(DateTime.utc(2026, 1, 1, h));
     final b = theme.brightness;
     final (Color tone, String line) = switch (pace.status) {
       PaceStatus.onTrack => (
@@ -55,7 +57,6 @@ class PaceCard extends StatelessWidget {
     final showLate = late > 0 &&
         pace.status != PaceStatus.onTrack &&
         late * 2 >= pace.stillUsualFils;
-    final hours = [0, 6, 12, 18, 24];
     return Card(
       key: const Key('paceCard'),
       margin: EdgeInsets.zero,
@@ -88,12 +89,13 @@ class PaceCard extends StatelessWidget {
                     painter: PacePainter(
                       pace,
                       progress: t,
-                      today: tone,
+                      today: theme.colorScheme.primary,
+                      ahead: tone,
                       usual: theme.colorScheme.outline,
                       limit: theme.colorScheme.error,
                       late: theme.colorScheme.primary.withValues(alpha: 0.08),
                       grid: theme.colorScheme.outlineVariant,
-                      labels: [for (final h in hours) clock(h == 24 ? 0 : h * 60)],
+                      labels: [hour(6), hour(12), hour(18)],
                       labelStyle: theme.textTheme.labelSmall!.copyWith(
                           color: theme.colorScheme.onSurfaceVariant),
                       textDirection: Directionality.of(context),
@@ -104,7 +106,8 @@ class PaceCard extends StatelessWidget {
             ),
             const SizedBox(height: 8),
             Wrap(spacing: 14, runSpacing: 4, children: [
-              _Key(color: tone, label: l10n.paceToday),
+              _Key(color: theme.colorScheme.primary, label: l10n.paceToday),
+              _Key(color: tone, label: l10n.paceAhead, dashed: true),
               _Key(color: theme.colorScheme.outline, label: l10n.paceUsual, dashed: true),
               _Key(color: theme.colorScheme.error, label: l10n.paceLimit(money(pace.limitFils))),
             ]),
@@ -179,6 +182,7 @@ class PacePainter extends CustomPainter {
     this.pace, {
     required this.progress,
     required this.today,
+    required this.ahead,
     required this.usual,
     required this.limit,
     required this.late,
@@ -191,6 +195,9 @@ class PacePainter extends CustomPainter {
   final DayPace pace;
   final double progress;
   final Color today;
+
+  /// The rest of a usual day from now, in the status colour.
+  final Color ahead;
   final Color usual;
   final Color limit;
   final Color late;
@@ -228,10 +235,13 @@ class PacePainter extends CustomPainter {
       ..color = grid
       ..strokeWidth = 1;
     canvas.drawLine(Offset(0, h), Offset(w, h), gridPaint);
+    // Ticks at midnight, 06, 12, 18 and midnight; labels at 06, 12 and 18.
+    for (final m in [0, 360, 720, 1080, kDayMinutes]) {
+      canvas.drawLine(Offset(x(m), h), Offset(x(m), h + 3), gridPaint);
+    }
     for (var i = 0; i < labels.length; i++) {
-      final m = i * 6 * 60;
+      final m = (i + 1) * 6 * 60;
       final gx = x(m);
-      canvas.drawLine(Offset(gx, h), Offset(gx, h + 3), gridPaint);
       final tp = TextPainter(
         text: TextSpan(text: labels[i], style: labelStyle),
         textDirection: textDirection,
@@ -285,7 +295,7 @@ class PacePainter extends CustomPainter {
     if (progress < 1) return;
     // The rest of a usual day from now, dotted.
     final rest = Paint()
-      ..color = today.withValues(alpha: 0.55)
+      ..color = ahead
       ..strokeWidth = 2.5
       ..strokeCap = StrokeCap.round;
     for (var m = pace.nowMinute; m < kDayMinutes; m += 12) {
@@ -294,6 +304,16 @@ class PacePainter extends CustomPainter {
     }
     final end = Offset(x(kDayMinutes), y(pace.expectedFils));
     canvas.drawCircle(end, 3, rest);
+    // Where a usual rest of the day crosses the limit.
+    final pass = pace.passMinute;
+    if (pass != null) {
+      final at = Offset(x(pass), ly);
+      canvas.drawLine(Offset(at.dx, ly - 7), Offset(at.dx, ly + 7),
+          Paint()
+            ..color = ahead
+            ..strokeWidth = 2);
+      canvas.drawCircle(at, 4, Paint()..color = ahead);
+    }
     // Now.
     final now = Offset(x(pace.nowMinute), y(pace.spentFils));
     canvas.drawCircle(now, 5.5, Paint()..color = today);
@@ -308,5 +328,8 @@ class PacePainter extends CustomPainter {
 
   @override
   bool shouldRepaint(PacePainter old) =>
-      old.progress != progress || old.pace != pace || old.today != today;
+      old.progress != progress ||
+      old.pace != pace ||
+      old.today != today ||
+      old.ahead != ahead;
 }

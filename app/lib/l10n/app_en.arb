@@ -933,5 +933,6 @@
   "pacePassed": "You passed today's limit. You usually spend {more} more after now; stopping here saves it.",
   "@pacePassed": {"placeholders": {"more": {"type": "String"}}},
   "paceLate": "{amount} of it usually goes after 10 pm.",
-  "@paceLate": {"placeholders": {"amount": {"type": "String"}}}
+  "@paceLate": {"placeholders": {"amount": {"type": "String"}}},
+  "paceAhead": "If the day goes as usual"
 }
