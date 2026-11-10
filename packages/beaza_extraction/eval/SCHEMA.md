@@ -45,14 +45,22 @@ from other messages, except `last4` and `direction` as explained below.
 
 ## Masking (FR-6.1)
 
-Before a message goes into a gold file, replace:
+The one team member who receives a volunteer's messages masks them within 24
+hours and then deletes the originals (the consent form promises this).
+Replace, with made-up values of the same shape:
 
 - personal names with `[NAME]`
 - phone numbers of people with `[PHONE]` (bank hotline numbers may stay)
-- account numbers and IBANs with `X`s, keeping only the last 4 digits
+- account numbers, card numbers and IBANs: keep the shape, make up every
+  digit. Use one made-up last-4 per real account of a volunteer, the same in
+  all of that volunteer's messages, so `last4` can still be checked
+- reference numbers: keep the bank's prefix and the date part, make up the rest
+- balances: made-up amounts
 
 Keep amounts, dates, times, merchant names and the bank's wording exactly as
-they are, because those are what is being measured.
+they are, because those are what is being measured. Masked messages are kept
+in a private folder, never in this repository. `eval/formats.jsonl` shows the
+result on the team's own messages.
 
 ## Two annotators
 
