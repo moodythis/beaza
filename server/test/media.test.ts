@@ -1,6 +1,6 @@
 import assert from 'node:assert/strict';
 import { describe, it } from 'node:test';
-import { MEDIA_CONSENT_VERSION, WHISPER_MODEL, cleanReceipt, toFils } from '../src/media.ts';
+import { MEDIA_CONSENT_VERSION, WHISPER_MODEL, cleanReceipt, mayHaveAmount, toFils } from '../src/media.ts';
 import { Server } from './harness.ts';
 
 class FakeAi {
@@ -74,6 +74,36 @@ describe('AI reading of receipt photos and voice', () => {
     s.ai = new FakeAi({ response: '[{"item": "بترول", "fils": 1500, "category": "transport"}]' });
     const res = await s.call('POST', '/v1/expenses', { consent: MEDIA_CONSENT_VERSION, language: 'ar', text: 'عبيت بترول بدينار ونص' });
     assert.deepEqual(res.body.drafts, [{ item: 'بترول', fils: 1500, category: 'transport' }]);
+  });
+
+  it('a question or chat is turned away before the model is asked', async () => {
+    for (const text of ['كم عمر ميسي؟', 'What is the capital of France?', 'write me a poem']) {
+      const s = new Server();
+      const ai = new FakeAi({ response: '[{"item": "x", "fils": 100}]' });
+      s.ai = ai;
+      const res = await s.call('POST', '/v1/expenses', { consent: MEDIA_CONSENT_VERSION, language: 'ar', text });
+      assert.equal(res.status, 200, text);
+      assert.deepEqual(res.body.drafts, []);
+      assert.equal(res.body.reason, 'off_topic');
+      assert.equal(ai.calls.length, 0, text);
+    }
+    const s = new Server();
+    const ai = new FakeAi({ text: 'شنو حالة الطقس اليوم' });
+    s.ai = ai;
+    const res = await s.call('POST', '/v1/voice', { consent: MEDIA_CONSENT_VERSION, language: 'ar', audio: JPEG });
+    assert.equal(res.body.reason, 'off_topic');
+    assert.equal(ai.calls.length, 1); // speech to text only
+    assert.ok(mayHaveAmount('شريت كرك بربيتين'));
+    assert.ok(mayHaveAmount('lunch 2 BD'));
+    assert.ok(!mayHaveAmount('how are you'));
+  });
+
+  it('the model finding no spending says so', async () => {
+    const s = new Server();
+    s.ai = new FakeAi({ response: '[]' });
+    const res = await s.call('POST', '/v1/expenses', { consent: MEDIA_CONSENT_VERSION, language: 'en', text: 'how much is 2 plus 2' });
+    assert.deepEqual(res.body.drafts, []);
+    assert.equal(res.body.reason, 'no_spending');
   });
 
   it('refuses without consent, extra fields or a bad picture', async () => {

@@ -159,7 +159,17 @@ export function cleanDrafts(v: unknown): AiDraft[] {
 const EXPENSES_PROMPT = `You turn what a person in Bahrain said about cash spending into a list. Reply with one JSON array only:
 [{"item": what was bought, in the person's words, "fils": the amount in fils as an integer, "category": one of ${CATEGORIES.join(', ')}}].
 Bahraini money: 1 dinar = 1000 fils; ربية = 100 fils; ربيتين = 200; خمس ربيات or نص دينار = 500; ربع دينار = 250; ثلاث ارباع = 750; نص ربية = 50; اربعانه = 25; "دينار ونص" = 1500. A bare number under 100 is dinars, 100 or more is fils.
-If nothing was spent, reply [].`;
+If nothing was spent, reply [].
+If the text is a question, a chat, a request or anything other than money the person spent, reply [] and answer nothing else.`;
+
+/** An amount could be in [text]: a digit, or a money word (دينار, فلس,
+ * ربية, نص, ربع, dinar, fils, BD...). Without one there is nothing to put
+ * in the list, so the model is not asked and no daily quota is used. */
+export function mayHaveAmount(text: string): boolean {
+  if (/[0-9٠-٩۰-۹]/.test(text)) return true;
+  const t = text.toLowerCase().replace(/[ةه]/g, 'ه').replace(/[أإآ]/g, 'ا');
+  return /دينار|دنانير|فلس|فلوس|ربي|ربيات|نص|ربع|ارباع|اربعانه|dinar|fils|\bbd\b|\bbhd\b|half|quarter/.test(t);
+}
 
 async function expensesFrom(ai: AiLike, text: string): Promise<AiDraft[]> {
   try {
@@ -191,9 +201,11 @@ export async function readExpenses(
   if (typeof text !== 'string' || text.trim().length === 0 || text.length > MAX_TEXT) {
     throw new HttpError(400, 'bad_text');
   }
+  if (!mayHaveAmount(text)) return { drafts: [], reason: 'off_topic' };
   if (!ai) throw new HttpError(503, 'coach_disabled');
   if (!(await allow(db, now, cap))) throw new HttpError(429, 'coach_busy');
-  return { drafts: await expensesFrom(ai, text.trim()) };
+  const drafts = await expensesFrom(ai, text.trim());
+  return drafts.length > 0 ? { drafts } : { drafts, reason: 'no_spending' };
 }
 
 export async function readVoice(
@@ -225,5 +237,8 @@ export async function readVoice(
     text = '';
   }
   if (!text) return { text: '', drafts: [] };
-  return { text: text.slice(0, MAX_TEXT), drafts: await expensesFrom(ai, text.slice(0, MAX_TEXT)) };
+  const said = text.slice(0, MAX_TEXT);
+  if (!mayHaveAmount(said)) return { text: said, drafts: [], reason: 'off_topic' };
+  const drafts = await expensesFrom(ai, said);
+  return drafts.length > 0 ? { text: said, drafts } : { text: said, drafts, reason: 'no_spending' };
 }

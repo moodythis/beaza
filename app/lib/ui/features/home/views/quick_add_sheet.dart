@@ -155,6 +155,12 @@ class _QuickAddSheetState extends State<QuickAddSheet> {
   }
 
   void _useAiDrafts(List<AiDraft> drafts) {
+    if (drafts.isEmpty) {
+      // A question or chat: this box only adds expenses.
+      ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+          key: const Key('aiOffTopic'),
+          content: Text(AppLocalizations.of(context).aiOffTopic)));
+    }
     final now = widget.viewModel.now();
     setState(() {
       _aiText = _text.text;

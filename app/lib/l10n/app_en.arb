@@ -989,5 +989,6 @@
   "boardLeave": "Leave",
   "boardRank": "Your place online: {rank}",
   "@boardRank": {"placeholders": {"rank": {"type": "int"}}},
-  "boardOutside": "Online: outside the top 50"
+  "boardOutside": "Online: outside the top 50",
+  "aiOffTopic": "This box only adds expenses, like \"karak 200 fils\". Ask questions on the \"Ask about your spending\" screen."
 }
