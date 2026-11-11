@@ -3,7 +3,7 @@ import 'package:beaza/data/repositories/rewards_repository.dart';
 import 'package:beaza/data/repositories/savings_repository.dart';
 import 'package:beaza/data/repositories/settings_repository.dart';
 import 'package:beaza/domain/use_cases/rewards.dart' as rw;
-import 'package:beaza/domain/use_cases/rewards.dart' show DemoOffer, kDemoOffers, rankOffers;
+import 'package:beaza/domain/use_cases/rewards.dart' show DemoOffer, kDemoOffers, offerFit, rankOffers;
 import 'package:beaza/domain/use_cases/daily_close.dart';
 import 'package:beaza/domain/use_cases/leaderboard.dart';
 import 'package:beaza/domain/use_cases/spending_by_category.dart';
@@ -37,7 +37,11 @@ class SavingsViewModel extends ChangeNotifier {
   int pointsEarned = 0;
   List<Redemption> redeemed = const [];
   List<DemoOffer> offers = kDemoOffers;
-  bool personalOffers = false;
+  bool personalOffers = true;
+
+  /// For each offer id: the last 7 days' spending it applies to, how many
+  /// purchases, and what its discount would have kept.
+  Map<String, ({int spentFils, int count, int savingFils})> fits = const {};
 
   /// Finished days in a row within the limit (a frozen day is skipped).
   int streak = 0;
@@ -122,9 +126,13 @@ class SavingsViewModel extends ChangeNotifier {
   int get pointsBalance =>
       pointsEarned - redeemed.fold(0, (a, r) => a + r.cost);
 
-  /// Points still needed for [offer]; 0 when there are enough.
-  int pointsShort(DemoOffer offer) =>
-      offer.cost > pointsBalance ? offer.cost - pointsBalance : 0;
+  /// The coupon for [offer] that is still valid, if any.
+  Redemption? activeVoucher(DemoOffer offer) {
+    for (final r in vouchers) {
+      if (r.offerId == offer.id && r.activeAt(_clock())) return r;
+    }
+    return null;
+  }
 
   /// Redeemed vouchers, newest first (streak freezes are not vouchers).
   List<Redemption> get vouchers => [
@@ -137,6 +145,9 @@ class SavingsViewModel extends ChangeNotifier {
   Future<String?> redeem(DemoOffer offer) async {
     final r = rewards;
     if (r == null || pointsBalance < offer.cost) return null;
+    // One coupon per offer at a time: a valid one is shown again.
+    final held = activeVoucher(offer);
+    if (held != null) return held.code;
     final code = offer.codeFor(redeemed.length + 1);
     await r.redeem(offer.id, code, offer.cost);
     return code;
@@ -196,9 +207,11 @@ class SavingsViewModel extends ChangeNotifier {
       boardNumber = personaNumber(await r.boardId());
       redeemed = await r.redeemed();
       personalOffers = await r.personal();
+      fits = {for (final o in kDemoOffers) o.id: offerFit(o, entries, today)};
       offers = rankOffers(
         spendingByCategory(entries, today.addDays(-6), today),
         personal: personalOffers,
+        savings: {for (final e in fits.entries) e.key: e.value.savingFils},
       );
     }
     loaded = true;

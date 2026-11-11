@@ -633,7 +633,7 @@
   "rewardsDemoTag": "demo",
   "rewardsPoints": "points",
   "rewardsHow": "10 points for each day of the last 30 within your limit, 20 for each purchase you skipped after waiting, 10 each time you send a day's unspent money to your goal.",
-  "offersPersonal": "Offers by my spending",
+  "offersPersonal": "Deals that fit my spending first",
   "offersPersonalHow": "Puts offers for your biggest categories first. Worked out on this phone; nothing is sent.",
   "rewardsCost": "{points} pts",
   "@rewardsCost": {
@@ -991,7 +991,7 @@
   "@boardRank": {"placeholders": {"rank": {"type": "int"}}},
   "boardOutside": "Online: outside the top 50",
   "aiOffTopic": "This box only adds expenses, like \"karak 200 fils\". Ask questions on the \"Ask about your spending\" screen.",
-  "rewardsMarket": "Loyalty rewards & coupons",
+  "rewardsMarket": "Deals & coupons from shops",
   "walletButton": "My coupons ({count})",
   "@walletButton": {"placeholders": {"count": {"type": "int"}}},
   "walletTitle": "My coupons",
@@ -1002,5 +1002,10 @@
   "@voucherDaysLeft": {"placeholders": {"days": {"type": "int"}}},
   "voucherExpired": "Expired",
   "voucherDisclaimer": "This offer is a demo for the Beaza graduation project; no real shop accepts it.",
-  "voucherQrNote": "Demo pattern: shops cannot scan it"
+  "voucherQrNote": "Demo pattern: shops cannot scan it",
+  "dealsHow": "Shops give Beaza free coupons, and Beaza puts the ones that fit your spending first. No points needed. The shops here are a demo for now.",
+  "dealFit": "You spent {spent} here in the last 7 days ({count} times). This coupon would have saved about {saving}.",
+  "@dealFit": {"placeholders": {"spent": {"type": "String"}, "count": {"type": "int"}, "saving": {"type": "String"}}},
+  "dealGet": "Get coupon",
+  "dealShow": "Show coupon"
 }

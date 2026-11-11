@@ -74,10 +74,11 @@ class RewardsRepository extends ChangeNotifier {
     notifyListeners();
   }
 
-  Future<bool> personal() async => await _prefs.read(personalKey) == 'on';
+  /// On unless the person turned it off.
+  Future<bool> personal() async => await _prefs.read(personalKey) != 'off';
 
   Future<void> setPersonal(bool on) async {
-    await _prefs.write(personalKey, on ? 'on' : null);
+    await _prefs.write(personalKey, on ? 'on' : 'off');
     notifyListeners();
   }
 

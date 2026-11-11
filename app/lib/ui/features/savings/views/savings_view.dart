@@ -609,6 +609,10 @@ class RewardsCard extends StatelessWidget {
               ],
             ),
           ),
+          Padding(
+            padding: const EdgeInsets.fromLTRB(16, 0, 16, 0),
+            child: Text(l10n.dealsHow, style: theme.textTheme.bodySmall),
+          ),
           SwitchListTile(
             key: const Key('offersPersonal'),
             value: viewModel.personalOffers,
@@ -625,6 +629,20 @@ class RewardsCard extends StatelessWidget {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Text(ar ? o.offerAr : o.offerEn),
+                  if ((viewModel.fits[o.id]?.spentFils ?? 0) > 0)
+                    Padding(
+                      padding: const EdgeInsets.only(top: 2),
+                      child: Text(
+                        l10n.dealFit(
+                          l10n.bhd(formatFils(viewModel.fits[o.id]!.spentFils)),
+                          viewModel.fits[o.id]!.count,
+                          l10n.bhd(formatFils(viewModel.fits[o.id]!.savingFils)),
+                        ),
+                        key: Key('dealFit_${o.id}'),
+                        style: theme.textTheme.bodySmall
+                            ?.copyWith(color: theme.colorScheme.primary),
+                      ),
+                    ),
                   const SizedBox(height: 4),
                   Container(
                     key: Key('offerBadge_${o.id}'),
@@ -643,12 +661,9 @@ class RewardsCard extends StatelessWidget {
               trailing: FilledButton.tonal(
                 key: Key('redeem_${o.id}'),
                 onPressed: () async {
-                  final messenger = ScaffoldMessenger.of(context);
-                  final short = viewModel.pointsShort(o);
-                  if (short > 0) {
-                    messenger.showSnackBar(SnackBar(
-                        key: const Key('pointsShort'),
-                        content: Text(l10n.rewardsShort(short))));
+                  final held = viewModel.activeVoucher(o);
+                  if (held != null) {
+                    await showVoucherSheet(context, held, viewModel.now());
                     return;
                   }
                   final when = viewModel.now();
@@ -657,7 +672,9 @@ class RewardsCard extends StatelessWidget {
                   await showVoucherSheet(
                       context, Redemption(o.id, code, o.cost, when), when);
                 },
-                child: Text(l10n.rewardsCost(o.cost)),
+                child: Text(viewModel.activeVoucher(o) != null
+                    ? l10n.dealShow
+                    : l10n.dealGet),
               ),
             ),
           const SizedBox(height: 8),

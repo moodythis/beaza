@@ -63,7 +63,33 @@ void main() {
     }
   });
 
-  testWidgets('redeem an offer with enough points', (tester) async {
+  test('a coupon shows what it would have saved on the last 7 days', () {
+    final entries = const Reconciler().reconcile([
+      for (var d = 10; d <= 14; d++)
+        ExtractionResult(
+          status: ExtractionStatus.transaction, amountFils: 1500, currency: 'BHD',
+          type: TxnType.purchase, direction: TxDirection.outgoing,
+          merchantRaw: 'KARAK HOUSE', category: 'food', reference: 'K$d',
+          timestamp: bh(d, 8)),
+      tx(20000, bh(12), category: 'shopping'),
+      tx(9000, bh(1), category: 'shopping'), // older than 7 days
+    ], OwnAccounts());
+    const today = Day(2026, 11, 14);
+    final nakhla = kDemoOffers.firstWhere((o) => o.id == 'nakhla');
+    final souq = kDemoOffers.firstWhere((o) => o.id == 'souq');
+    expect(offerFit(nakhla, entries, today), (spentFils: 7500, count: 5, savingFils: 1500));
+    expect(offerFit(souq, entries, today), (spentFils: 20000, count: 1, savingFils: 3000));
+    // The coupon that would have saved most comes first.
+    final ranked = rankOffers(const [], personal: true,
+        savings: {for (final o in kDemoOffers) o.id: offerFit(o, entries, today).savingFils});
+    expect(ranked.take(2).map((o) => o.id), ['souq', 'nakhla']);
+    for (final o in kDemoOffers) {
+      expect(o.cost, 0, reason: 'coupons are free');
+    }
+  });
+
+  testWidgets('get a free coupon: no points taken, shown again, in My coupons',
+      (tester) async {
     final now = DateTime.utc(2026, 11, 14, 9);
     final ledger = InMemoryLedgerRepository(initial: [
       for (var d = 1; d <= 13; d++) tx(2000, bh(d)),
@@ -94,26 +120,25 @@ void main() {
     await tester.pumpAndSettle();
     await tester.tap(find.byKey(const Key('redeem_nakhla')));
     await tester.pumpAndSettle();
-    expect(find.byKey(const Key('redeemCode')), findsOneWidget);
     expect(find.byKey(const Key('voucherDisclaimer')), findsOneWidget);
     expect(find.text('Valid 7 days'), findsOneWidget);
     expect(find.byKey(const Key('voucherQr')), findsOneWidget);
     final code = tester.widget<SelectableText>(find.byKey(const Key('redeemCode'))).data!;
     expect(code, startsWith('DEMO-NAKHLA-'));
-    expect(vm.pointsBalance, 80);
+    expect(vm.pointsBalance, 130, reason: 'coupons cost no points');
 
-    // Not enough points for a 100-point offer: a message, nothing taken.
+    // Tapping again shows the same coupon, not a second one.
     Navigator.of(tester.element(find.byKey(const Key('voucherSheet')))).pop();
     await tester.pumpAndSettle();
-    await tester.scrollUntilVisible(find.byKey(const Key('redeem_souq')), 300,
-        scrollable: find.byType(Scrollable).first);
-    await tester.tap(find.byKey(const Key('redeem_souq')));
+    expect(find.text('Show coupon'), findsOneWidget);
+    await tester.tap(find.byKey(const Key('redeem_nakhla')));
     await tester.pumpAndSettle();
-    expect(find.text('Not enough points: you need 20 more, from keeping to your daily limit and the 24-hour wait.'),
-        findsOneWidget);
-    expect(vm.pointsBalance, 80);
+    expect(tester.widget<SelectableText>(find.byKey(const Key('redeemCode'))).data, code);
+    Navigator.of(tester.element(find.byKey(const Key('voucherSheet')))).pop();
+    await tester.pumpAndSettle();
+    expect(vm.vouchers, hasLength(1));
 
-    // My coupons lists the voucher; it opens again with its code.
+    // My coupons lists it; it opens again with its code.
     await tester.ensureVisible(find.byKey(const Key('openWallet')));
     await tester.pumpAndSettle();
     expect(find.text('My coupons (1)'), findsOneWidget);
