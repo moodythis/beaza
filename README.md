@@ -1,54 +1,85 @@
 # Beaza (بيزة)
 
-Localized bilingual transaction extraction pipeline and daily spending guardrail
-for cashless micro-expenses in Bahrain. Flutter and Dart, Android first.
+An Android app that helps students in Bahrain keep to a daily spending limit.
+It reads the bank's SMS messages on the phone, works out what was spent, and
+warns before the limit is passed. Arabic and English.
 
-## Layout
+Graduation project, College of Information Technology, University of Bahrain.
 
-| Path | Purpose |
+## Try it
+
+Download the APK from the [latest release](https://github.com/moodythis/beaza/releases/latest)
+and install it on an Android phone.
+
+Google Play Protect may block the install because the app reads SMS and is not
+on the Play Store. Pause Play Protect scanning while installing, then turn it
+back on. The APK is signed with a test key and is meant for evaluation only.
+
+## What it does
+
+- **Reads bank messages on the phone.** Templates for NBB, BBK, BisB, ila,
+  Al Salam, KFH and BenefitPay. A message with no template goes to review
+  instead of being guessed.
+- **Daily limit.** Set by hand or worked out from income, with alerts at 50%,
+  80% and 100%, a forecast of where today ends, and "Can I buy it?".
+- **Saving.** A goal, a 24-hour wait before a purchase, subscriptions, a daily
+  close that moves unspent money to the goal, a streak and a leaderboard.
+- **Questions.** "How much did I spend this week?", "Where did my money go?",
+  answered on the phone in Gulf Arabic or English.
+- **Optional AI** (Google Gemini, through the project's server): a savings
+  plan, sorting of shop names, receipt and voice reading. Each needs its own
+  consent, and each has a fallback on the phone.
+- **Optional sync** between a person's phones, end-to-end encrypted.
+
+The deals and coupons in the Saving tab are a demo: the shops are made up.
+
+## Privacy
+
+Everything works without an account, and bank messages never leave the phone.
+The local database is encrypted with a key in the Android Keystore. Sync
+stores only records the server cannot read. The savings plan sends totals and
+shop names, never message text, account numbers or people's names. A receipt
+photo or a voice recording is sent only when the person turns that on. Details
+are in [docs/privacy-compliance.md](docs/privacy-compliance.md).
+
+## How it is built
+
+| Path | What is there |
 |---|---|
-| `packages/beaza_extraction` | Pure Dart core: extraction pipeline, reconciler and daily guardrail, shared by the app and the evaluation tool |
-| `packages/beaza_crypto` | Pure Dart end-to-end encryption for sync (keys, recovery key, record encryption) |
-| `app` | Flutter app (Arabic and English), MVVM: `data/` repositories and services, `domain/use_cases`, `ui/core`, `ui/features/<feature>/{view_models,views}`; Kotlin SMS intake and alerts in `android/` |
-| `server` | Cloudflare Worker (`beaza-sync`) with a D1 database in the EU: optional sync that stores only encrypted records, and the AI endpoints (`/v1/coach`, `/v1/alternatives`, `/v1/categorize`, `/v1/receipt`, `/v1/voice`, `/v1/expenses`) that keep no content |
-| `docs` | Privacy compliance notes (GDPR, Bahrain PDPL) and the app icon. The SRS, Design, discussion guide and the Arabic user guide are kept as shared documents outside the repo |
-| `dartpad` | Old single-file snapshots of early stages; not maintained |
-| `.github/workflows/ci.yml` | Tests every part (extraction, crypto, server, phone-server contract, app, a two-phone sync test) and builds the APK |
+| `app` | The Flutter app (MVVM), with Kotlin for SMS intake and reminders |
+| `packages/beaza_extraction` | Pure Dart: reading messages, removing duplicates, the daily limit, and the evaluation tool |
+| `packages/beaza_assistant` | Pure Dart: the questions screen and Bahraini money words |
+| `packages/beaza_crypto` | Pure Dart: encryption for sync |
+| `server` | A Cloudflare Worker with a D1 database: sync, the AI routes and the leaderboard |
 
-## Status
+All money is kept as whole fils (1 BHD = 1000 fils), and days follow Bahrain
+time.
 
-| Part | State |
-|---|---|
-| Normalizer, detector, classifier, Tier 1 templates (BisB, ila, Al Salam, BenefitPay, NBB, KFH), validator, extractor | Done, tested; BBK and AUB are detected but have no template yet |
-| Reconciler (duplicates, own accounts, spending total, money paid back within 30 days) | Done, tested |
-| Daily guardrail (limit, 50/80/100% alerts, cap, snooze, micro-expenses, rollover) | Done, tested |
-| App: four tabs (Today, History, Insights, Saving), light theme by default, short motion that turns off with reduced motion | Done, tested |
-| Daily limit from income with no saving or one of six profiles (pay yourself first, 50/30/20, 70/20/10, weekend weighted, kakeibo, own amount) | Done, tested |
-| Today: limit card, "Can I buy it?" with "Wait 24 hours", AI plan tile, challenge tile, weekly report card, small purchases | Done, tested |
-| Today's pace: a forecast from the person's usual day (last 28 days, per Bahrain hour) that says before the limit is crossed whether a usual rest of the day fits or passes it, and when; drawn as a chart with the late-night hours shaded | Done, tested |
-| Daily close: from 20:00 (or the next morning) the unspent part of the limit goes to the savings goal (+10 points) or to the next day's limit (at most half of it); 21:30 reminder without amounts; coins fly to where it went | Done, tested |
-| Streak with a freeze (50 points, covers one day over the limit) and a leaderboard by points and streak only: a practice board of made-up personas on the phone, and an optional online board (`/v1/leaderboard`) under its own consent | Done, tested; online scores are self-reported and nicknames are checked for characters only |
-| History: day list, unsorted filter, change category (own categories too), edit, delete, swipe to delete, "money came back" switch | Done, tested |
-| Insights: Ask (on the phone), category ring with percentages, rule tips, weekly challenge, AI plan, cheaper alternatives | Done, tested |
-| Saving: goal, 24-hour holds with a "Did you decide?" notification, subscriptions, demo points and offers | Done, tested; reminders are set again after the phone restarts |
-| Weekly report (9 sections, week by week, Saturday 21:00 notification without amounts) and the privacy eye | Done, tested |
-| Manual expense, quick add by text or voice, receipt photo read on the phone | Done, tested |
-| Optional AI (Google Gemini through the Worker, key kept as a Worker secret): plan, cheaper ideas, sorting, receipt and voice reading, each with its own consent | Done, tested; falls back to rules or the phone when Gemini does not answer |
-| Encrypted database (drift + SQLite3 Multiple Ciphers, key in Android Keystore) | Done, tested |
-| SMS intake (Kotlin receiver, background run) and local alerts | Done; battery saving can delay background alerts (the app shows a card) |
-| Optional account, end-to-end encrypted sync, merge protection | Done, tested (including a two-phone test against the real server code) |
-| Data export to a JSON file | Done, tested |
-| Merchant normalizer and categorizer | Done (names cleaned, nine categories plus the user's own) |
-| Notification intake (wallet apps) | Later |
-| Evaluation harness | B1 (rules) built: `packages/beaza_extraction/eval` |
-| Tier 2 model (B2, B3) | Later |
-| Changing the account email | Later |
+## Accuracy
 
-## Without a laptop
+The rules-only reader (B1) was measured on two sets made by the team:
 
-- **Tests:** push, open the **Actions** tab, read the latest run.
-- **Try the app:** open the latest green run, download the `beaza-apk` artifact
-  (a zip), extract it on an Android phone and install `app-release.apk`.
-  Google Play Protect may block it because it reads SMS; pause scanning while
-  installing. It is signed with a test key (`app/android/keystore`), not for
-  release.
+| Set | Messages | Field precision | Field recall | Exact match |
+|---|---|---|---|---|
+| Formats (wording of real NBB, KFH and BBK messages, digits made up) | 37 | 1.000 | 1.000 | 100% |
+| Seed (real English formats and invented Arabic ones) | 30 | 1.000 | 0.776 | 80% |
+
+The templates were written from the formats set, so its score shows they match
+those messages, not how they handle new ones. No messages from other users
+were collected, and only one person labelled the sets, so there is no
+agreement score. The data and the tool are in
+[`packages/beaza_extraction/eval`](packages/beaza_extraction/eval).
+
+## Tests
+
+Every push runs the tests for each package, the server and the app, a
+two-phone sync test against the real server code, and builds the APK. Results
+are in the [Actions](https://github.com/moodythis/beaza/actions) tab.
+
+## Known limits
+
+- Arabic bank messages are not read yet; AUB has no template.
+- Wallet notifications are not read, only SMS.
+- Leaderboard scores are reported by each phone and not checked.
+- Sign-up by email does not verify the address.
+- The AI runs on Google's free tier, whose terms the project does not control.
