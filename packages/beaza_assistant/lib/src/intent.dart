@@ -20,7 +20,22 @@ class ParsedRequest {
     this.topic,
     this.wantsRemaining = false,
     this.wantsBreakdown = false,
+    this.weekday,
+    this.periodGiven = false,
   });
+
+  /// The same question for another period: "لا، بس الأحد" after "كم صرفت؟".
+  ParsedRequest forPeriodOf(ParsedRequest other) => ParsedRequest(
+        intent: intent,
+        arabic: other.arabic,
+        period: other.period,
+        category: category,
+        topic: topic,
+        wantsRemaining: false,
+        wantsBreakdown: wantsBreakdown,
+        weekday: other.weekday,
+        periodGiven: true,
+      );
 
   final AssistantIntent intent;
   final bool arabic;
@@ -29,6 +44,45 @@ class ParsedRequest {
   final Topic? topic;
   final bool wantsRemaining;
   final bool wantsBreakdown;
+
+  /// DateTime.monday..sunday when [period] is [PeriodKind.weekday].
+  final int? weekday;
+
+  /// The text named a day or a period (today, Sunday, this month...).
+  final bool periodGiven;
+}
+
+/// Weekday names: Arabic only with "ال" in front ("أحد" alone is "anyone").
+final Map<String, int> _weekdays = {
+  for (final e in const {
+    'احد': DateTime.sunday,
+    'اثنين': DateTime.monday,
+    'اتنين': DateTime.monday,
+    'ثلاثاء': DateTime.tuesday,
+    'ثلاثا': DateTime.tuesday,
+    'اربعاء': DateTime.wednesday,
+    'اربعا': DateTime.wednesday,
+    'خميس': DateTime.thursday,
+    'جمعه': DateTime.friday,
+    'سبت': DateTime.saturday,
+  }.entries)
+    for (final p in const ['ال', 'بال', 'وال', 'هال', 'لل'])
+      '$p${e.key}': e.value,
+  'sunday': DateTime.sunday,
+  'monday': DateTime.monday,
+  'tuesday': DateTime.tuesday,
+  'wednesday': DateTime.wednesday,
+  'thursday': DateTime.thursday,
+  'friday': DateTime.friday,
+  'saturday': DateTime.saturday,
+};
+
+int? _weekdayIn(List<String> tokens) {
+  for (final t in tokens) {
+    final w = _weekdays[t] ?? _weekdays[t.endsWith('s') ? t.substring(0, t.length - 1) : t];
+    if (w != null) return w;
+  }
+  return null;
 }
 
 const Set<String> _question = {
@@ -101,6 +155,15 @@ class IntentDetector {
 
   final BahrainiMoneyParser money;
 
+  /// The text carries its own money question, advice request or amount,
+  /// so it is not a follow-up to the previous question.
+  bool hasMoneyIntent(String text) {
+    final tokens = tokenize(text);
+    return kAssistantScope.hasMoneyWord(tokens) ||
+        _has(tokens, _advice) ||
+        money.findAll(tokens).isNotEmpty;
+  }
+
   ParsedRequest detect(String text) {
     final tokens = tokenize(text);
     final arabic = isArabic(text);
@@ -121,7 +184,10 @@ class IntentDetector {
       }
     }
     final remaining = _has(tokens, _remaining);
-    final period = _has(tokens, _yesterday)
+    final weekday = _weekdayIn(tokens);
+    final period = weekday != null
+        ? PeriodKind.weekday
+        : _has(tokens, _yesterday)
         ? PeriodKind.yesterday
         : _has(tokens, _today)
             ? PeriodKind.today
@@ -138,6 +204,7 @@ class IntentDetector {
     // studies") is not about money; with "how much" or a period it is.
     final kindAsked = (category != null || topic != null) &&
         (_has(tokens, _howMuch) ||
+            weekday != null ||
             _has(tokens, _today) ||
             _has(tokens, _yesterday) ||
             _has(tokens, _week) ||
@@ -175,6 +242,12 @@ class IntentDetector {
       category: category,
       topic: category == null ? topic : null,
       wantsRemaining: remaining,
+      weekday: weekday,
+      periodGiven: weekday != null ||
+          _has(tokens, _today) ||
+          _has(tokens, _yesterday) ||
+          _has(tokens, _week) ||
+          _has(tokens, _month),
       wantsBreakdown: category == null &&
           topic == null &&
           (_has(tokens, _breakdown) || whereWord),

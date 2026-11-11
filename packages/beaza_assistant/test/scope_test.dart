@@ -101,4 +101,41 @@ void main() {
       expect(small.replyText, isNot(contains('at home')));
     });
   });
+
+  group('a day of the week, and follow-ups', () {
+    // Today is Saturday 14 Nov 2026 (Bahrain). Sunday was 8 Nov.
+    final week = ledger([
+      tx(2000, bh(8, 10), merchantRaw: 'CAFE'), // Sunday
+      tx(1500, bh(8, 19), merchantRaw: 'CAFE'), // Sunday
+      tx(4000, bh(12, 13), merchantRaw: 'SHOP'), // Thursday
+      tx(700, bh(14, 9), merchantRaw: 'CAFE'), // today
+    ]);
+
+    test('"جم صرفت يوم الاحد" answers for Sunday only', () {
+      final r = a.answerLocally('جم صرفت يوم الاحد', week);
+      expect(r.intent, AssistantIntent.spendingQuery);
+      expect(r.replyText, 'صرفت 3.500 د.ب يوم الأحد (2 عمليات).');
+    });
+
+    test('English, and today\'s weekday is today', () {
+      expect(a.answerLocally('How much did I spend on Thursday?', week).replyText,
+          'You spent BHD 4.000 on Thursday (1 purchase).');
+      expect(a.answerLocally('How much did I spend on Saturday?', week).replyText,
+          'You spent 700 fils today (1 purchase).');
+    });
+
+    test('"لا بس الاحد" after a question asks it again for Sunday', () {
+      final r = a.answerLocally('لا بس الاحد', week, previous: 'كم صرفت هالأسبوع؟');
+      expect(r.intent, AssistantIntent.spendingQuery);
+      expect(r.replyText, 'صرفت 3.500 د.ب يوم الأحد (2 عمليات).');
+      final y = a.answerLocally('and yesterday?', week,
+          previous: 'How much did I spend this week?');
+      expect(y.replyText, contains('yesterday'));
+    });
+
+    test('"أحد" without "ال" is not Sunday, and no follow-up without a question before', () {
+      expect(a.answerLocally('لا بس الاحد', week).intent, AssistantIntent.unknown);
+      expect(a.answerLocally('هل احد يعرف؟', week).intent, AssistantIntent.outOfScope);
+    });
+  });
 }

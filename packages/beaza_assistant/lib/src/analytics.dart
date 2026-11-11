@@ -4,7 +4,8 @@ library;
 
 import 'package:beaza_extraction/beaza_extraction.dart';
 
-enum PeriodKind { today, yesterday, week, month }
+/// [weekday]: the last day with a given weekday, today included ("يوم الأحد").
+enum PeriodKind { today, yesterday, week, month, weekday }
 
 /// Bahrain days, both ends included.
 class Period {
@@ -12,12 +13,21 @@ class Period {
 
   /// "week" is the last 7 days including today, like the home screen;
   /// "month" is from the 1st of this month to today.
-  factory Period.of(PeriodKind kind, Day today) => switch (kind) {
+  ///
+  /// [weekday] (DateTime.monday..sunday) is used only with
+  /// [PeriodKind.weekday]: that day this week, or last week if it is still
+  /// to come.
+  factory Period.of(PeriodKind kind, Day today, {int? weekday}) => switch (kind) {
         PeriodKind.today => Period(kind, today, today),
         PeriodKind.yesterday => Period(kind, today.previous, today.previous),
         PeriodKind.week => Period(kind, today.addDays(-6), today),
         PeriodKind.month =>
           Period(kind, Day(today.year, today.month, 1), today),
+        PeriodKind.weekday => () {
+            final back = (dayOfWeek(today) - (weekday ?? dayOfWeek(today)) + 7) % 7;
+            final d = today.addDays(-back);
+            return Period(kind, d, d);
+          }(),
       };
 
   final PeriodKind kind;
@@ -39,6 +49,9 @@ class Period {
     return n;
   }
 }
+
+/// DateTime.monday (1) to DateTime.sunday (7) for a Bahrain day.
+int dayOfWeek(Day d) => DateTime.utc(d.year, d.month, d.day).weekday;
 
 /// A category's total. [bucket] is a category, 'transfer' or 'unsorted'.
 class BucketTotal {

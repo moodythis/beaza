@@ -75,7 +75,14 @@ String bucketName(String bucket, {required bool arabic}) {
   return (arabic ? ar : en)[bucket] ?? bucket;
 }
 
-String _periodText(PeriodKind p, {required bool arabic}) => switch (p) {
+const List<String> _dayAr = ['الاثنين', 'الثلاثاء', 'الأربعاء', 'الخميس', 'الجمعة', 'السبت', 'الأحد'];
+const List<String> _dayEn = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'];
+
+String _periodText(Period p, Day today, {required bool arabic}) => switch (p.kind) {
+      PeriodKind.weekday when p.from == today => arabic ? 'اليوم' : 'today',
+      PeriodKind.weekday => arabic
+          ? 'يوم ${_dayAr[dayOfWeek(p.from) - 1]}'
+          : 'on ${_dayEn[dayOfWeek(p.from) - 1]}',
       PeriodKind.today => arabic ? 'اليوم' : 'today',
       PeriodKind.yesterday => arabic ? 'أمس' : 'yesterday',
       PeriodKind.week => arabic ? 'في آخر 7 أيام' : 'in the last 7 days',
@@ -111,9 +118,9 @@ class BeazaAiAssistant {
   final NumberGuard guard;
   final DateTime Function() _clock;
 
-  Future<AssistantResponse> ask(
-      String text, Iterable<LedgerEntry> entries) async {
-    final local = answerLocally(text, entries);
+  Future<AssistantResponse> ask(String text, Iterable<LedgerEntry> entries,
+      {String? previous}) async {
+    final local = answerLocally(text, entries, previous: previous);
     final client = llm;
     // Drafts are shown as they are; an unknown request has nothing computed.
     if (client == null ||
@@ -149,8 +156,24 @@ class BeazaAiAssistant {
   }
 
   /// Offline answer: rules and arithmetic on the phone only.
-  AssistantResponse answerLocally(String text, Iterable<LedgerEntry> entries) {
-    final req = detector.detect(text);
+  ///
+  /// [previous] is the person's last question on this screen. A reply that
+  /// only names a day or a period ("لا، بس الأحد", "and yesterday?") asks
+  /// that same question again for the new period.
+  AssistantResponse answerLocally(String text, Iterable<LedgerEntry> entries,
+      {String? previous}) {
+    var req = detector.detect(text);
+    if (previous != null &&
+        req.periodGiven &&
+        req.category == null &&
+        req.topic == null &&
+        !detector.hasMoneyIntent(text)) {
+      final before = detector.detect(previous);
+      if (before.intent == AssistantIntent.spendingQuery &&
+          !before.wantsRemaining) {
+        req = before.forPeriodOf(req);
+      }
+    }
     final now = _clock();
     final s = SpendingSummaryBuilder(entries,
         settings: settings, today: Day.of(now));
@@ -214,7 +237,7 @@ class BeazaAiAssistant {
 
   AssistantResponse _total(SpendingSummaryBuilder s, ParsedRequest req) {
     final ar = req.arabic;
-    final p = Period.of(req.period, s.today);
+    final p = Period.of(req.period, s.today, weekday: req.weekday);
     final topic = req.topic;
     final category = req.category;
     bool where(ExtractionResult r) => topic != null
@@ -233,7 +256,7 @@ class BeazaAiAssistant {
                     ? 'على ${bucketName(category, arabic: true)}'
                     : 'on ${bucketName(category, arabic: false)}')
                 : '';
-    final when = _periodText(req.period, arabic: ar);
+    final when = _periodText(p, s.today, arabic: ar);
     String text;
     if (total == 0) {
       text = ar
@@ -263,9 +286,9 @@ class BeazaAiAssistant {
 
   AssistantResponse _breakdown(SpendingSummaryBuilder s, ParsedRequest req) {
     final ar = req.arabic;
-    final p = Period.of(req.period, s.today);
+    final p = Period.of(req.period, s.today, weekday: req.weekday);
     final buckets = s.byBucket(p);
-    final when = _periodText(req.period, arabic: ar);
+    final when = _periodText(p, s.today, arabic: ar);
     if (buckets.isEmpty) {
       return AssistantResponse(
         intent: AssistantIntent.spendingQuery,

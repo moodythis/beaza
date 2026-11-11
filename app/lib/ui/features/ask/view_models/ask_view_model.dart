@@ -43,7 +43,12 @@ class AskViewModel extends ChangeNotifier {
     if (q.isEmpty) return;
     final assistant =
         BeazaAiAssistant(settings: await _settings.load(), clock: _clock);
-    _turns.add(AskTurn(q, assistant.answerLocally(q, await _ledger.entries())));
+    // The last question, so "and on Sunday?" asks it again for Sunday.
+    final previous = _turns.isEmpty ? null : _turns.last.question;
+    _turns.add(AskTurn(
+        q,
+        assistant.answerLocally(q, await _ledger.entries(),
+            previous: previous)));
     if (!_disposed) notifyListeners();
   }
 
