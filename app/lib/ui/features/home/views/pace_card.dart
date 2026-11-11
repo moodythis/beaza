@@ -153,7 +153,9 @@ class _Key extends StatelessWidget {
             child: CustomPaint(painter: _KeyPainter(color, dashed, dotted)),
           ),
           const SizedBox(width: 6),
-          Text(label, style: Theme.of(context).textTheme.labelSmall),
+          // Wraps on a narrow phone with large text instead of overflowing.
+          Flexible(
+              child: Text(label, style: Theme.of(context).textTheme.labelSmall)),
         ],
       );
 }
