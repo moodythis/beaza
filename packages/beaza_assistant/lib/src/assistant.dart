@@ -160,8 +160,11 @@ class BeazaAiAssistant {
   /// [previous] is the person's last question on this screen. A reply that
   /// only names a day or a period ("لا، بس الأحد", "and yesterday?") asks
   /// that same question again for the new period.
+  ///
+  /// [afford] is what the app's budget plan says about a price; without it
+  /// a "can I buy it?" question is answered from the daily limit alone.
   AssistantResponse answerLocally(String text, Iterable<LedgerEntry> entries,
-      {String? previous}) {
+      {String? previous, AffordFacts? afford}) {
     var req = detector.detect(text);
     if (previous != null &&
         req.periodGiven &&
@@ -190,6 +193,8 @@ class BeazaAiAssistant {
         return _advice(s, req.arabic);
       case AssistantIntent.unknown:
         return _unknown(req.arabic);
+      case AssistantIntent.canIBuy:
+        return _canIBuy(s, req.priceFils!, afford, req.arabic);
       case AssistantIntent.outOfScope:
         return AssistantResponse(
           intent: AssistantIntent.outOfScope,
@@ -492,6 +497,76 @@ class BeazaAiAssistant {
 
     found.sort((a, b) => b.$1.compareTo(a.$1));
     return [for (final f in found.take(2)) f.$2];
+  }
+
+  /// Straight talk about a price, the way a Bahraini who helps students
+  /// with money would put it: what it does to the daily limit, and what to
+  /// do if it does not fit. Every number is worked out here in fils.
+  AssistantResponse _canIBuy(SpendingSummaryBuilder s, int price,
+      AffordFacts? afford, bool ar) {
+    String m(int f) => formatMoney(f, arabic: ar);
+    final d = s.todaySummary();
+    final metrics = <Metric>[_money('price_fils', price, ar)];
+    String text;
+    final monthLeft = afford?.monthLeftFils;
+    final now = afford?.limitFromTomorrowFils;
+    final after = afford?.limitIfBoughtFils;
+    if (monthLeft != null && price > monthLeft) {
+      metrics.add(_money('month_left_fils', monthLeft, ar));
+      text = ar
+          ? '${m(price)} أكثر من كل اللي باقي لك هالشهر (${m(monthLeft)}). لا تاخذه الحين. إذا تبيه، حطه هدف توفير في بيزة وجمّع له من الشهر الجاي.'
+          : '${m(price)} is more than everything left for this month (${m(monthLeft)}). Don\'t buy it now. If you want it, make it a saving goal in Beaza and put money towards it from next month.';
+    } else if (now != null && after != null) {
+      metrics
+        ..add(_money('limit_now_fils', now, ar))
+        ..add(_money('limit_after_fils', after, ar));
+      text = ar
+          ? 'يمديك، بس لازم تقلل مصاريفك: حدك اليومي من باجر بينزل من ${m(now)} إلى ${m(after)} لين آخر الشهر.'
+          : 'You can, but you will have to cut back: from tomorrow your daily limit drops from ${m(now)} to ${m(after)} until the end of the month.';
+      if (after * 2 < now) {
+        text += ar
+            ? ' هذا أقل من نص حدك، فإذا مو مستعجل عليه أجّله للشهر الجاي أو جمّع له.'
+            : ' That is less than half your limit, so if it can wait, leave it to next month or save up for it.';
+      }
+    } else if (monthLeft != null) {
+      metrics.add(_money('month_left_fils', monthLeft, ar));
+      text = ar
+          ? 'يمديك من الباقي لهالشهر (${m(monthLeft)})، وباجر يبدأ شهر جديد.'
+          : 'It fits in what is left this month (${m(monthLeft)}), and a new month starts tomorrow.';
+    } else if (d.limitFils <= 0) {
+      text = ar
+          ? 'ما عندك حد يومي، فما أقدر أقول إذا يمديك. حط حدك أو خله ينحسب من دخلك من الشاشة الرئيسية، وارجع اسألني.'
+          : 'You have no daily limit yet, so I can\'t say. Set one, or work it out from your income on the home screen, and ask me again.';
+    } else if (price <= d.remainingFils) {
+      metrics.add(_money('left_after_fils', d.remainingFils - price, ar));
+      text = ar
+          ? 'يدخل في حدك اليوم، وبيظل لك ${m(d.remainingFils - price)}.'
+          : 'It fits in today\'s limit, with ${m(d.remainingFils - price)} left after it.';
+    } else {
+      final limit = d.limitFils;
+      final days = (price + limit - 1) ~/ limit;
+      final half = limit ~/ 2;
+      metrics
+        ..add(_money('limit_fils', limit, ar))
+        ..add(Metric('days_of_limit', days, MetricUnit.days, display: '$days'));
+      text = ar
+          ? '${m(price)} تساوي $days يوم من حدك اليومي (${m(limit)}). يعني لازم تقلل مصاريفك علشانه.'
+          : '${m(price)} is $days days of your daily limit (${m(limit)}), so you would have to cut back for it.';
+      if (half > 0) {
+        final saveDays = (price + half - 1) ~/ half;
+        metrics
+          ..add(_money('half_limit_fils', half, ar))
+          ..add(Metric('save_days', saveDays, MetricUnit.days, display: '$saveDays'));
+        text += ar
+            ? ' لو توفر نص حدك كل يوم (${m(half)})، بتجمعه في $saveDays يوم. حطه هدف توفير في بيزة وتابع.'
+            : ' Put aside half your limit each day (${m(half)}) and you will have it in $saveDays days. Make it a saving goal in Beaza.';
+      }
+    }
+    return AssistantResponse(
+      intent: AssistantIntent.canIBuy,
+      replyText: text,
+      referencedMetrics: metrics,
+    );
   }
 
   AssistantResponse _unknown(bool ar) => AssistantResponse(

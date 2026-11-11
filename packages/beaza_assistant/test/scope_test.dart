@@ -138,4 +138,36 @@ void main() {
       expect(a.answerLocally('هل احد يعرف؟', week).intent, AssistantIntent.outOfScope);
     });
   });
+
+  group('can I buy it?', () {
+    test('a laptop for 300 BD with a budget plan: the limit it leaves', () {
+      final r = a.answerLocally(
+          'الحين لو اخذت لابتوب ب ٣٠٠ دينار هلي يمديني؟', entries,
+          afford: const AffordFacts(
+              monthLeftFils: 72600, limitFromTomorrowFils: 3821, limitIfBoughtFils: 0));
+      expect(r.intent, AssistantIntent.canIBuy);
+      expect(r.replyText, contains('300.000 د.ب أكثر من كل اللي باقي لك هالشهر (72.600 د.ب)'));
+    });
+
+    test('it fits, but the limit drops', () {
+      final r = a.answerLocally('Can I afford a phone for 40 BD?', entries,
+          afford: const AffordFacts(
+              monthLeftFils: 72600, limitFromTomorrowFils: 3821, limitIfBoughtFils: 1716));
+      expect(r.replyText,
+          'You can, but you will have to cut back: from tomorrow your daily limit drops from BHD 3.821 to BHD 1.716 until the end of the month. That is less than half your limit, so if it can wait, leave it to next month or save up for it.');
+    });
+
+    test('only a daily limit: days of the limit and how long to save', () {
+      // Limit 10.000, nothing spent today (14 Nov) in sample() except 3.900.
+      final r = a.answerLocally('يمديني اشتري سماعة ب 50 دينار؟', entries);
+      expect(r.intent, AssistantIntent.canIBuy);
+      expect(r.replyText, contains('50.000 د.ب تساوي 5 يوم من حدك اليومي (10.000 د.ب)'));
+      expect(r.replyText, contains('نص حدك كل يوم (5.000 د.ب)، بتجمعه في 10 يوم'));
+    });
+
+    test('a log is still a log', () {
+      expect(a.answerLocally('شريت كرك بربيتين', entries).intent,
+          AssistantIntent.logExpense);
+    });
+  });
 }

@@ -9,6 +9,27 @@ enum AssistantIntent {
   /// Not about the person's spending or budget (kAssistantScopeJson): turned
   /// away on the phone, never sent to a model.
   outOfScope,
+
+  /// "Can I afford a laptop for 300 BD?": what the price does to the limit.
+  canIBuy,
+}
+
+/// What the app knows about a price from its budget plan ("Can I buy it?",
+/// FR-5.10). All null without a plan.
+class AffordFacts {
+  const AffordFacts({
+    this.monthLeftFils,
+    this.limitFromTomorrowFils,
+    this.limitIfBoughtFils,
+  });
+
+  /// Free money left this month after today's spending.
+  final int? monthLeftFils;
+
+  /// The limit from tomorrow without and with the purchase; null on the
+  /// last day of the month.
+  final int? limitFromTomorrowFils;
+  final int? limitIfBoughtFils;
 }
 
 /// Who wrote the reply text. The numbers are always computed on the phone.

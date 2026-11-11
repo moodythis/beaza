@@ -22,6 +22,7 @@ class ParsedRequest {
     this.wantsBreakdown = false,
     this.weekday,
     this.periodGiven = false,
+    this.priceFils,
   });
 
   /// The same question for another period: "لا، بس الأحد" after "كم صرفت؟".
@@ -50,7 +51,17 @@ class ParsedRequest {
 
   /// The text named a day or a period (today, Sunday, this month...).
   final bool periodGiven;
+
+  /// The price in a "can I buy it?" question.
+  final int? priceFils;
 }
+
+/// "Can I / should I buy or take it": with an amount and a question.
+const Set<String> _afford = {
+  'يمديني', 'يمدي', 'يمدني', 'يمديك', 'اقدر', 'اشتري', 'اشتريه', 'اشتريت', //
+  'شريت', 'اخذ', 'اخذه', 'اخذت', 'اخد', 'اخدت', 'اجيب', 'ينفع', 'afford', //
+  'buy', 'get', 'purchase',
+};
 
 /// Weekday names: Arabic only with "ال" in front ("أحد" alone is "anyone").
 final Map<String, int> _weekdays = {
@@ -219,8 +230,11 @@ class IntentDetector {
             _has(tokens, _week) ||
             _has(tokens, _month));
 
+    final prices = money.findAll(tokens);
     AssistantIntent intent;
-    if (_has(tokens, _advice)) {
+    if (asks && prices.length == 1 && _has(tokens, _afford)) {
+      intent = AssistantIntent.canIBuy;
+    } else if (_has(tokens, _advice)) {
       intent = aboutMoney || scope.onlyAdvice(tokens)
           ? AssistantIntent.guardrailAdvice
           : AssistantIntent.outOfScope;
@@ -243,6 +257,7 @@ class IntentDetector {
       topic: category == null ? topic : null,
       wantsRemaining: remaining,
       weekday: weekday,
+      priceFils: intent == AssistantIntent.canIBuy ? prices.single.fils : null,
       periodGiven: weekday != null ||
           _has(tokens, _today) ||
           _has(tokens, _yesterday) ||

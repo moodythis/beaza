@@ -22,8 +22,10 @@ class AskViewModel extends ChangeNotifier {
     required LedgerRepository ledger,
     required SettingsRepository settings,
     required Future<void> Function(List<DraftTransaction>) addDrafts,
+    Future<AffordFacts?> Function(int priceFils)? afford,
     DateTime Function()? clock,
   })  : _ledger = ledger,
+        _afford = afford,
         _settings = settings,
         _addDrafts = addDrafts,
         _clock = clock ?? DateTime.now;
@@ -31,6 +33,9 @@ class AskViewModel extends ChangeNotifier {
   final LedgerRepository _ledger;
   final SettingsRepository _settings;
   final Future<void> Function(List<DraftTransaction>) _addDrafts;
+
+  /// The home screen's "Can I buy it?" for a price, from the budget plan.
+  final Future<AffordFacts?> Function(int priceFils)? _afford;
   final DateTime Function() _clock;
 
   final List<AskTurn> _turns = [];
@@ -45,10 +50,18 @@ class AskViewModel extends ChangeNotifier {
         BeazaAiAssistant(settings: await _settings.load(), clock: _clock);
     // The last question, so "and on Sunday?" asks it again for Sunday.
     final previous = _turns.isEmpty ? null : _turns.last.question;
+    final asked = assistant.detector.detect(q);
+    final price = asked.priceFils;
+    final afford = _afford;
+    final facts = asked.intent == AssistantIntent.canIBuy &&
+            price != null &&
+            afford != null
+        ? await afford(price)
+        : null;
     _turns.add(AskTurn(
         q,
         assistant.answerLocally(q, await _ledger.entries(),
-            previous: previous)));
+            previous: previous, afford: facts)));
     if (!_disposed) notifyListeners();
   }
 

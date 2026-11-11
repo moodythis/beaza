@@ -33,6 +33,7 @@ import 'package:beaza/ui/features/receipt/views/receipt_sheet.dart';
 import 'package:beaza/ui/features/savings/views/savings_view.dart';
 import 'package:beaza/ui/features/review/view_models/review_view_model.dart';
 import 'package:beaza/ui/features/review/views/review_view.dart';
+import 'package:beaza_assistant/beaza_assistant.dart' show AffordFacts;
 import 'package:beaza_extraction/beaza_extraction.dart';
 import 'package:flutter/material.dart';
 
@@ -228,6 +229,14 @@ class HomeView extends StatelessWidget {
                           ledger: viewModel.ledger,
                           settings: viewModel.settings,
                           addDrafts: viewModel.addDrafts,
+                          afford: (fils) async {
+                            final c = await viewModel.checkPurchase(fils);
+                            return AffordFacts(
+                              monthLeftFils: c.monthLeftFils,
+                              limitFromTomorrowFils: c.limitFromTomorrowFils,
+                              limitIfBoughtFils: c.limitIfBoughtFils,
+                            );
+                          },
                           clock: viewModel.now,
                         ),
                       ),
