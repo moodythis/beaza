@@ -70,15 +70,23 @@ class HistoryView extends StatelessWidget {
               ],
             );
           }
-          return ListView(
+          // One flat list of rows, built only as they scroll into view: a
+          // year of messages is about 2,000 rows.
+          final rows = <Object>[
+            if (viewModel.unsortedOnly || viewModel.unsortedCount > 0) #filter,
+            if (viewModel.unsortedOnly && viewModel.autoSort != null) #autoSort,
+            for (final d in viewModel.days) ...[d, ...d.entries],
+          ];
+          return ListView.builder(
             padding: const EdgeInsets.fromLTRB(16, 8, 16, 32),
-            children: [
-              if (viewModel.unsortedOnly || viewModel.unsortedCount > 0)
-                filter,
-              if (viewModel.unsortedOnly && viewModel.autoSort != null)
-                _autoSortCard(context, l10n),
-              for (final d in viewModel.days) ...[
-                Padding(
+            itemCount: rows.length,
+            itemBuilder: (context, i) {
+              final row = rows[i];
+              if (row == #filter) return filter;
+              if (row == #autoSort) return _autoSortCard(context, l10n);
+              if (row is HistoryDay) {
+                final d = row;
+                return Padding(
                   padding: const EdgeInsets.only(top: 16, bottom: 4),
                   child: Row(
                     key: Key('day_${d.day}'),
@@ -98,22 +106,22 @@ class HistoryView extends StatelessWidget {
                         ),
                     ],
                   ),
+                );
+              }
+              final e = row as LedgerEntry;
+              return _swipeToDelete(
+                context,
+                e,
+                EntryTile(
+                  entry: e,
+                  // Sorting is the common job, so the unsorted list goes
+                  // straight to the categories.
+                  onTap: viewModel.unsortedOnly
+                      ? () => _choose(context, e)
+                      : () => _actions(context, e),
                 ),
-                for (final e in d.entries)
-                  _swipeToDelete(
-                    context,
-                    e,
-                    EntryTile(
-                      entry: e,
-                      // Sorting is the common job, so the unsorted list goes
-                      // straight to the categories.
-                      onTap: viewModel.unsortedOnly
-                          ? () => _choose(context, e)
-                          : () => _actions(context, e),
-                    ),
-                  ),
-              ],
-            ],
+              );
+            },
           );
         },
       ),

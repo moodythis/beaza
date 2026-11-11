@@ -207,6 +207,10 @@ jobs:
         run: |
           AAPT="$(ls -d "$ANDROID_HOME"/build-tools/*/ | sort -V | tail -1)aapt"
           "$AAPT" dump permissions build/app/outputs/flutter-apk/app-release.apk
+      - name: APK size (largest parts)
+        run: |
+          ls -l build/app/outputs/flutter-apk/app-release.apk
+          unzip -l build/app/outputs/flutter-apk/app-release.apk | sort -k1 -nr | head -15 | sed 's/^/SIZE /'
       - name: Upload APK
         uses: actions/upload-artifact@v4
         with:

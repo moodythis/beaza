@@ -7,7 +7,15 @@ import 'package:beaza/data/repositories/ledger_repository.dart';
 import 'package:beaza/data/repositories/settings_repository.dart';
 import 'package:beaza/data/services/database.dart';
 import 'package:beaza/data/services/database_opener.dart';
+import 'package:beaza/data/repositories/preferences_store.dart';
+import 'package:beaza/data/repositories/rewards_repository.dart';
+import 'package:beaza/data/repositories/savings_repository.dart';
+import 'package:beaza/domain/use_cases/weekly_report.dart';
+import 'package:beaza/l10n/app_localizations.dart';
+import 'package:beaza/ui/features/history/view_models/history_view_model.dart';
+import 'package:beaza/ui/features/history/views/history_view.dart';
 import 'package:beaza/ui/features/home/view_models/home_view_model.dart';
+import 'package:beaza/ui/features/savings/view_models/savings_view_model.dart';
 import 'package:beaza_extraction/beaza_extraction.dart';
 import 'package:drift/drift.dart' show Value;
 import 'package:flutter/material.dart';
@@ -160,6 +168,50 @@ void main() {
       bench('home_first_frame', frame.elapsed);
       expect(load.elapsed, lessThan(const Duration(seconds: 3)));
       expect(frame.elapsed, lessThan(const Duration(seconds: 3)));
+    });
+  });
+
+  group('other screens with a year of data', () {
+    testWidgets('History: load and first frame', (tester) async {
+      final vm = HistoryViewModel(ledger: InMemoryLedgerRepository(initial: year()));
+      final load = Stopwatch()..start();
+      await tester.runAsync(vm.load);
+      load.stop();
+      final frame = Stopwatch()..start();
+      await tester.pumpWidget(MaterialApp(
+        localizationsDelegates: AppLocalizations.localizationsDelegates,
+        supportedLocales: AppLocalizations.supportedLocales,
+        locale: const Locale('en'),
+        home: HistoryView(viewModel: vm),
+      ));
+      frame.stop();
+      bench('history_load_1825', load.elapsed);
+      bench('history_first_frame_1825', frame.elapsed);
+      expect(vm.days, hasLength(365));
+      expect(frame.elapsed, lessThan(const Duration(seconds: 3)));
+    });
+
+    test('Saving tab load and the weekly report', () async {
+      final ledger = InMemoryLedgerRepository(initial: year());
+      final prefs = MemoryPreferencesStore();
+      final vm = SavingsViewModel(
+        repo: SavingsRepository(prefs, clock: () => now),
+        ledger: ledger,
+        rewards: RewardsRepository(prefs, clock: () => now),
+        settings: InMemorySettingsRepository(
+            const GuardrailSettings(dailyLimitFils: 8000)),
+        clock: () => now,
+      );
+      final load = Stopwatch()..start();
+      await vm.load();
+      load.stop();
+      final entries = await ledger.entries();
+      final report = Stopwatch()..start();
+      buildWeeklyReport(entries, Day.of(now), dailyLimitFils: 8000);
+      report.stop();
+      bench('savings_load_1825', load.elapsed);
+      bench('weekly_report_1825', report.elapsed);
+      expect(load.elapsed, lessThan(const Duration(seconds: 3)));
     });
   });
 }
