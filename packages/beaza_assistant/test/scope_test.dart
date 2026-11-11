@@ -154,7 +154,7 @@ void main() {
           afford: const AffordFacts(
               monthLeftFils: 72600, limitFromTomorrowFils: 3821, limitIfBoughtFils: 1716));
       expect(r.replyText,
-          'You can, but you will have to cut back: from tomorrow your daily limit drops from BHD 3.821 to BHD 1.716 until the end of the month. That is less than half your limit, so if it can wait, leave it to next month or save up for it.');
+          'That is more than what is left of today\'s limit (BHD 6.100). You can, but you will have to cut back: from tomorrow your daily limit drops from BHD 3.821 to BHD 1.716 until the end of the month. That is less than half your limit, so if it can wait, leave it to next month or save up for it.');
     });
 
     test('only a daily limit: days of the limit and how long to save', () {
@@ -169,5 +169,13 @@ void main() {
       expect(a.answerLocally('شريت كرك بربيتين', entries).intent,
           AssistantIntent.logExpense);
     });
+  });
+
+  test('"if I spend 2 BD today, what is left?"', () {
+    for (final q in ['لو اليوم صرفت ب دينارين جم يقة ليي', 'لو اليوم صرفت دينارين جم بيصير للي باقي اليوم؟']) {
+      final r = a.answerLocally(q, entries);
+      expect(r.intent, AssistantIntent.canIBuy, reason: q);
+      expect(r.replyText, 'يمديك. لو صرفت 2.000 د.ب اليوم، بيظل لك 4.100 د.ب من حدك.');
+    }
   });
 }

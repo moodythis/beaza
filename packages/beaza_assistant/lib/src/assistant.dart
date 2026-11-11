@@ -516,13 +516,23 @@ class BeazaAiAssistant {
       text = ar
           ? '${m(price)} أكثر من كل اللي باقي لك هالشهر (${m(monthLeft)}). لا تاخذه الحين. إذا تبيه، حطه هدف توفير في بيزة وجمّع له من الشهر الجاي.'
           : '${m(price)} is more than everything left for this month (${m(monthLeft)}). Don\'t buy it now. If you want it, make it a saving goal in Beaza and put money towards it from next month.';
+    } else if (d.limitFils > 0 && price <= d.remainingFils) {
+      metrics.add(_money('left_after_fils', d.remainingFils - price, ar));
+      text = ar
+          ? 'يمديك. لو صرفت ${m(price)} اليوم، بيظل لك ${m(d.remainingFils - price)} من حدك.'
+          : 'Yes. If you spend ${m(price)} today, ${m(d.remainingFils - price)} of your limit is left.';
     } else if (now != null && after != null) {
       metrics
         ..add(_money('limit_now_fils', now, ar))
         ..add(_money('limit_after_fils', after, ar));
-      text = ar
+      final over = d.limitFils > 0
+          ? (ar
+              ? 'هذا أكثر من الباقي من حدك اليوم (${m(d.remainingFils < 0 ? 0 : d.remainingFils)}). '
+              : 'That is more than what is left of today\'s limit (${m(d.remainingFils < 0 ? 0 : d.remainingFils)}). ')
+          : '';
+      text = over + (ar
           ? 'يمديك، بس لازم تقلل مصاريفك: حدك اليومي من باجر بينزل من ${m(now)} إلى ${m(after)} لين آخر الشهر.'
-          : 'You can, but you will have to cut back: from tomorrow your daily limit drops from ${m(now)} to ${m(after)} until the end of the month.';
+          : 'You can, but you will have to cut back: from tomorrow your daily limit drops from ${m(now)} to ${m(after)} until the end of the month.');
       if (after * 2 < now) {
         text += ar
             ? ' هذا أقل من نص حدك، فإذا مو مستعجل عليه أجّله للشهر الجاي أو جمّع له.'

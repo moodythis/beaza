@@ -232,7 +232,10 @@ class IntentDetector {
 
     final prices = money.findAll(tokens);
     AssistantIntent intent;
-    if (asks && prices.length == 1 && _has(tokens, _afford)) {
+    // "Can I buy it for 300?" and "if I spend 2 BD today, what is left?".
+    if (asks &&
+        prices.length == 1 &&
+        (_has(tokens, _afford) || _has(tokens, const {'لو', 'if'}))) {
       intent = AssistantIntent.canIBuy;
     } else if (_has(tokens, _advice)) {
       intent = aboutMoney || scope.onlyAdvice(tokens)
