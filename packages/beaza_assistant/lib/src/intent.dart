@@ -121,8 +121,36 @@ int? _weekdayIn(List<String> tokens) {
 
 const Set<String> _question = {
   'كم', 'جم', 'چم', 'شكثر', 'شقد', 'قديش', 'وين', 'هل', 'شنو', 'ايش', //
-  'وش', 'بكم', 'how', 'what', 'where', 'which',
+  'وش', 'ويش', 'شو', 'بكم', 'how', 'what', 'where', 'which',
 };
+
+/// "If ...": a what-if, never an expense to add.
+const Set<String> _conditional = {'لو', 'اذا', 'if'};
+const Set<String> _outcome = {'يصير', 'بيصير', 'يبقى', 'يظل', 'يقه', 'happens', 'happen'};
+
+/// Words of a question that are never part of a shop's name.
+final Set<String> _questionVocabulary = {
+  ..._question, ..._conditional, ..._outcome, ..._howMuch, ..._howMany, //
+  ..._today, ..._yesterday, ..._week, ..._month, ..._pastWords, ..._remaining, //
+  ..._advice, ..._breakdown, ..._afford, ..._biggestWords, ..._shopWords, //
+  ..._mostWords, ..._compareWords, ..._moreLess, ..._averageWords, ..._endWords, //
+  ..._overWords, ..._manyDays,
+  for (final w in _categoryWords.values) ...w,
+  for (final w in _topicWords.values) ...w,
+  'في', 'عند', 'من', 'على', 'عن', 'يا', 'اليوم', 'at', 'in', 'on', 'the', 'did', //
+  'do', 'i', 'my', 'me', 'to', 'for', 'from', 'is', 'was', 'have', 'this', 'that', //
+  'بيزه', 'beaza', 'ويكند', 'weekend', 'كله', 'كلها', 'بالضبط', 'تقريبا', 'لين', //
+  'الحين', 'now', 'all', 'so', 'far', 'total', 'much', 'many', 'spend',
+};
+
+/// True for a word that belongs to the question itself (or to money, a
+/// period, a category), so it cannot be a shop name.
+bool isQuestionWord(String token) =>
+    _forms(token).any((f) =>
+        _questionVocabulary.contains(f) ||
+        kAssistantScope.moneyWords.contains(f) ||
+        kAssistantScope.fillerWords.contains(f) ||
+        kAssistantScope.leftWords.contains(f));
 const Set<String> _advice = {
   'نصيحه', 'نصايح', 'نصائح', 'انصحني', 'وفر', 'اوفر', 'توفير', 'شسوي', //
   'advice', 'tip', 'tips', 'save', 'saving', 'coach',
@@ -278,9 +306,10 @@ class IntentDetector {
     final prices = money.findAll(tokens);
     AssistantIntent intent;
     // "Can I buy it for 300?" and "if I spend 2 BD today, what is left?".
-    if (asks &&
+    final hypothetical = _has(tokens, _conditional);
+    if ((asks || hypothetical) &&
         prices.length == 1 &&
-        (_has(tokens, _afford) || _has(tokens, const {'لو', 'if'}))) {
+        (_has(tokens, _afford) || hypothetical || _has(tokens, _outcome))) {
       intent = AssistantIntent.canIBuy;
     } else if (_has(tokens, _advice)) {
       intent = aboutMoney || scope.onlyAdvice(tokens)
@@ -290,7 +319,7 @@ class IntentDetector {
       intent = aboutMoney || shortLeft
           ? AssistantIntent.spendingQuery
           : AssistantIntent.outOfScope;
-    } else if (amounts) {
+    } else if (amounts && !hypothetical) {
       intent = AssistantIntent.logExpense;
     } else {
       intent = AssistantIntent.unknown;

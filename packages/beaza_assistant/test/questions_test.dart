@@ -19,6 +19,7 @@ void main() {
     tx(1700, bh(14, 9), merchantRaw: 'STARBUCKS SEEF', category: 'food'),
     tx(10000, bh(3, 12), merchantRaw: 'LULU HYPERMARKET', category: 'groceries'),
     tx(2000, bh(5, 12), merchantRaw: 'CAFE', category: 'food'),
+    tx(3500, bh(11, 17), merchantRaw: 'مرفأ الأطفال', category: 'entertainment'),
   ]);
   String ask(String q) => a.answerLocally(q, entries).replyText;
 
@@ -37,20 +38,20 @@ void main() {
 
   test('against the week before', () {
     for (final q in ['صرفت أكثر من الأسبوع اللي فات؟', 'Did I spend more than last week?']) {
-      expect(ask(q), allOf(contains('29.000'), contains('12.000'), contains('17.000'), contains('142')),
+      expect(ask(q), allOf(contains('32.500'), contains('12.000'), contains('20.500'), contains('171')),
           reason: q);
     }
   });
 
   test('average a day', () {
     expect(ask('كم معدل صرفي باليوم؟'),
-        'معدل صرفك في آخر 7 أيام: 4.142 د.ب باليوم (29.000 د.ب على 7 أيام). وهذا ضمن حدك (10.000 د.ب).');
-    expect(ask('What is my average daily spending?'), contains('BHD 4.142 a day'));
+        'معدل صرفك في آخر 7 أيام: 4.642 د.ب باليوم (32.500 د.ب على 7 أيام). وهذا ضمن حدك (10.000 د.ب).');
+    expect(ask('What is my average daily spending?'), contains('BHD 4.642 a day'));
   });
 
   test('where the month ends at this pace', () {
     for (final q in ['كم بصرف آخر الشهر بهالمعدل؟', 'How much will I spend by the end of the month?']) {
-      expect(ask(q), allOf(contains('41.000'), contains('87.857')), reason: q);
+      expect(ask(q), allOf(contains('44.500'), contains('95.357')), reason: q);
     }
   });
 
@@ -61,9 +62,9 @@ void main() {
 
   test('a named shop', () {
     expect(ask('كم صرفت في starbucks هالأسبوع؟'),
-        'صرفت 6.000 د.ب في STARBUCKS في آخر 7 أيام (3 عمليات).');
+        'صرفت 6.000 د.ب في STARBUCKS SEEF في آخر 7 أيام (3 عمليات).');
     expect(ask('How much did I spend at Starbucks this week?'),
-        'You spent BHD 6.000 at STARBUCKS in the last 7 days (3 purchases).');
+        'You spent BHD 6.000 at STARBUCKS SEEF in the last 7 days (3 purchases).');
   });
 
   test('last week and last month', () {
@@ -73,7 +74,26 @@ void main() {
   });
 
   test('the plain questions still work', () {
-    expect(ask('كم صرفت هالأسبوع؟'), 'صرفت 29.000 د.ب في آخر 7 أيام (5 عمليات).');
+    expect(ask('كم صرفت هالأسبوع؟'), 'صرفت 32.500 د.ب في آخر 7 أيام (6 عمليات).');
     expect(a.answerLocally('كم باقي؟', entries).replyText, contains('باقي لك'));
+  });
+
+  test('a shop named in Arabic, written with or without spaces', () {
+    for (final q in ['دفعت لمرفأالاطفال كم؟', 'كم صرفت في مرفأ الأطفال؟', 'كم دفعت لمرفا الاطفال هالأسبوع']) {
+      expect(ask(q), 'صرفت 3.500 د.ب في مرفأ الأطفال في آخر 7 أيام (عملية وحدة).', reason: q);
+    }
+    expect(ask('دفعت لصالون النخيل كم؟'),
+        'ما لقيت مشتريات مسجلة باسم «صالون النخيل» في قائمتك.');
+    expect(ask('كم صرفت هالأسبوع يا بيزة؟'), contains('32.500'));
+    expect(ask('كم صرفت في الويكند؟'), isNot(contains('ما لقيت')));
+  });
+
+  test('"what if I spend 4 today" is a question, never an expense to add', () {
+    final r = a.answerLocally('لو صرفت ٤ في اليوم ويش يصير', entries);
+    expect(r.intent, AssistantIntent.canIBuy);
+    expect(r.draftTransactions, isEmpty);
+    expect(r.replyText, contains('4.000'));
+    expect(a.answerLocally('إذا دفعت 3 دينار شنو يصير؟', entries).intent,
+        AssistantIntent.canIBuy);
   });
 }

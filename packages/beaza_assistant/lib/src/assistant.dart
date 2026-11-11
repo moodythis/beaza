@@ -12,6 +12,7 @@ import 'llm.dart';
 import 'response.dart';
 import 'sanitizer.dart';
 import 'scope.dart';
+import 'text.dart';
 
 const String kSystemPrompt = '''
 You are the assistant inside Beaza, a daily spending app for young people in Bahrain.
@@ -265,9 +266,17 @@ class BeazaAiAssistant {
     final category = req.category;
     // A shop the person named ("at Starbucks", "في lulu"), matched on a
     // word of the shop names in their own list.
-    final shop = topic == null && category == null ? _namedShop(s, req.words) : null;
+    final named = topic == null && category == null ? _namedShop(s, req.words) : null;
+    if (named != null && named.match == null) {
+      return _reply(
+          ar
+              ? 'ما لقيت مشتريات مسجلة باسم «${named.asked}» في قائمتك.'
+              : 'I found no purchases named "${named.asked}" in your list.',
+          []);
+    }
+    final shop = named?.match;
     bool where(ExtractionResult r) => shop != null
-        ? _shopOf(r).toLowerCase().split(RegExp(r'[^a-z0-9]+')).contains(shop)
+        ? _key(_shopOf(r)).contains(shop)
         : topic != null
             ? matchesTopic(topic, r)
             : category != null
@@ -276,7 +285,7 @@ class BeazaAiAssistant {
     final total = s.total(p, where);
     final count = s.count(p, where);
     final label = shop != null
-        ? (ar ? 'في ${shop.toUpperCase()}' : 'at ${shop.toUpperCase()}')
+        ? (ar ? 'في ${named!.display}' : 'at ${named!.display}')
         : topic == Topic.coffee
         ? (ar ? 'على القهوة والكافيهات' : 'on coffee')
         : topic == Topic.delivery
@@ -524,29 +533,54 @@ class BeazaAiAssistant {
     return [for (final f in found.take(2)) f.$2];
   }
 
-  static const Set<String> _notShops = {
-    'what', 'when', 'where', 'which', 'much', 'many', 'spend', 'spent', 'spending', //
-    'this', 'that', 'last', 'week', 'month', 'today', 'yesterday', 'have', 'with', //
-    'from', 'money', 'shop', 'shops', 'store', 'food', 'coffee', 'cafe', 'total', //
-    'did', 'does', 'there', 'about', 'into', 'over', 'more', 'less', 'than',
-  };
+  /// A shop name written one way: Arabic letter forms unified, lower
+  /// case, no spaces or marks ("مرفأ الأطفال" and "مرفأالاطفال" match).
+  static String _key(String s) =>
+      normalizeText(s).replaceAll(RegExp(r'[^a-z0-9ء-ي]'), '');
 
-  /// A word of the question (4+ Latin letters) that is a word of one of the
-  /// person's shop names.
-  String? _namedShop(SpendingSummaryBuilder s, List<String> words) {
-    final shopWords = <String>{
-      for (final r in s.items(Period(PeriodKind.month, s.today.addDays(-90), s.today)))
-        ..._shopOf(r).toLowerCase().split(RegExp(r'[^a-z0-9]+')),
-    };
-    for (final w in words) {
-      if (w.length >= 4 &&
-          RegExp(r'^[a-z]+$').hasMatch(w) &&
-          !_notShops.contains(w) &&
-          shopWords.contains(w)) {
-        return w;
+  /// The shop the question names, if it names one: the words left after
+  /// the question's own words, matched against the shop names of the last
+  /// 90 days. [match] is null when a name was given ("دفعت لـ…", "at …")
+  /// but no purchase has it.
+  ({String asked, String? match, String display})? _namedShop(
+      SpendingSummaryBuilder s, List<String> words) {
+    var pointed = false;
+    final rest = <String>[];
+    for (var i = 0; i < words.length; i++) {
+      var w = words[i];
+      if (w == kBreak || isNumberToken(w)) continue;
+      if (const {'في', 'عند', 'at', 'from'}.contains(w)) {
+        pointed = true;
+        continue;
       }
+      if (isQuestionWord(w)) continue;
+      // "دفعت لمرفأ…": a joined ل points at a name. A joined ب is often
+      // part of the word, so it is dropped for matching only.
+      for (final p in const ['لل', 'ل', 'ب']) {
+        if (w.startsWith(p) && w.length - p.length >= 3) {
+          final cut = w.substring(p.length);
+          if (!isQuestionWord(cut)) {
+            w = cut;
+            if (p != 'ب') pointed = true;
+          }
+          break;
+        }
+      }
+      if (_key(w).length >= 3) rest.add(w);
     }
-    return null;
+    if (rest.isEmpty) return null;
+    final names = <String, int>{};
+    for (final r in s.items(Period(PeriodKind.month, s.today.addDays(-90), s.today))) {
+      final n = _shopOf(r);
+      if (n.isNotEmpty) names[n] = (names[n] ?? 0) + 1;
+    }
+    for (final candidate in [rest.join(), ...rest]) {
+      final k = _key(candidate);
+      final hits = names.keys.where((n) => _key(n).contains(k)).toList()
+        ..sort((a, b) => names[b]!.compareTo(names[a]!));
+      if (hits.isNotEmpty) return (asked: candidate, match: k, display: hits.first);
+    }
+    return pointed ? (asked: rest.join(' '), match: null, display: '') : null;
   }
 
   static String _shopOf(ExtractionResult r) =>
