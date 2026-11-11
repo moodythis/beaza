@@ -53,8 +53,17 @@ export function checkNickname(v: unknown): string {
   if (length < 3 || length > 15 || !/^[\p{L}\p{M} ]+$/u.test(n)) {
     throw new HttpError(400, 'bad_nickname');
   }
+  if (n.toLowerCase().split(' ').some((w) => RUDE.has(w))) throw new HttpError(400, 'bad_nickname');
   return n;
 }
+
+/** A short list of plain insults, matched as whole words. Everyone sees the
+ * board, so the obvious ones are refused; it is not a full filter (a name is
+ * still checked for its letters, not its meaning). */
+const RUDE = new Set([
+  'fuck', 'shit', 'bitch', 'asshole', 'bastard', 'dick', 'pussy', 'slut', 'whore',
+  'كلب', 'حمار', 'حيوان', 'غبي', 'زق', 'خرا', 'تافه', 'وسخ', 'حقير', 'لعين',
+]);
 
 export function checkBoardId(v: unknown): string {
   if (typeof v !== 'string' || !/^[0-9a-f]{32}$/.test(v)) throw new HttpError(400, 'bad_board_id');
@@ -130,6 +139,7 @@ export async function postBoard(
   db: D1Like,
   now: number,
   cap = BOARD_DAILY_CAP,
+  mayAddRow: () => Promise<boolean> = async () => true,
 ): Promise<Record<string, unknown>> {
   const x = checkBoardInput(body);
   const today = dayOf(now);
@@ -142,6 +152,20 @@ export async function postBoard(
     .first<{ count: number }>();
   if ((used?.count ?? 0) > cap) throw new HttpError(429, 'board_busy');
   const id = await hashOf(x.boardId);
+  // A caller may put only so many new rows on the board in a day
+  // ([mayAddRow]), so one caller cannot fill it with made-up rows and push
+  // everyone else out. It is asked only for a row that is not there yet and
+  // would get a place; a caller's own row is always updated.
+  const there = await db.prepare('SELECT 1 AS one FROM leaderboard WHERE id_hash = ?').bind(id).first();
+  if (!there) {
+    const now50 = await rows(db);
+    const last = now50[now50.length - 1];
+    const getsPlace =
+      now50.length < BOARD_SIZE ||
+      x.points > last.points ||
+      (x.points === last.points && x.streak >= last.streak);
+    if (getsPlace && !(await mayAddRow())) throw new HttpError(429, 'board_busy');
+  }
   await db
     .prepare(
       'INSERT INTO leaderboard (id_hash, number, nickname, points, streak, updated_day) VALUES (?, ?, ?, ?, ?, ?) ' +

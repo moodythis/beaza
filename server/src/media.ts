@@ -105,11 +105,12 @@ export async function readReceipt(
   ai: AiLike | undefined,
   now: number,
   cap = COACH_DAILY_CAP,
+  callerOk = true,
 ): Promise<Record<string, unknown>> {
   checkKeys(body, ['consent', 'language', 'image']);
   const image = base64(body.image, MAX_IMAGE_CHARS, 'bad_image');
   if (!ai) throw new HttpError(503, 'coach_disabled');
-  if (!(await allow(db, now, cap))) throw new HttpError(429, 'coach_busy');
+  if (!callerOk || !(await allow(db, now, cap))) throw new HttpError(429, 'coach_busy');
   let reply: string | null = null;
   let provider = 'workers-ai';
   try {
@@ -195,6 +196,7 @@ export async function readExpenses(
   ai: AiLike | undefined,
   now: number,
   cap = COACH_DAILY_CAP,
+  callerOk = true,
 ): Promise<Record<string, unknown>> {
   checkKeys(body, ['consent', 'language', 'text']);
   const text = body.text;
@@ -203,7 +205,7 @@ export async function readExpenses(
   }
   if (!mayHaveAmount(text)) return { drafts: [], reason: 'off_topic' };
   if (!ai) throw new HttpError(503, 'coach_disabled');
-  if (!(await allow(db, now, cap))) throw new HttpError(429, 'coach_busy');
+  if (!callerOk || !(await allow(db, now, cap))) throw new HttpError(429, 'coach_busy');
   const drafts = await expensesFrom(ai, text.trim());
   return drafts.length > 0 ? { drafts } : { drafts, reason: 'no_spending' };
 }
@@ -214,11 +216,12 @@ export async function readVoice(
   ai: AiLike | undefined,
   now: number,
   cap = COACH_DAILY_CAP,
+  callerOk = true,
 ): Promise<Record<string, unknown>> {
   checkKeys(body, ['consent', 'language', 'audio']);
   const audio = base64(body.audio, MAX_AUDIO_CHARS, 'bad_audio');
   if (!ai) throw new HttpError(503, 'coach_disabled');
-  if (!(await allow(db, now, cap))) throw new HttpError(429, 'coach_busy');
+  if (!callerOk || !(await allow(db, now, cap))) throw new HttpError(429, 'coach_busy');
   let text = '';
   try {
     const result = await ai.run(WHISPER_MODEL, {

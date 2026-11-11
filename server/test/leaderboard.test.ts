@@ -55,6 +55,7 @@ describe('the leaderboard', () => {
 
   it('keeps the top 50 only; a lower score gets no rank and is not kept', async () => {
     const s = new Server();
+    s.limits = { boardNewRowsPerDay: 1000, boardPostsPerHour: 1000 };
     for (let i = 1; i <= BOARD_SIZE; i++) {
       await s.call('POST', '/v1/leaderboard', entry(i, { points30d: 100 + i }));
     }
@@ -116,5 +117,55 @@ describe('the leaderboard', () => {
     // The same two values are pinned in the app's leaderboard_test.dart.
     assert.equal(fnv1a('abc'), 2921240957);
     assert.equal(personaNumber('0123456789abcdef0123456789abcdef'), 413);
+  });
+});
+
+describe('one caller cannot take over the leaderboard', () => {
+  it('only 10 new rows a day from one address get a place; its own row still updates', async () => {
+    const s = new Server();
+    for (let i = 1; i <= 10; i++) {
+      assert.equal((await s.call('POST', '/v1/leaderboard', entry(i, { points30d: 5000, streakDays: 365 }))).status, 200);
+    }
+    const more = await s.call('POST', '/v1/leaderboard', entry(11, { points30d: 5000, streakDays: 365 }));
+    assert.equal(more.status, 429);
+    assert.equal(more.body.error, 'board_busy');
+    assert.equal((await s.call('GET', '/v1/leaderboard')).body.rows.length, 10);
+    // Updating a row that is already there is not a new row.
+    assert.equal((await s.call('POST', '/v1/leaderboard', entry(3, { points30d: 120 }))).status, 200);
+    // Someone else, from another address, still joins.
+    const other = await s.call('POST', '/v1/leaderboard', entry(77), undefined, '198.51.100.9');
+    assert.equal(other.status, 200);
+    assert.equal(other.body.rows.length, 11);
+    // The next day the caller may add rows again.
+    s.advance(24 * 60 * 60 * 1000);
+    assert.equal((await s.call('POST', '/v1/leaderboard', entry(11))).status, 200);
+  });
+
+  it('one address cannot use up the day of updates for everyone', async () => {
+    const s = new Server();
+    s.limits = { boardPostsPerHour: 3 };
+    for (let i = 0; i < 3; i++) {
+      assert.equal((await s.call('POST', '/v1/leaderboard', entry(1))).status, 200);
+    }
+    assert.equal((await s.call('POST', '/v1/leaderboard', entry(1))).status, 429);
+    assert.equal((await s.call('POST', '/v1/leaderboard', entry(2), undefined, '198.51.100.9')).status, 200);
+    s.advance(60 * 60 * 1000);
+    assert.equal((await s.call('POST', '/v1/leaderboard', entry(1))).status, 200);
+  });
+
+  it('plain insults are refused as nicknames', () => {
+    assert.throws(() => checkNickname('حمار'));
+    assert.throws(() => checkNickname('big Shit'));
+    assert.equal(checkNickname('نوخذة البحر'), 'نوخذة البحر');
+  });
+
+  it('no address is stored: the counts sit under keyed hashes', async () => {
+    const s = new Server();
+    await s.call('POST', '/v1/leaderboard', entry(1), undefined, '203.0.113.77');
+    const keys = (await s.d1.prepare('SELECT key FROM attempts').all<{ key: string }>()).results;
+    assert.ok(keys.length > 0);
+    for (const k of keys) assert.ok(!k.key.includes('203.0.113.77'));
+    const cols = (await s.d1.prepare('SELECT * FROM leaderboard').all<Record<string, unknown>>()).results[0];
+    assert.deepEqual(Object.keys(cols).sort(), ['id_hash', 'nickname', 'number', 'points', 'streak', 'updated_day']);
   });
 });

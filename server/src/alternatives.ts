@@ -99,10 +99,11 @@ export async function alternatives(
   ai: AiLike | undefined,
   now: number,
   cap = COACH_DAILY_CAP,
+  callerOk = true,
 ): Promise<Record<string, unknown>> {
   const x = checkAltInput(body);
   if (!ai) throw new HttpError(503, 'coach_disabled');
-  if (!(await allow(db, now, cap))) throw new HttpError(429, 'coach_busy');
+  if (!callerOk || !(await allow(db, now, cap))) throw new HttpError(429, 'coach_busy');
   const names = x.shops.map((s) => s.name);
   try {
     const result = await ai.run(COACH_MODEL, {

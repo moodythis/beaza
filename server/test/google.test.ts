@@ -1,7 +1,7 @@
 import assert from 'node:assert/strict';
 import { before, describe, it } from 'node:test';
 import { randomBytes, toB64, utf8 } from '../src/util.ts';
-import { newAccountFields, Server, signUp } from './harness.ts';
+import { newAccountFields, sealedLike, Server, signUp } from './harness.ts';
 
 const CLIENT = 'beaza-web.apps.googleusercontent.com';
 let keyPair: CryptoKeyPair;
@@ -73,7 +73,7 @@ describe('Google accounts', () => {
   it('check, sign up, then log in on another phone with the recovery key', async () => {
     const s = googleServer();
     const before = await s.call('POST', '/v1/google/check', { idToken: await idToken(s) });
-    assert.deepEqual(before.body, { exists: false, email: 'person@gmail.com', password: false });
+    assert.deepEqual(before.body, { exists: false, email: 'person@gmail.com', password: false, linked: false });
 
     const account = await googleSignUp(s);
     const info = await s.call('GET', '/v1/account', undefined, account.token);
@@ -122,7 +122,7 @@ describe('Google accounts', () => {
     const s = googleServer();
     const { account, token } = await signUp(s, 'person@gmail.com');
     const check = await s.call('POST', '/v1/google/check', { idToken: await idToken(s) });
-    assert.deepEqual(check.body, { exists: true, email: 'person@gmail.com', password: true });
+    assert.deepEqual(check.body, { exists: true, email: 'person@gmail.com', password: true, linked: false });
 
     const wrong = await s.call('POST', '/v1/google/login', {
       idToken: await idToken(s),
@@ -293,5 +293,48 @@ describe('Google accounts', () => {
     assert.equal(ok.status, 200);
     const check = await s.call('POST', '/v1/google/check', { idToken: await idToken(s) });
     assert.equal(check.body.exists, false);
+  });
+
+  it('someone took my email first: Google proves it is mine and I get it back', async () => {
+    const s = googleServer();
+    // A stranger signs up with the address (sign-up by email checks nothing)
+    // and stores something.
+    const squatter = await signUp(s, 'person@gmail.com');
+    await s.call('POST', '/v1/records', { records: [{ collection: 'txn', id: 'a1', blob: sealedLike() }] }, squatter.token);
+
+    const check = await s.call('POST', '/v1/google/check', { idToken: await idToken(s) });
+    assert.equal(check.body.exists, true);
+    assert.equal(check.body.linked, false);
+
+    // Without `replace` nothing changes.
+    const fields = googleFields();
+    const plain = await s.call('POST', '/v1/google/register', { idToken: await idToken(s), ...fields });
+    assert.equal(plain.status, 409);
+
+    const mine = await s.call('POST', '/v1/google/register', { idToken: await idToken(s), ...fields, replace: true });
+    assert.equal(mine.status, 200, JSON.stringify(mine.body));
+    // The stranger is out: session, password and records are gone.
+    assert.equal((await s.call('GET', '/v1/records', undefined, squatter.token)).status, 401);
+    assert.equal(
+      (await s.call('POST', '/v1/login', { email: 'person@gmail.com', authKey: squatter.account.authKey })).status,
+      401,
+    );
+    assert.equal((await s.call('GET', '/v1/records', undefined, mine.body.token)).body.records.length, 0);
+    const after = await s.call('POST', '/v1/google/check', { idToken: await idToken(s) });
+    assert.equal(after.body.linked, true);
+  });
+
+  it('an account already linked to a Google account cannot be replaced', async () => {
+    const s = googleServer();
+    await googleSignUp(s);
+    const again = await s.call('POST', '/v1/google/register', {
+      idToken: await idToken(s), ...googleFields(), replace: true,
+    });
+    assert.equal(again.status, 409);
+    // Nor can another Google account take the same address.
+    const other = await s.call('POST', '/v1/google/register', {
+      idToken: await idToken(s, { sub: 'second' }), ...googleFields(), replace: true,
+    });
+    assert.equal(other.status, 409);
   });
 });

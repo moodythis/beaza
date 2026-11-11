@@ -1007,5 +1007,10 @@
   "dealFit": "You spent {spent} here in the last 7 days ({count} times). This coupon would have saved about {saving}.",
   "@dealFit": {"placeholders": {"spent": {"type": "String"}, "count": {"type": "int"}, "saving": {"type": "String"}}},
   "dealGet": "Get coupon",
-  "dealShow": "Show coupon"
+  "dealShow": "Show coupon",
+  "reclaimButton": "Didn't make this account?",
+  "reclaimTitle": "This email is yours",
+  "reclaimBody": "A Beaza account is registered with {email}, but whoever made it never proved the address is theirs. Google has confirmed it is yours, so you can start a new account in its place. The old account and its copy on the server will be deleted. The data on this phone is not affected.",
+  "@reclaimBody": {"placeholders": {"email": {"type": "String"}}},
+  "reclaimConfirm": "Start a new account"
 }

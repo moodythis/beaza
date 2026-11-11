@@ -59,6 +59,7 @@ class GoogleServer {
               'email': '$sub@gmail.com',
               'password': user != null &&
                   (user['bundle'] as Map).containsKey('password'),
+              'linked': user != null && user['linked'] == true,
             });
           case 'POST /v1/kdf':
             final user = users[(body['email'] as String).split('@').first];
@@ -68,10 +69,14 @@ class GoogleServer {
             if ((body['bundle'] as Map).containsKey('password')) {
               return _error(400, 'bad_bundle');
             }
-            if (users.containsKey(sub)) return _error(409, 'email_taken');
+            if (users.containsKey(sub) &&
+                (body['replace'] != true || users[sub]!['linked'] == true)) {
+              return _error(409, 'email_taken');
+            }
             users[sub!] = {
               'recoveryAuthKey': body['recoveryAuthKey'],
               'bundle': body['bundle'],
+              'linked': true,
             };
             return _ok({
               'token': _session(sub),
@@ -239,6 +244,36 @@ void main() {
     expect(start.hasPassword, isTrue);
   });
 
+  test('someone took the email first: the Google owner starts a new account '
+      'in its place', () async {
+    final server = GoogleServer();
+    final stranger = await const KeyWork.forTests(fast)
+        .createAccount('the stranger password');
+    server.users['sara'] = {
+      'authKey': toBase64(stranger.authKey!),
+      'recoveryAuthKey': toBase64(stranger.recoveryAuthKey),
+      'bundle': stranger.bundle.toJson(),
+    };
+
+    final store = MemoryAccountStore();
+    final a = phone(server, FakeGoogle(), store);
+    final start = (await a.startGoogle())!;
+    expect(start.exists, isTrue);
+    expect(start.linked, isFalse);
+    // Without saying so, nothing is replaced.
+    expect(await problemOf(() => a.signUpWithGoogle(start, consent)),
+        AccountProblem.emailTaken);
+
+    final key = await a.signUpWithGoogle(start, consent, replace: true);
+    expect(key.format(), isNotEmpty);
+    expect(store.saved!.email, 'sara@gmail.com');
+    expect(store.saved!.dataKey, isNot(stranger.dataKey));
+    expect(server.users['sara']!.containsKey('authKey'), isFalse);
+    // Now it is linked: it can no longer be replaced.
+    final again = (await phone(server, FakeGoogle()).startGoogle())!;
+    expect(again.linked, isTrue);
+  });
+
   test('a phone the server forgot asks for the password again', () async {
     final server = GoogleServer();
     final store = MemoryAccountStore();
@@ -341,6 +376,39 @@ void main() {
     expect(find.byKey(const Key('signUpSubmit')), findsOneWidget);
   });
 
+  testWidgets('"Didn\'t make this account?" leads to a new account in its place',
+      (tester) async {
+    await tester.binding.setSurfaceSize(const Size(800, 2400));
+    addTearDown(() => tester.binding.setSurfaceSize(null));
+    final accounts = TakenEmailAccounts();
+    final vm = HomeViewModel(
+      ledger: InMemoryLedgerRepository(),
+      settings: InMemorySettingsRepository(
+          const GuardrailSettings(dailyLimitFils: 10000)),
+    );
+    await vm.load();
+    await tester.pumpWidget(BeazaApp(
+        homeViewModel: vm, locale: const Locale('en'), account: accounts));
+    await tester.pumpAndSettle();
+    await tester.tap(find.byKey(const Key('accountButton')));
+    await tester.pumpAndSettle();
+    await tester.tap(find.byKey(const Key('googleButton')));
+    await tester.pumpAndSettle();
+
+    // The password is asked for, with a way out for the email's owner.
+    expect(find.byKey(const Key('passwordField')), findsOneWidget);
+    await tester.tap(find.byKey(const Key('notMyAccount')));
+    await tester.pumpAndSettle();
+    expect(find.text('This email is yours'), findsOneWidget);
+    expect(find.textContaining('sara@gmail.com'), findsWidgets);
+    await tester.tap(find.byKey(const Key('reclaimConfirm')));
+    await tester.pumpAndSettle();
+    // The Google sign-up screen, for the same Google account.
+    expect(find.byKey(const Key('googleAccount')), findsOneWidget);
+    expect(find.byKey(const Key('passwordField')), findsNothing);
+    expect(accounts.replaced, isNull, reason: 'nothing happens before consent');
+  });
+
   testWidgets('without Google set up the button is not shown',
       (tester) async {
     await tester.binding.setSurfaceSize(const Size(800, 2400));
@@ -357,6 +425,29 @@ void main() {
     await tester.pumpAndSettle();
     expect(find.byKey(const Key('googleButton')), findsNothing);
   });
+}
+
+/// A Google account whose email is already held by a password account
+/// that was never linked to Google.
+class TakenEmailAccounts extends FakeAccounts {
+  bool? replaced;
+
+  @override
+  bool get googleAvailable => true;
+
+  @override
+  Future<GoogleStart?> startGoogle() async => const GoogleStart(
+      idToken: 'id-token-sara',
+      email: 'sara@gmail.com',
+      exists: true,
+      hasPassword: true);
+
+  @override
+  Future<RecoveryKey> signUpWithGoogle(GoogleStart start, Consent consent,
+      {bool replace = false}) async {
+    replaced = replace;
+    return RecoveryKey.generate();
+  }
 }
 
 class GoogleFakeAccounts extends FakeAccounts {

@@ -47,8 +47,10 @@ class AccountViewModel extends ChangeNotifier {
   Future<GoogleStart?> startGoogle() =>
       _run<GoogleStart?>(repository.startGoogle);
 
-  Future<RecoveryKey?> signUpWithGoogle(GoogleStart start, Consent consent) =>
-      _run(() => repository.signUpWithGoogle(start, consent));
+  Future<RecoveryKey?> signUpWithGoogle(GoogleStart start, Consent consent,
+          {bool replace = false}) =>
+      _run(() =>
+          repository.signUpWithGoogle(start, consent, replace: replace));
 
   Future<bool> logInWithGoogle(GoogleStart start,
           {String? password, String? recoveryKey}) =>

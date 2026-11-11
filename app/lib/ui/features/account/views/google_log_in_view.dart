@@ -2,6 +2,7 @@ import 'package:beaza/data/repositories/account_repository.dart';
 import 'package:beaza/l10n/app_localizations.dart';
 import 'package:beaza/ui/features/account/view_models/account_view_model.dart';
 import 'package:beaza/ui/features/account/views/account_widgets.dart';
+import 'package:beaza/ui/features/account/views/sign_up_view.dart';
 import 'package:flutter/material.dart';
 
 /// Logging in with Google on this phone. Google has confirmed the person;
@@ -51,6 +52,36 @@ class _GoogleLogInViewState extends State<GoogleLogInView> {
         ? await vm.logInWithGoogle(widget.start, password: _password.text)
         : await vm.logInWithGoogle(widget.start, recoveryKey: _key.text);
     if (ok && mounted) Navigator.of(context).pop(true);
+  }
+
+  /// Someone else made an account with this email (sign-up by email does
+  /// not check the address). Google has proved the email is this person's,
+  /// so they may start a new account that replaces it.
+  Future<void> _notMine() async {
+    final l10n = AppLocalizations.of(context);
+    final sure = await showDialog<bool>(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: Text(l10n.reclaimTitle),
+        content: Text(l10n.reclaimBody(widget.start.email)),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(context).pop(false),
+            child: Text(l10n.cancel),
+          ),
+          FilledButton(
+            key: const Key('reclaimConfirm'),
+            onPressed: () => Navigator.of(context).pop(true),
+            child: Text(l10n.reclaimConfirm),
+          ),
+        ],
+      ),
+    );
+    if (sure != true || !mounted) return;
+    await Navigator.of(context).pushReplacement(MaterialPageRoute<void>(
+      builder: (_) =>
+          SignUpView(viewModel: vm, google: widget.start, replace: true),
+    ));
   }
 
   @override
@@ -109,6 +140,15 @@ class _GoogleLogInViewState extends State<GoogleLogInView> {
                     child: Text(_usePassword
                         ? l10n.useRecoveryKeyInstead
                         : l10n.usePasswordInstead),
+                  ),
+                ),
+              if (!widget.start.linked)
+                Align(
+                  alignment: AlignmentDirectional.centerStart,
+                  child: TextButton(
+                    key: const Key('notMyAccount'),
+                    onPressed: vm.busy ? null : _notMine,
+                    child: Text(l10n.reclaimButton),
                   ),
                 ),
               const SizedBox(height: 16),

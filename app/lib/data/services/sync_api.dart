@@ -170,15 +170,27 @@ class SyncApi {
     return _session(body);
   }
 
+  /// Sets a new password. The session alone is not enough: the server also
+  /// wants one of the account's current keys, so a stolen session cannot
+  /// change the password. After a recovery log-in that is the recovery
+  /// proof ([currentRecoveryAuthKey]); otherwise the old password key.
   Future<void> setPassword(
     String token,
     List<int> authKey,
-    KeyBundle bundle,
-  ) =>
+    KeyBundle bundle, {
+    List<int>? currentAuthKey,
+    List<int>? currentRecoveryAuthKey,
+  }) =>
       _send(
         'POST',
         '/v1/password',
-        {'authKey': toBase64(authKey), 'bundle': bundle.toJson()},
+        {
+          'authKey': toBase64(authKey),
+          'bundle': bundle.toJson(),
+          if (currentAuthKey != null) 'currentAuthKey': toBase64(currentAuthKey),
+          if (currentRecoveryAuthKey != null)
+            'currentRecoveryAuthKey': toBase64(currentRecoveryAuthKey),
+        },
         token: token,
       );
 
@@ -194,13 +206,17 @@ class SyncApi {
   /// just confirmed the person owns it.
   /// [password]: the account has a password (an email account with the same
   /// Gmail, or one already linked), so the phone asks for it.
-  Future<({bool exists, String email, bool password})> googleCheck(
+  /// [linked]: the account has been opened with this Google account
+  /// before. False for an account someone made with this email and a
+  /// password: nobody checked that its maker owns the email.
+  Future<({bool exists, String email, bool password, bool linked})> googleCheck(
       String idToken) async {
     final body = await _send('POST', '/v1/google/check', {'idToken': idToken});
     return (
       exists: body['exists'] as bool,
       email: body['email'] as String,
       password: body['password'] as bool? ?? false,
+      linked: body['linked'] as bool? ?? false,
     );
   }
 
@@ -212,9 +228,13 @@ class SyncApi {
     required List<int> recoveryAuthKey,
     required KeyBundle bundle,
     required Consent consent,
+    bool replace = false,
   }) async {
     final body = await _send('POST', '/v1/google/register', {
       'idToken': idToken,
+      // The email was taken by an account never linked to Google: Google
+      // has proved it is this person's, so that account is replaced.
+      if (replace) 'replace': true,
       'recoveryAuthKey': toBase64(recoveryAuthKey),
       'bundle': bundle.toJson(),
       'consent': consent.toJson(),

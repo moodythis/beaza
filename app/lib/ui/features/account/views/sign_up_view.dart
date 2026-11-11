@@ -14,10 +14,14 @@ import 'package:flutter/services.dart';
 /// With [google] the Google account replaces the email and password; the
 /// agreements are the same.
 class SignUpView extends StatefulWidget {
-  const SignUpView({super.key, required this.viewModel, this.google});
+  const SignUpView({super.key, required this.viewModel, this.google, this.replace = false});
 
   final AccountViewModel viewModel;
   final GoogleStart? google;
+
+  /// With [google]: the email is held by an account never linked to Google;
+  /// the new account replaces it.
+  final bool replace;
 
   @override
   State<SignUpView> createState() => _SignUpViewState();
@@ -57,7 +61,7 @@ class _SignUpViewState extends State<SignUpView> {
     );
     final google = widget.google;
     final key = google != null
-        ? await vm.signUpWithGoogle(google, consent)
+        ? await vm.signUpWithGoogle(google, consent, replace: widget.replace)
         : await vm.signUp(
             email: _email.text,
             password: _password.text,

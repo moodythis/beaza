@@ -410,15 +410,17 @@ export async function coach(
   ai: AiLike | undefined,
   now: number,
   cap = COACH_DAILY_CAP,
+  callerOk = true,
 ): Promise<Record<string, unknown>> {
   const x = checkCoachInput(body);
   if (!ai) throw new HttpError(503, 'coach_disabled');
   const ar = x.language === 'ar';
   const { lines } = facts(x);
-  // The daily AI allowance is shared by everyone and needs no account, so
-  // one caller can use it up. The plan must not stop for the others: past
-  // the cap it is written by rules (no AI is asked, nothing is spent).
-  if (!(await allow(db, now, cap))) {
+  // The daily AI allowance is shared by everyone and needs no account. A
+  // caller past its own share ([callerOk] false) is not counted against it,
+  // and past either limit the plan is written by rules (no AI is asked,
+  // nothing is spent), so the plan never stops for anyone.
+  if (!callerOk || !(await allow(db, now, cap))) {
     return { plan: rulePlan(x), source: 'rules', facts: lines, reason: 'daily_limit' };
   }
   let reply: string | null = null;

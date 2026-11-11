@@ -52,7 +52,13 @@ class GoogleStart {
     required this.exists,
     this.hasPassword = false,
     this.loggedIn = false,
+    this.linked = false,
   });
+
+  /// The account was opened with this Google account before. False when
+  /// someone made it with this email and a password, which is not checked
+  /// against the address: the email's owner may replace it.
+  final bool linked;
 
   final String idToken;
   final String email;
@@ -115,7 +121,12 @@ abstract class AccountRepository extends ChangeNotifier {
       throw UnsupportedError('Google sign-in');
 
   /// Creates a Google account and returns the recovery key, to be shown once.
-  Future<RecoveryKey> signUpWithGoogle(GoogleStart start, Consent consent) =>
+  ///
+  /// [replace]: an account with this email exists but was never linked to
+  /// Google (someone else may have taken the address); it is deleted on the
+  /// server and this new one takes its place.
+  Future<RecoveryKey> signUpWithGoogle(GoogleStart start, Consent consent,
+          {bool replace = false}) =>
       throw UnsupportedError('Google sign-in');
 
   /// Logs in with Google plus the password or the recovery key, whichever
@@ -229,6 +240,7 @@ class RemoteAccountRepository extends AccountRepository {
               email: found.email,
               exists: true,
               hasPassword: found.password,
+              linked: found.linked,
               loggedIn: true);
         } on AccountFailure catch (e) {
           // The server forgot this phone (or the account changed): ask for
@@ -246,12 +258,13 @@ class RemoteAccountRepository extends AccountRepository {
       email: found.email,
       exists: found.exists,
       hasPassword: found.password,
+      linked: found.linked,
     );
   }
 
   @override
-  Future<RecoveryKey> signUpWithGoogle(
-      GoogleStart start, Consent consent) async {
+  Future<RecoveryKey> signUpWithGoogle(GoogleStart start, Consent consent,
+      {bool replace = false}) async {
     if (!consent.adult) throw ArgumentError('consent must include age');
     final created = await _work.createGoogleAccount();
     final made = await _guard(() => _api.googleRegister(
@@ -259,6 +272,7 @@ class RemoteAccountRepository extends AccountRepository {
           recoveryAuthKey: created.recoveryAuthKey,
           bundle: created.bundle,
           consent: consent,
+          replace: replace,
         ));
     await _save(SavedAccount(
         email: start.email,
@@ -402,8 +416,11 @@ class RemoteAccountRepository extends AccountRepository {
       throw const AccountFailure(AccountProblem.wrongRecoveryKey);
     }
     final change = await _work.setPassword(session.bundle, dataKey, newPassword);
-    await _guard(
-        () => _api.setPassword(session.token, change.authKey, change.bundle));
+    // The recovery key that just logged in also proves the right to set
+    // the password (a session alone is refused).
+    await _guard(() async => _api.setPassword(
+        session.token, change.authKey, change.bundle,
+        currentRecoveryAuthKey: await key.authKey()));
     await _save(
         SavedAccount(email: email, token: session.token, dataKey: dataKey));
   }

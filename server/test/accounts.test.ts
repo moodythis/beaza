@@ -213,7 +213,14 @@ describe('change password and recovery key', () => {
 
     const next = newAccountFields(account.email);
     const bundle = { ...account.bundle, password: next.bundle.password };
-    const res = await s.call('POST', '/v1/password', { authKey: next.authKey, bundle }, phoneA);
+    // A session alone is not enough, and neither is a wrong key.
+    const bare = await s.call('POST', '/v1/password', { authKey: next.authKey, bundle }, phoneA);
+    assert.equal(bare.status, 400);
+    assert.equal(bare.body.error, 'proof_required');
+    const wrong = await s.call('POST', '/v1/password', { authKey: next.authKey, bundle, currentAuthKey: next.authKey }, phoneA);
+    assert.equal(wrong.status, 401);
+    assert.equal((await s.call('POST', '/v1/login', { email: account.email, authKey: account.authKey })).status, 200);
+    const res = await s.call('POST', '/v1/password', { authKey: next.authKey, bundle, currentAuthKey: account.authKey }, phoneA);
     assert.equal(res.status, 200);
 
     assert.equal((await s.call('POST', '/v1/login', { email: account.email, authKey: account.authKey })).status, 401);
@@ -230,7 +237,7 @@ describe('change password and recovery key', () => {
     const s = new Server();
     const { account, token } = await signUp(s);
     const other = newAccountFields();
-    const res = await s.call('POST', '/v1/password', { authKey: other.authKey, bundle: other.bundle }, token);
+    const res = await s.call('POST', '/v1/password', { authKey: other.authKey, bundle: other.bundle, currentAuthKey: account.authKey }, token);
     assert.equal(res.status, 400);
     assert.equal(res.body.error, 'key_changed');
     assert.equal((await s.call('POST', '/v1/login', { email: account.email, authKey: account.authKey })).status, 200);
@@ -248,12 +255,39 @@ describe('change password and recovery key', () => {
     const { account, token } = await signUp(s);
     const fresh = toB64(randomBytes(32));
     const bundle = { ...account.bundle, recovery: toB64(randomBytes(73)) };
-    const res = await s.call('POST', '/v1/recovery-key', { recoveryAuthKey: fresh, bundle }, token);
+    // A stolen session cannot set its own recovery key.
+    assert.equal((await s.call('POST', '/v1/recovery-key', { recoveryAuthKey: fresh, bundle }, token)).status, 400);
+    const res = await s.call(
+      'POST', '/v1/recovery-key',
+      { recoveryAuthKey: fresh, bundle, currentRecoveryAuthKey: account.recoveryAuthKey }, token,
+    );
     assert.equal(res.status, 200);
     assert.equal((await s.call('POST', '/v1/recover', { email: account.email, recoveryAuthKey: account.recoveryAuthKey })).status, 401);
     const ok = await s.call('POST', '/v1/recover', { email: account.email, recoveryAuthKey: fresh });
     assert.equal(ok.status, 200);
     assert.equal(ok.body.bundle.recovery, bundle.recovery);
+  });
+});
+
+describe('a stolen session cannot change the keys', () => {
+  it('after a recovery log-in the new password is set with the recovery proof; wrong proofs are limited', async () => {
+    const s = new Server();
+    const { account } = await signUp(s);
+    const session = (await s.call('POST', '/v1/recover', { email: account.email, recoveryAuthKey: account.recoveryAuthKey })).body.token;
+    const next = newAccountFields(account.email);
+    const bundle = { ...account.bundle, password: next.bundle.password };
+    const ok = await s.call(
+      'POST', '/v1/password',
+      { authKey: next.authKey, bundle, currentRecoveryAuthKey: account.recoveryAuthKey }, session,
+    );
+    assert.equal(ok.status, 200);
+
+    for (let i = 0; i < 10; i++) {
+      const bad = await s.call('POST', '/v1/password', { authKey: next.authKey, bundle, currentAuthKey: account.authKey }, session);
+      assert.equal(bad.status, 401);
+    }
+    const limited = await s.call('POST', '/v1/password', { authKey: next.authKey, bundle, currentAuthKey: next.authKey }, session);
+    assert.equal(limited.status, 429);
   });
 });
 

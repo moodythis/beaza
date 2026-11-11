@@ -7,6 +7,7 @@ import {
   onlyGivenNumbers,
 } from '../src/coach.ts';
 import { Server } from './harness.ts';
+import { MEDIA_CONSENT_VERSION } from '../src/media.ts';
 
 /** Totals as the phone sends them: no names, texts, digits or dates. */
 function request(over: Record<string, unknown> = {}) {
@@ -275,6 +276,33 @@ describe('POST /v1/coach (AI savings plan)', () => {
     assert.equal(third.body.reason, 'daily_limit');
     s.advance(24 * 60 * 60 * 1000);
     assert.equal((await s.call('POST', '/v1/coach', request())).status, 200);
+  });
+});
+
+describe('one caller cannot use up the shared AI allowance', () => {
+  it('past its own share a caller gets the rule plan and is not counted for everyone', async () => {
+    const s = new Server();
+    s.ai = new FakeAi({ response: '1. ok' });
+    s.limits = { aiPerDay: 2 };
+    for (let i = 0; i < 2; i++) {
+      assert.equal((await s.call('POST', '/v1/coach', request())).body.source, 'model');
+    }
+    for (let i = 0; i < 5; i++) {
+      const res = await s.call('POST', '/v1/coach', request());
+      assert.equal(res.status, 200);
+      assert.equal(res.body.source, 'rules');
+      assert.equal(res.body.reason, 'daily_limit');
+    }
+    // Only the caller's 2 allowed requests were taken from the shared count.
+    const used = await s.d1.prepare('SELECT count FROM coach_usage').first<{ count: number }>();
+    assert.equal(used?.count, 2);
+    // Another address still gets the AI.
+    const other = await s.call('POST', '/v1/coach', request(), undefined, '198.51.100.9');
+    assert.equal(other.body.source, 'model');
+    // The share covers every AI route together.
+    const typed = await s.call('POST', '/v1/expenses', { consent: MEDIA_CONSENT_VERSION, language: 'ar', text: 'كرك 200' });
+    assert.equal(typed.status, 429);
+    assert.equal(typed.body.error, 'coach_busy');
   });
 });
 

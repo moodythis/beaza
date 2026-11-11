@@ -11,7 +11,7 @@
 // Drafted for a graduation project; a lawyer should review them before a
 // public release.
 
-export const PRIVACY_VERSION = '2026-11-10.1';
+export const PRIVACY_VERSION = '2026-11-11.1';
 export const TERMS_VERSION = '2026-11-03';
 
 type Section = { title: string; body: string[] };
@@ -85,7 +85,7 @@ const en: Section[] = [
       'A hash of a proof made from your recovery key. The recovery key itself is never sent.',
       'Your data key, locked so that only your password or your recovery key can open it.',
       'Your transactions and settings, encrypted on your phone before sending. We cannot read the amounts, merchants, dates or limits.',
-      'The version of this notice you agreed to and when; hashes of session tokens; counts of wrong log-in attempts stored under keyed hashes (no email or IP address in them).',
+      'The version of this notice you agreed to and when; hashes of session tokens; counts of wrong log-in attempts, and of AI and leaderboard requests, stored under keyed hashes (no email or IP address in them) and dropped within two days. They only stop one caller from using up what is shared by everyone. An account made with an email address and password is not checked against the address: if the address is yours, signing in with the Google account for it lets you replace that account, and its stored records are then deleted.',
     ],
   },
   {
@@ -206,7 +206,7 @@ const ar: Section[] = [
       'بصمة لإثبات يُشتق من مفتاح الاسترجاع. مفتاح الاسترجاع نفسه لا يُرسل أبدًا.',
       'مفتاح بياناتك مقفلًا، بحيث لا يفتحه إلا كلمة السر أو مفتاح الاسترجاع.',
       'معاملاتك وإعداداتك، مشفرة على هاتفك قبل الإرسال. لا نستطيع قراءة المبالغ أو التجار أو التواريخ أو الحدود.',
-      'نسخة هذا الإشعار التي وافقت عليها ووقت الموافقة، وبصمات رموز الجلسات، وعدد محاولات الدخول الخاطئة محفوظًا تحت بصمات مفتاحية (بدون بريد أو عنوان IP).',
+      'نسخة هذا الإشعار التي وافقت عليها ووقت الموافقة، وبصمات رموز الجلسات، وعدد محاولات الدخول الخاطئة وعدد طلبات الذكاء الاصطناعي ولوحة الصدارة محفوظًا تحت بصمات مفتاحية (بدون بريد أو عنوان IP) ويُحذف خلال يومين. الغرض منها فقط منع جهة واحدة من استهلاك ما هو مشترك بين الجميع. الحساب المُنشأ ببريد وكلمة مرور لا يُتحقق فيه من ملكية البريد: إذا كان البريد لك، فالدخول بحساب Google الخاص به يتيح لك استبدال ذلك الحساب، وتُحذف سجلاته المحفوظة.',
     ],
   },
   {

@@ -48,6 +48,27 @@ export type Options = {
   googleKeys?: GoogleKeys;
   /** Daily cap on savings plans; tests set a small one. */
   coachCap?: number;
+  /** Per-caller limits; tests set small ones. */
+  limits?: Partial<CallerLimits>;
+};
+
+/** What one caller (one network address) may do. The AI and the leaderboard
+ * need no account, so without these one caller could use up what is shared
+ * by everyone. The numbers leave room for several phones behind one address
+ * (a campus Wi-Fi) while keeping one caller well under the shared caps. */
+export type CallerLimits = {
+  /** AI requests a day (the shared cap is 300). */
+  aiPerDay: number;
+  /** Leaderboard updates an hour (the shared cap is 20,000 a day). */
+  boardPostsPerHour: number;
+  /** New rows a day that would get a place on the board (it has 50). */
+  boardNewRowsPerDay: number;
+};
+
+export const CALLER_LIMITS: CallerLimits = {
+  aiPerDay: 60,
+  boardPostsPerHour: 60,
+  boardNewRowsPerDay: 10,
 };
 
 type Ctx = {
@@ -60,6 +81,7 @@ type Ctx = {
   google: (token: unknown) => Promise<GoogleIdentity>;
   ai?: AiLike;
   coachCap?: number;
+  limits: CallerLimits;
 };
 
 type UserRow = {
@@ -109,6 +131,7 @@ export async function handle(
         env.AI,
       ),
       coachCap: options.coachCap,
+      limits: { ...CALLER_LIMITS, ...options.limits },
     };
     response = json(200, await dispatch(route, url, ctx));
   } catch (error) {
@@ -159,24 +182,29 @@ async function dispatch(route: string, url: URL, ctx: Ctx): Promise<Record<strin
       return deleteAccount(ctx);
     case 'POST /v1/coach':
       // No account needed: the request holds only totals, no identity.
-      return coach(await readJson(ctx.request), ctx.db, ctx.ai, ctx.now, ctx.coachCap);
+      return coach(await readJson(ctx.request), ctx.db, ctx.ai, ctx.now, ctx.coachCap, await aiShare(ctx));
     case 'POST /v1/alternatives':
       // No account needed: only the shop names and totals of the plan.
-      return alternatives(await readJson(ctx.request), ctx.db, ctx.ai, ctx.now, ctx.coachCap);
+      return alternatives(await readJson(ctx.request), ctx.db, ctx.ai, ctx.now, ctx.coachCap, await aiShare(ctx));
     case 'POST /v1/categorize':
       // No account needed: only shop names, nothing about the person.
-      return categorize(await readJson(ctx.request), ctx.db, ctx.ai, ctx.now, ctx.coachCap);
+      return categorize(await readJson(ctx.request), ctx.db, ctx.ai, ctx.now, ctx.coachCap, await aiShare(ctx));
     case 'POST /v1/receipt':
-      return readReceipt(await readJson(ctx.request, MAX_MEDIA_BODY), ctx.db, ctx.ai, ctx.now, ctx.coachCap);
+      return readReceipt(await readJson(ctx.request, MAX_MEDIA_BODY), ctx.db, ctx.ai, ctx.now, ctx.coachCap, await aiShare(ctx));
     case 'POST /v1/voice':
-      return readVoice(await readJson(ctx.request, MAX_MEDIA_BODY), ctx.db, ctx.ai, ctx.now, ctx.coachCap);
+      return readVoice(await readJson(ctx.request, MAX_MEDIA_BODY), ctx.db, ctx.ai, ctx.now, ctx.coachCap, await aiShare(ctx));
     case 'POST /v1/expenses':
-      return readExpenses(await readJson(ctx.request), ctx.db, ctx.ai, ctx.now, ctx.coachCap);
+      return readExpenses(await readJson(ctx.request), ctx.db, ctx.ai, ctx.now, ctx.coachCap, await aiShare(ctx));
     case 'GET /v1/leaderboard':
       return readBoard(ctx.db);
     case 'POST /v1/leaderboard':
       // No account: a random id the phone made up, points and streak only.
-      return postBoard(await readJson(ctx.request), ctx.db, ctx.now);
+      if (!(await withinCallerLimit(ctx, 'board', ctx.limits.boardPostsPerHour, HOUR))) {
+        throw new HttpError(429, 'board_busy');
+      }
+      return postBoard(await readJson(ctx.request), ctx.db, ctx.now, undefined, () =>
+        withinCallerLimit(ctx, 'board-new', ctx.limits.boardNewRowsPerDay, DAY),
+      );
     case 'POST /v1/leaderboard/leave':
       return leaveBoard(await readJson(ctx.request), ctx.db);
     default:
@@ -291,6 +319,38 @@ async function recordAttempt(ctx: Ctx, key: string, windowMs: number) {
     .bind(key, ctx.now, windowMs)
     .run();
 }
+
+// ---- limits for what needs no account ----
+
+/** Counts this request for the caller and says whether it is still within
+ * [max] in the window. The caller is known only by a keyed hash of its
+ * network address (the address itself is never stored), in the same table
+ * as the wrong-guess counts. One statement, so two requests at once cannot
+ * both slip under the limit. */
+async function withinCallerLimit(ctx: Ctx, name: string, max: number, windowMs: number): Promise<boolean> {
+  const key = `${name}:${await keyedHash(ctx, ctx.ip)}`;
+  const row = await ctx.db
+    .prepare(
+      `INSERT INTO attempts (key, count, window_start) VALUES (?1, 1, ?2)
+       ON CONFLICT (key) DO UPDATE SET
+         count = CASE WHEN ?2 - window_start >= ?3 THEN 1 ELSE count + 1 END,
+         window_start = CASE WHEN ?2 - window_start >= ?3 THEN ?2 ELSE window_start END
+       RETURNING count`,
+    )
+    .bind(key, ctx.now, windowMs)
+    .first<{ count: number }>();
+  // Now and then, drop counts whose window ended long ago (the longest
+  // window is a day), so the table does not grow with every caller ever seen.
+  if (row?.count === 1 && ctx.now % 20 === 0) {
+    await ctx.db.prepare('DELETE FROM attempts WHERE window_start < ?').bind(ctx.now - 2 * DAY).run();
+  }
+  return (row?.count ?? 0) <= max;
+}
+
+/** Whether the caller is within its own share of the day's AI requests. A
+ * caller past it is turned away before the shared count, so it cannot use
+ * up what is left for everyone else. */
+const aiShare = (ctx: Ctx) => withinCallerLimit(ctx, 'ai', ctx.limits.aiPerDay, DAY);
 
 // ---- sessions ----
 
@@ -413,7 +473,10 @@ async function googleCheck(ctx: Ctx) {
   const who = await ctx.google((await readJson(ctx.request)).idToken);
   const user = await findGoogleUser(ctx, who);
   const password = user ? (JSON.parse(user.bundle) as Bundle).password !== undefined : false;
-  return { exists: user !== null, email: who.email, password };
+  // `linked` false: the account was made with this email and a password and
+  // has never been opened with this Google account. Nobody checked that its
+  // maker owns the email, so the phone may offer to replace it.
+  return { exists: user !== null, email: who.email, password, linked: user?.google_sub === who.sub };
 }
 
 async function googleRegister(ctx: Ctx) {
@@ -430,10 +493,23 @@ async function googleRegister(ctx: Ctx) {
   const consent = checkConsent(body.consent);
 
   const taken = await ctx.db
-    .prepare('SELECT id FROM users WHERE email = ? OR google_sub = ?')
+    .prepare('SELECT id, google_sub FROM users WHERE email = ? OR google_sub = ?')
     .bind(email, who.sub)
-    .first();
-  if (taken) throw new HttpError(409, 'email_taken');
+    .first<{ id: string; google_sub: string | null }>();
+  if (taken) {
+    // Sign-up by email does not check that the email is the person's, so
+    // anyone can take an address first. Google has just proved that this
+    // caller owns it: with `replace` they get the address back. Only an
+    // account never linked to a Google account can be replaced; its
+    // (encrypted, unreadable) records go with it.
+    if (body.replace !== true || taken.google_sub !== null) throw new HttpError(409, 'email_taken');
+    await ctx.db.batch([
+      ctx.db.prepare('DELETE FROM records WHERE user_id = ?').bind(taken.id),
+      ctx.db.prepare('DELETE FROM sessions WHERE user_id = ?').bind(taken.id),
+      ctx.db.prepare('DELETE FROM devices WHERE user_id = ?').bind(taken.id),
+      ctx.db.prepare('DELETE FROM users WHERE id = ?').bind(taken.id),
+    ]);
+  }
 
   const id = toHex(randomBytes(16));
   try {
@@ -622,9 +698,39 @@ async function sameDataKey(ctx: Ctx, userId: string, bundle: Bundle) {
   }
 }
 
+/** A session alone must not be enough to change what locks the account: a
+ * stolen session token could otherwise set its own password or recovery key
+ * and lock the person out. The caller also proves one of the account's
+ * current keys: the password key (`currentAuthKey`) or the recovery proof
+ * (`currentRecoveryAuthKey`). Wrong proofs are counted like wrong log-ins. */
+async function proveCurrentKey(ctx: Ctx, userId: string, body: Record<string, unknown>) {
+  const limitKey = `proof:${await keyedHash(ctx, userId)}`;
+  await assertNotLimited(ctx, limitKey, 10, HOUR);
+  const user = await ctx.db
+    .prepare('SELECT auth_hash, recovery_auth_hash FROM users WHERE id = ?')
+    .bind(userId)
+    .first<{ auth_hash: string; recovery_auth_hash: string }>();
+  if (!user) throw new HttpError(401, 'unauthorized');
+  let ok = false;
+  if (body.currentAuthKey !== undefined) {
+    const key = checkKey(body.currentAuthKey, 'bad_auth_key');
+    ok = safeEqual(await storedHash('auth', userId, key), user.auth_hash);
+  } else if (body.currentRecoveryAuthKey !== undefined) {
+    const key = checkKey(body.currentRecoveryAuthKey, 'bad_recovery_auth_key');
+    ok = safeEqual(await storedHash('recovery', userId, key), user.recovery_auth_hash);
+  } else {
+    throw new HttpError(400, 'proof_required');
+  }
+  if (!ok) {
+    await recordAttempt(ctx, limitKey, HOUR);
+    throw new HttpError(401, 'invalid_credentials');
+  }
+}
+
 async function changePassword(ctx: Ctx) {
   const { userId, tokenHash } = await authenticate(ctx);
   const body = await readJson(ctx.request);
+  await proveCurrentKey(ctx, userId, body);
   const authKey = checkKey(body.authKey, 'bad_auth_key');
   const bundle = checkBundle(body.bundle);
   if (!bundle.password) throw new HttpError(400, 'bad_bundle');
@@ -645,6 +751,7 @@ async function changePassword(ctx: Ctx) {
 async function changeRecoveryKey(ctx: Ctx) {
   const { userId } = await authenticate(ctx);
   const body = await readJson(ctx.request);
+  await proveCurrentKey(ctx, userId, body);
   const recoveryAuthKey = checkKey(body.recoveryAuthKey, 'bad_recovery_auth_key');
   const bundle = checkBundle(body.bundle);
   await sameDataKey(ctx, userId, bundle);

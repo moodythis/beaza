@@ -78,6 +78,18 @@ class FakeServer {
         return _ok({'token': _session(body['email'] as String), 'bundle': user['bundle']});
       case 'POST /v1/password':
         if (sessionEmail == null) return _error(401, 'unauthorized');
+        // As the server: a session alone is not enough.
+        final u = users[sessionEmail]!;
+        if (body['currentAuthKey'] == null &&
+            body['currentRecoveryAuthKey'] == null) {
+          return _error(400, 'proof_required');
+        }
+        if ((body['currentAuthKey'] != null &&
+                body['currentAuthKey'] != u['authKey']) ||
+            (body['currentRecoveryAuthKey'] != null &&
+                body['currentRecoveryAuthKey'] != u['recoveryAuthKey'])) {
+          return _error(401, 'invalid_credentials');
+        }
         users[sessionEmail]!
           ..['authKey'] = body['authKey']
           ..['bundle'] = body['bundle'];
