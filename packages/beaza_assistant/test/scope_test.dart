@@ -28,6 +28,7 @@ void main() {
       'Give me advice about my exams',
       'عطني نصيحة في الدراسة',
       'what day is it today?',
+      'How many days are left until Eid?',
     ]) {
       test(q, () {
         final r = a.answerLocally(q, entries);
@@ -43,6 +44,7 @@ void main() {
       ('How much did I spend on food this week?', AssistantIntent.spendingQuery),
       ('وين راحت فلوسي هالشهر؟', AssistantIntent.spendingQuery),
       ('كم باقي؟', AssistantIntent.spendingQuery),
+      ('How much is left today?', AssistantIntent.spendingQuery),
       ('جم باقي لي من حدي اليومي؟', AssistantIntent.spendingQuery),
       ('كم صرفت على القهوة اليوم؟', AssistantIntent.spendingQuery),
       ('عطني نصيحة', AssistantIntent.guardrailAdvice),

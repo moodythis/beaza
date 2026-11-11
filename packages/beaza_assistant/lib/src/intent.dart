@@ -144,7 +144,13 @@ class IntentDetector {
             _has(tokens, _month));
     final aboutMoney = scope.hasMoneyWord(tokens) || kindAsked || amounts;
     final words = tokens.where((t) => t != kBreak).length;
-    final shortLeft = scope.hasLeftWord(tokens) && words <= 3;
+    // "كم باقي؟", "How much is left today?"; not "how many days are left?".
+    final shortLeft = scope.hasLeftWord(tokens) &&
+        (words <= 3 ||
+            _has(tokens, _howMuch) ||
+            _has(tokens, _today) ||
+            _has(tokens, _week) ||
+            _has(tokens, _month));
 
     AssistantIntent intent;
     if (_has(tokens, _advice)) {
