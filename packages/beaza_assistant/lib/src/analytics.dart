@@ -5,7 +5,7 @@ library;
 import 'package:beaza_extraction/beaza_extraction.dart';
 
 /// [weekday]: the last day with a given weekday, today included ("يوم الأحد").
-enum PeriodKind { today, yesterday, week, month, weekday }
+enum PeriodKind { today, yesterday, week, month, weekday, lastWeek, lastMonth }
 
 /// Bahrain days, both ends included.
 class Period {
@@ -23,6 +23,12 @@ class Period {
         PeriodKind.week => Period(kind, today.addDays(-6), today),
         PeriodKind.month =>
           Period(kind, Day(today.year, today.month, 1), today),
+        PeriodKind.lastWeek =>
+          Period(kind, today.addDays(-13), today.addDays(-7)),
+        PeriodKind.lastMonth => () {
+            final end = Day(today.year, today.month, 1).addDays(-1);
+            return Period(kind, Day(end.year, end.month, 1), end);
+          }(),
         PeriodKind.weekday => () {
             final back = (dayOfWeek(today) - (weekday ?? dayOfWeek(today)) + 7) % 7;
             final d = today.addDays(-back);
@@ -114,6 +120,22 @@ class SpendingSummaryBuilder {
 
   int count(Period p, [bool Function(ExtractionResult r)? where]) =>
       _in(p, where).length;
+
+  /// The counted purchases in [p], oldest first.
+  List<ExtractionResult> items(Period p,
+          [bool Function(ExtractionResult r)? where]) =>
+      _in(p, where).toList();
+
+  /// Days in [p] whose spending passed the daily limit.
+  int daysOver(Period p) {
+    if (settings.dailyLimitFils <= 0) return 0;
+    final g = Guardrail(settings);
+    var n = 0;
+    for (var d = p.from; d.compareTo(p.to) <= 0; d = d.addDays(1)) {
+      if (g.summarize(_all, d).spentFils > settings.dailyLimitFils) n++;
+    }
+    return n;
+  }
 
   /// Largest first.
   List<BucketTotal> byBucket(Period p) {

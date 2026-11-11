@@ -11,6 +11,20 @@ import 'text.dart';
 
 enum Topic { coffee, delivery }
 
+/// What a spending question asks for, beyond a plain total.
+enum QueryKind { total, biggest, topShop, compare, average, projection, overLimit }
+
+const Set<String> _biggestWords = {'اكبر', 'اغلى', 'biggest', 'largest', 'expensive'};
+const Set<String> _shopWords = {'محل', 'محلات', 'مكان', 'shop', 'shops', 'store', 'stores', 'place'};
+const Set<String> _mostWords = {'اكثر', 'most', 'often', 'وايد'};
+const Set<String> _compareWords = {'قارن', 'مقارنه', 'compare', 'compared', 'vs', 'than'};
+const Set<String> _moreLess = {'اكثر', 'اقل', 'more', 'less', 'زاد', 'نقص'};
+const Set<String> _pastWords = {'فات', 'الماضي', 'ماضي', 'قبله', 'last', 'previous'};
+const Set<String> _averageWords = {'معدل', 'متوسط', 'average', 'avg', 'يوميا', 'باليوم', 'daily'};
+const Set<String> _endWords = {'اخر', 'نهايه', 'end', 'rate', 'بهالمعدل', 'pace'};
+const Set<String> _overWords = {'تعديت', 'تجاوزت', 'عديت', 'طلعت', 'over', 'exceeded', 'passed', 'went'};
+const Set<String> _manyDays = {'يوم', 'ايام', 'مرات', 'مره', 'days', 'times'};
+
 class ParsedRequest {
   const ParsedRequest({
     required this.intent,
@@ -23,6 +37,8 @@ class ParsedRequest {
     this.weekday,
     this.periodGiven = false,
     this.priceFils,
+    this.kind = QueryKind.total,
+    this.words = const [],
   });
 
   /// The same question for another period: "لا، بس الأحد" after "كم صرفت؟".
@@ -36,6 +52,8 @@ class ParsedRequest {
         wantsBreakdown: wantsBreakdown,
         weekday: other.weekday,
         periodGiven: true,
+        kind: kind,
+        words: words,
       );
 
   final AssistantIntent intent;
@@ -54,6 +72,11 @@ class ParsedRequest {
 
   /// The price in a "can I buy it?" question.
   final int? priceFils;
+
+  final QueryKind kind;
+
+  /// The question's words, for matching a shop name.
+  final List<String> words;
 }
 
 /// "Can I / should I buy or take it": with an amount and a question.
@@ -111,6 +134,7 @@ const Set<String> _remaining = {
 const Set<String> _breakdown = {
   'راحت', 'راح', 'توزيع', 'اصناف', 'breakdown', 'categories', 'go', 'went',
 };
+const Set<String> _howMany = {'many'};
 const Set<String> _howMuch = {'كم', 'جم', 'چم', 'بكم', 'شكثر', 'شقد', 'much'};
 const Set<String> _today = {'اليوم', 'هاليوم', 'today'};
 const Set<String> _yesterday = {'امس', 'البارحه', 'yesterday'};
@@ -203,10 +227,31 @@ class IntentDetector {
         : _has(tokens, _today)
             ? PeriodKind.today
             : _has(tokens, _month)
-                ? PeriodKind.month
+                ? (_has(tokens, _pastWords) ? PeriodKind.lastMonth : PeriodKind.month)
                 : _has(tokens, _week)
-                    ? PeriodKind.week
+                    ? (_has(tokens, _pastWords) && !_has(tokens, _compareWords) && !_has(tokens, _moreLess)
+                        ? PeriodKind.lastWeek
+                        : PeriodKind.week)
                     : (remaining ? PeriodKind.today : PeriodKind.week);
+
+    final QueryKind kind;
+    if (_has(tokens, _overWords) && (_has(tokens, _manyDays) || _has(tokens, _howMany))) {
+      kind = QueryKind.overLimit;
+    } else if (_has(tokens, _compareWords) ||
+        (_has(tokens, _moreLess) && _has(tokens, _pastWords))) {
+      kind = QueryKind.compare;
+    } else if (_has(tokens, _endWords) && (_has(tokens, _month) || _has(tokens, const {'rate', 'pace', 'بهالمعدل'}))) {
+      kind = QueryKind.projection;
+    } else if (_has(tokens, _averageWords)) {
+      kind = QueryKind.average;
+    } else if (_has(tokens, _shopWords) && (_has(tokens, _mostWords) || _has(tokens, const {'وين', 'which', 'where'}))) {
+      kind = QueryKind.topShop;
+    } else if (_has(tokens, _biggestWords) ||
+        (_has(tokens, const {'most'}) && _has(tokens, const {'expensive'}))) {
+      kind = QueryKind.biggest;
+    } else {
+      kind = QueryKind.total;
+    }
 
     // Only the person's own money is in scope (kAssistantScopeJson).
     final scope = kAssistantScope;
@@ -266,6 +311,8 @@ class IntentDetector {
           _has(tokens, _yesterday) ||
           _has(tokens, _week) ||
           _has(tokens, _month),
+      kind: kind,
+      words: tokens,
       wantsBreakdown: category == null &&
           topic == null &&
           (_has(tokens, _breakdown) || whereWord),

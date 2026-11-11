@@ -83,6 +83,8 @@ String _periodText(Period p, Day today, {required bool arabic}) => switch (p.kin
       PeriodKind.weekday => arabic
           ? 'يوم ${_dayAr[dayOfWeek(p.from) - 1]}'
           : 'on ${_dayEn[dayOfWeek(p.from) - 1]}',
+      PeriodKind.lastWeek => arabic ? 'في الأسبوع اللي قبله' : 'in the week before',
+      PeriodKind.lastMonth => arabic ? 'الشهر اللي فات' : 'last month',
       PeriodKind.today => arabic ? 'اليوم' : 'today',
       PeriodKind.yesterday => arabic ? 'أمس' : 'yesterday',
       PeriodKind.week => arabic ? 'في آخر 7 أيام' : 'in the last 7 days',
@@ -186,6 +188,22 @@ class BeazaAiAssistant {
         if (drafts.isEmpty) return _unknown(req.arabic);
         return _log(drafts, req.arabic);
       case AssistantIntent.spendingQuery:
+        switch (req.kind) {
+          case QueryKind.overLimit:
+            return _overLimit(s, req);
+          case QueryKind.compare:
+            return _compare(s, req.arabic);
+          case QueryKind.projection:
+            return _projection(s, req.arabic);
+          case QueryKind.average:
+            return _average(s, req);
+          case QueryKind.topShop:
+            return _topShop(s, req);
+          case QueryKind.biggest:
+            return _biggest(s, req);
+          case QueryKind.total:
+            break;
+        }
         if (req.wantsRemaining) return _remaining(s, req.arabic);
         if (req.wantsBreakdown) return _breakdown(s, req);
         return _total(s, req);
@@ -245,14 +263,21 @@ class BeazaAiAssistant {
     final p = Period.of(req.period, s.today, weekday: req.weekday);
     final topic = req.topic;
     final category = req.category;
-    bool where(ExtractionResult r) => topic != null
-        ? matchesTopic(topic, r)
-        : category != null
-            ? r.category == category
-            : true;
+    // A shop the person named ("at Starbucks", "في lulu"), matched on a
+    // word of the shop names in their own list.
+    final shop = topic == null && category == null ? _namedShop(s, req.words) : null;
+    bool where(ExtractionResult r) => shop != null
+        ? _shopOf(r).toLowerCase().split(RegExp(r'[^a-z0-9]+')).contains(shop)
+        : topic != null
+            ? matchesTopic(topic, r)
+            : category != null
+                ? r.category == category
+                : true;
     final total = s.total(p, where);
     final count = s.count(p, where);
-    final label = topic == Topic.coffee
+    final label = shop != null
+        ? (ar ? 'في ${shop.toUpperCase()}' : 'at ${shop.toUpperCase()}')
+        : topic == Topic.coffee
         ? (ar ? 'على القهوة والكافيهات' : 'on coffee')
         : topic == Topic.delivery
             ? (ar ? 'على تطبيقات التوصيل' : 'on delivery apps')
@@ -497,6 +522,213 @@ class BeazaAiAssistant {
 
     found.sort((a, b) => b.$1.compareTo(a.$1));
     return [for (final f in found.take(2)) f.$2];
+  }
+
+  static const Set<String> _notShops = {
+    'what', 'when', 'where', 'which', 'much', 'many', 'spend', 'spent', 'spending', //
+    'this', 'that', 'last', 'week', 'month', 'today', 'yesterday', 'have', 'with', //
+    'from', 'money', 'shop', 'shops', 'store', 'food', 'coffee', 'cafe', 'total', //
+    'did', 'does', 'there', 'about', 'into', 'over', 'more', 'less', 'than',
+  };
+
+  /// A word of the question (4+ Latin letters) that is a word of one of the
+  /// person's shop names.
+  String? _namedShop(SpendingSummaryBuilder s, List<String> words) {
+    final shopWords = <String>{
+      for (final r in s.items(Period(PeriodKind.month, s.today.addDays(-90), s.today)))
+        ..._shopOf(r).toLowerCase().split(RegExp(r'[^a-z0-9]+')),
+    };
+    for (final w in words) {
+      if (w.length >= 4 &&
+          RegExp(r'^[a-z]+$').hasMatch(w) &&
+          !_notShops.contains(w) &&
+          shopWords.contains(w)) {
+        return w;
+      }
+    }
+    return null;
+  }
+
+  static String _shopOf(ExtractionResult r) =>
+      (r.merchantNorm ?? r.merchantRaw ?? '').trim();
+
+  AssistantResponse _reply(String text, List<Metric> metrics) =>
+      AssistantResponse(
+        intent: AssistantIntent.spendingQuery,
+        replyText: text.replaceAll(RegExp(r' {2,}'), ' '),
+        referencedMetrics: metrics,
+      );
+
+  /// The single largest purchase in the period.
+  AssistantResponse _biggest(SpendingSummaryBuilder s, ParsedRequest req) {
+    final ar = req.arabic;
+    final p = Period.of(req.period, s.today, weekday: req.weekday);
+    final when = _periodText(p, s.today, arabic: ar);
+    final items = s.items(p);
+    if (items.isEmpty) {
+      return _reply(ar ? 'ما صرفت شي $when.' : 'Nothing spent $when.', []);
+    }
+    final top = items.reduce((a, b) => b.amountFils! > a.amountFils! ? b : a);
+    final shop = _shopOf(top);
+    final at = shop.isEmpty ? '' : (ar ? ' في $shop' : ' at $shop');
+    final day = Day.of(top.timestamp!);
+    final dayText = ar
+        ? 'يوم ${_dayAr[dayOfWeek(day) - 1]}'
+        : 'on ${_dayEn[dayOfWeek(day) - 1]}';
+    return _reply(
+        ar
+            ? 'أكبر مصروف $when: ${formatMoney(top.amountFils!, arabic: true)}$at، $dayText.'
+            : 'Your biggest purchase $when: ${formatMoney(top.amountFils!, arabic: false)}$at, $dayText.',
+        [_money('biggest_fils', top.amountFils!, ar)]);
+  }
+
+  /// The shop with the most money spent (and how many visits).
+  AssistantResponse _topShop(SpendingSummaryBuilder s, ParsedRequest req) {
+    final ar = req.arabic;
+    final p = Period.of(req.period, s.today, weekday: req.weekday);
+    final when = _periodText(p, s.today, arabic: ar);
+    final totals = <String, int>{};
+    final counts = <String, int>{};
+    final names = <String, String>{};
+    for (final r in s.items(p)) {
+      final name = _shopOf(r);
+      if (name.isEmpty) continue;
+      final key = name.toLowerCase();
+      names.putIfAbsent(key, () => name);
+      totals[key] = (totals[key] ?? 0) + r.amountFils!;
+      counts[key] = (counts[key] ?? 0) + 1;
+    }
+    if (totals.isEmpty) {
+      return _reply(
+          ar ? 'ما في مشتريات من محلات $when.' : 'No shop purchases $when.', []);
+    }
+    final key = totals.keys.reduce((a, b) => totals[b]! > totals[a]! ? b : a);
+    final n = counts[key]!;
+    final times = ar ? (n == 1 ? 'مرة وحدة' : '$n مرات') : (n == 1 ? 'once' : '$n times');
+    return _reply(
+        ar
+            ? 'أكثر محل صرفت فيه $when: ${names[key]}، ${formatMoney(totals[key]!, arabic: true)} ($times).'
+            : 'The shop you spent most at $when: ${names[key]}, ${formatMoney(totals[key]!, arabic: false)} ($times).',
+        [
+          _money('shop_fils', totals[key]!, ar),
+          Metric('shop_count', n, MetricUnit.count, display: '$n'),
+        ]);
+  }
+
+  /// The last 7 days against the 7 before.
+  AssistantResponse _compare(SpendingSummaryBuilder s, bool ar) {
+    final now = s.total(Period.of(PeriodKind.week, s.today));
+    final before = s.total(Period.of(PeriodKind.lastWeek, s.today));
+    final metrics = [
+      _money('week_fils', now, ar),
+      _money('week_before_fils', before, ar),
+    ];
+    String m(int f) => formatMoney(f, arabic: ar);
+    if (before == 0) {
+      return _reply(
+          ar
+              ? 'آخر 7 أيام صرفت ${m(now)}، والأسبوع اللي قبله ما في صرف مسجّل علشان أقارن.'
+              : 'You spent ${m(now)} in the last 7 days; nothing is recorded for the week before, so there is nothing to compare.',
+          metrics);
+    }
+    final diff = (now - before).abs();
+    final pct = percentOf(diff, before);
+    metrics
+      ..add(_money('diff_fils', diff, ar))
+      ..add(Metric('diff_percent', pct, MetricUnit.percent, display: '$pct'));
+    final String text;
+    if (now == before) {
+      text = ar
+          ? 'نفس الشي: ${m(now)} آخر 7 أيام والأسبوع اللي قبله.'
+          : 'The same: ${m(now)} in the last 7 days and in the week before.';
+    } else if (now > before) {
+      text = ar
+          ? 'آخر 7 أيام صرفت ${m(now)}، أكثر من الأسبوع اللي قبله (${m(before)}) بـ ${m(diff)}، يعني $pct٪. شوف وين زاد من «وين راحت فلوسي؟».'
+          : 'You spent ${m(now)} in the last 7 days, ${m(diff)} ($pct%) more than the week before (${m(before)}). Ask "Where did my money go?" to see what grew.';
+    } else {
+      text = ar
+          ? 'آخر 7 أيام صرفت ${m(now)}، أقل من الأسبوع اللي قبله (${m(before)}) بـ ${m(diff)}، يعني $pct٪. كمّل جذي.'
+          : 'You spent ${m(now)} in the last 7 days, ${m(diff)} ($pct%) less than the week before (${m(before)}). Keep it up.';
+    }
+    return _reply(text, metrics);
+  }
+
+  /// Average a day over the period, against the daily limit.
+  AssistantResponse _average(SpendingSummaryBuilder s, ParsedRequest req) {
+    final ar = req.arabic;
+    final kind = req.period == PeriodKind.today || req.period == PeriodKind.weekday
+        ? PeriodKind.week
+        : req.period;
+    final p = Period.of(kind, s.today);
+    final total = s.total(p);
+    final days = p.days;
+    final avg = total ~/ days;
+    String m(int f) => formatMoney(f, arabic: ar);
+    final when = _periodText(p, s.today, arabic: ar);
+    final metrics = [
+      _money('average_fils', avg, ar),
+      _money('total_fils', total, ar),
+      Metric('days', days, MetricUnit.days, display: '$days'),
+    ];
+    var text = ar
+        ? 'معدل صرفك $when: ${m(avg)} باليوم (${m(total)} على $days أيام).'
+        : 'Your average $when: ${m(avg)} a day (${m(total)} over $days days).';
+    final limit = s.settings.dailyLimitFils;
+    if (limit > 0) {
+      metrics.add(_money('limit_fils', limit, ar));
+      text += avg > limit
+          ? (ar ? ' هذا فوق حدك (${m(limit)})، فلازم تخفف شوي.' : ' That is above your limit (${m(limit)}), so ease off a little.')
+          : (ar ? ' وهذا ضمن حدك (${m(limit)}).' : ' That is within your limit (${m(limit)}).');
+    }
+    return _reply(text, metrics);
+  }
+
+  /// This month so far, and where it ends at the same pace.
+  AssistantResponse _projection(SpendingSummaryBuilder s, bool ar) {
+    final p = Period.of(PeriodKind.month, s.today);
+    final total = s.total(p);
+    final soFar = s.today.day;
+    final inMonth = Day(s.today.year, s.today.month + 1, 1).addDays(-1).day;
+    final end = total * inMonth ~/ soFar;
+    String m(int f) => formatMoney(f, arabic: ar);
+    return _reply(
+        ar
+            ? 'لين اليوم صرفت ${m(total)} هالشهر في $soFar يوم. إذا كملت بنفس المعدل، بتوصل تقريباً ${m(end)} آخر الشهر.'
+            : 'So far this month you have spent ${m(total)} in $soFar days. At the same pace you would reach about ${m(end)} by the end of the month.',
+        [
+          _money('month_fils', total, ar),
+          _money('month_end_fils', end, ar),
+          Metric('days_so_far', soFar, MetricUnit.days, display: '$soFar'),
+        ]);
+  }
+
+  /// How many days passed the daily limit.
+  AssistantResponse _overLimit(SpendingSummaryBuilder s, ParsedRequest req) {
+    final ar = req.arabic;
+    if (s.settings.dailyLimitFils <= 0) {
+      return _reply(
+          ar
+              ? 'ما عندك حد يومي، فما في أيام تعديته. حط حدك من الشاشة الرئيسية.'
+              : 'You have no daily limit, so no days over it. Set one on the home screen.',
+          []);
+    }
+    final kind = req.period == PeriodKind.month || req.period == PeriodKind.lastMonth
+        ? req.period
+        : PeriodKind.week;
+    final p = Period.of(kind, s.today);
+    final n = s.daysOver(p);
+    final days = p.days;
+    final when = _periodText(p, s.today, arabic: ar);
+    return _reply(
+        n == 0
+            ? (ar ? 'ما تعديت حدك ولا يوم $when. عاش!' : 'You stayed within your limit every day $when. Well done.')
+            : (ar
+                ? 'تعديت حدك $n من $days أيام $when.'
+                : 'You went over your limit on $n of $days days $when.'),
+        [
+          Metric('days_over', n, MetricUnit.days, display: '$n'),
+          Metric('days', days, MetricUnit.days, display: '$days'),
+        ]);
   }
 
   /// Straight talk about a price, the way a Bahraini who helps students
