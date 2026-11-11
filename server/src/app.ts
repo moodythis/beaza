@@ -16,6 +16,7 @@ import {
   HttpError,
   isObject,
   MAX_BODY,
+  MAX_RECORDS_PER_ACCOUNT,
 } from './validate.ts';
 import type { Bundle } from './validate.ts';
 import { legalPage, PRIVACY_VERSION, TERMS_VERSION } from './legal.ts';
@@ -201,8 +202,28 @@ async function readJson(request: Request, max = MAX_BODY): Promise<Record<string
   if (Number(request.headers.get('content-length') ?? 0) > max) {
     throw new HttpError(413, 'too_large');
   }
-  const text = await request.text();
-  if (text.length > max) throw new HttpError(413, 'too_large');
+  // Read in pieces and stop at the limit: a body sent without a length
+  // (chunked) must not be held in memory whole before it is refused.
+  const reader = request.body?.getReader();
+  const parts: Uint8Array[] = [];
+  let size = 0;
+  while (reader) {
+    const { done, value } = await reader.read();
+    if (done) break;
+    size += value.byteLength;
+    if (size > max) {
+      await reader.cancel().catch(() => {});
+      throw new HttpError(413, 'too_large');
+    }
+    parts.push(value);
+  }
+  const bytes = new Uint8Array(size);
+  let at = 0;
+  for (const p of parts) {
+    bytes.set(p, at);
+    at += p.byteLength;
+  }
+  const text = new TextDecoder().decode(bytes);
   let value: unknown;
   try {
     value = JSON.parse(text);
@@ -713,6 +734,16 @@ async function pushRecords(ctx: Ctx) {
   const { userId } = await authenticate(ctx);
   const records = checkRecords((await readJson(ctx.request)).records);
   const n = records.length;
+  const held = await ctx.db
+    .prepare('SELECT COUNT(*) AS n FROM records WHERE user_id = ?')
+    .bind(userId)
+    .first<{ n: number }>();
+  // Counted before the write, so a batch that only replaces records is also
+  // refused at the cap: simpler than counting new ids, and the cap is far
+  // above real use.
+  if ((held?.n ?? 0) + n > MAX_RECORDS_PER_ACCOUNT) {
+    throw new HttpError(413, 'storage_full', { max: MAX_RECORDS_PER_ACCOUNT });
+  }
   await ctx.db.batch([
     ctx.db.prepare('UPDATE users SET seq = seq + ? WHERE id = ?').bind(n, userId),
     ...records.map((r, i) =>

@@ -2,6 +2,9 @@ import { fromB64 } from './util.ts';
 
 export const MAX_BODY = 256 * 1024;
 export const MAX_BATCH = 100;
+/** Records one account may hold. A heavy user makes about 2,000 a year;
+ * without a cap one account could fill the shared database. */
+export const MAX_RECORDS_PER_ACCOUNT = 20_000;
 export const MAX_BLOB_CHARS = 16 * 1024;
 /** version + nonce + tag + one 64-byte padding block (see beaza_crypto). */
 export const MIN_BLOB_BYTES = 1 + 24 + 16 + 64;

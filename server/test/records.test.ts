@@ -5,6 +5,29 @@ import { newAccountFields, sealedLike, Server, signUp } from './harness.ts';
 
 const rec = (id: string, collection = 'transactions', blob = sealedLike()) => ({ collection, id, blob });
 
+describe('one account cannot fill the shared database', () => {
+  it('refuses records past the cap for the account, and only for that account', async () => {
+    const s = new Server();
+    const { token } = await signUp(s);
+    await s.d1
+      .prepare(
+        `INSERT INTO records (user_id, collection, id, blob, seq)
+         WITH RECURSIVE n(i) AS (SELECT 1 UNION ALL SELECT i + 1 FROM n WHERE i < 19999)
+         SELECT (SELECT id FROM users LIMIT 1), 'transactions', 'x' || i, 'b', i FROM n`,
+      )
+      .run();
+    await s.d1.prepare('UPDATE users SET seq = 19999').run();
+    assert.equal((await s.call('POST', '/v1/records', { records: [rec('last')] }, token)).status, 200);
+    const over = await s.call('POST', '/v1/records', { records: [rec('one-more')] }, token);
+    assert.equal(over.status, 413);
+    assert.equal(over.body.error, 'storage_full');
+    assert.equal((await s.call('GET', '/v1/records?since=19999', undefined, token)).body.records.length, 1);
+
+    const other = await signUp(s, 'other@example.com');
+    assert.equal((await s.call('POST', '/v1/records', { records: [rec('a1')] }, other.token)).status, 200);
+  });
+});
+
 describe('push and pull', () => {
   it('a record comes back exactly as sent, with a seq number', async () => {
     const s = new Server();

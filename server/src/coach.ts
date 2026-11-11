@@ -413,9 +413,14 @@ export async function coach(
 ): Promise<Record<string, unknown>> {
   const x = checkCoachInput(body);
   if (!ai) throw new HttpError(503, 'coach_disabled');
-  if (!(await allow(db, now, cap))) throw new HttpError(429, 'coach_busy');
   const ar = x.language === 'ar';
   const { lines } = facts(x);
+  // The daily AI allowance is shared by everyone and needs no account, so
+  // one caller can use it up. The plan must not stop for the others: past
+  // the cap it is written by rules (no AI is asked, nothing is spent).
+  if (!(await allow(db, now, cap))) {
+    return { plan: rulePlan(x), source: 'rules', facts: lines, reason: 'daily_limit' };
+  }
   let reply: string | null = null;
   let provider = 'workers-ai';
   let aiError: string | undefined;

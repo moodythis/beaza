@@ -267,9 +267,12 @@ describe('POST /v1/coach (AI savings plan)', () => {
     s.coachCap = 2;
     assert.equal((await s.call('POST', '/v1/coach', request())).status, 200);
     assert.equal((await s.call('POST', '/v1/coach', request())).status, 200);
+    // Past the cap the plan still comes, written by rules: one caller
+    // using up the shared allowance does not stop the plan for the others.
     const third = await s.call('POST', '/v1/coach', request());
-    assert.equal(third.status, 429);
-    assert.equal(third.body.error, 'coach_busy');
+    assert.equal(third.status, 200);
+    assert.equal(third.body.source, 'rules');
+    assert.equal(third.body.reason, 'daily_limit');
     s.advance(24 * 60 * 60 * 1000);
     assert.equal((await s.call('POST', '/v1/coach', request())).status, 200);
   });
