@@ -280,24 +280,24 @@ export function facts(x: CoachInput): { lines: string[]; trim?: { category: stri
 }
 
 const SYSTEM = {
-  ar: `أنت بحريني خبير في ترتيب مصاريف الطلاب، تكلّم طالب جامعة في البحرين داخل تطبيق بيزة.
-اكتب خطة قصيرة بلهجة بحرينية بسيطة، مثل ما تنصح ولد أختك: 3 أو 4 خطوات مرقّمة، كل خطوة جملة وحدة.
-كل خطوة لازم تكون شي يسويه هالأسبوع: وش يسوي، ومتى، وبدال شنو. مثل: يسوي الكرك بالبيت أيام الدوام بدل الكافيه، يختار الاستلام بدل التوصيل، يتعشى قبل السهر، يقرر مبلغ طلعة الويكند (الخميس للسبت) قبل لا يطلع.
-اربط كل خطوة بشي موجود في "الحقائق": محل يتكرر، وقت، يوم، أو فئة. لا تكتب نصايح عامة مثل «خلك واعي بمصروفك» أو «سوّ ميزانية».
+  ar: `أنت بحريني خبير في ترتيب مصاريف الطلاب، وتسولف مع طالب جامعة في البحرين داخل تطبيق بيزة، مثل ما تنصح ولد أختك وأنتوا قاعدين.
+اكتب رسالة وحدة قصيرة بلهجة بحرينية طبيعية، فقرة أو فقرتين، من 3 إلى 5 جمل. لا تستخدم أرقام خطوات ولا نقاط ولا عناوين ولا قوائم.
+كلّمه مباشرة («شوف»، «لاحظت إنك»، «جرّب»). اختار أهم شيئين أو ثلاثة بس، ولكل واحد قول له وش يسوي هالأسبوع ومتى وبدال شنو. مثل: يسوي الكرك بالبيت أيام الدوام بدل الكافيه، يختار الاستلام بدل التوصيل، يتعشى قبل السهر، يقرر مبلغ طلعة الويكند (الخميس للسبت) قبل لا يطلع.
+اربط كلامك بشي موجود في "الحقائق": محل يتكرر، وقت، يوم، أو فئة. لا تقول كلام عام مثل «خلك واعي بمصروفك» أو «سوّ ميزانية».
 استخدم فقط الأرقام الموجودة في "الحقائق" وانسخها كما هي. لا تحسب ولا تخترع أي رقم أو سعر.
 لا تنصح بتخفيف فئة إلا إذا في "الحقائق" سطر "لو قلّ صرف"؛ وإلا لا تقترح تخفيف، وقل إن صرفه معقول إذا المبالغ صغيرة.
-إذا في سطر "غير مصنّف" خل الخطوة 1 تصنيف المصاريف.
-انسخ أسماء المحلات كما هي. لا تنصح بقروض أو استثمار أو بنوك أو منتجات مالية، ولا تلوم ولا توعظ. أقل من 120 كلمة.
-ابدأ مباشرة بالخطوة 1، بدون تحية وبدون جملة ختامية.`,
-  en: `You are a Bahraini who helps students organise their spending, talking to a university student in Bahrain inside the Beaza app.
-Write a short plan in plain, warm English, the way you would advise a younger cousin: 3 or 4 numbered steps, one sentence each.
-Each step is something to do this week: what, when, and instead of what. For example: make karak at home on study days instead of the café, pick up instead of delivery, eat before a late night, decide what the weekend (Thursday to Saturday) outing costs before going.
-Tie every step to something in FACTS: a shop that repeats, a time, a day or a category. No generic advice such as "be mindful of your spending" or "make a budget".
+إذا في سطر "غير مصنّف" ابدأ بإنه يصنّف مصاريفه.
+انسخ أسماء المحلات كما هي. لا تنصح بقروض أو استثمار أو بنوك أو منتجات مالية، ولا تلوم ولا توعظ. أقل من 110 كلمة.
+لا تبدأ بتحية ولا تختم بتلخيص أو دعاء.`,
+  en: `You are a Bahraini who is good at helping students organise their spending, chatting with a university student in Bahrain inside the Beaza app, the way you would talk to a younger cousin over tea.
+Write one short message in plain, warm English: one or two paragraphs, 3 to 5 sentences. No step numbers, bullets, headings or lists.
+Talk to them directly ("Look,", "I noticed you", "Try"). Pick only the two or three things that matter most, and for each say what to do this week, when, and instead of what. For example: make karak at home on study days instead of the café, pick up instead of delivery, eat before a late night, decide what the weekend (Thursday to Saturday) outing costs before going.
+Tie what you say to something in FACTS: a shop that repeats, a time, a day or a category. No generic advice such as "be mindful of your spending" or "make a budget".
 Use only the numbers in FACTS, copied exactly. Never calculate or invent a number or a price.
 Suggest cutting a category only if FACTS has an "If ... spending drops" line; otherwise suggest no cuts, and say the spending looks reasonable if the amounts are small.
-If FACTS says the spending is not sorted, make step 1 sorting it.
-Copy shop names exactly. No loans, investments, banks or financial products, no blame and no preaching. Under 120 words.
-Start directly with step 1: no greeting and no closing line.`,
+If FACTS says the spending is not sorted, start with sorting it.
+Copy shop names exactly. No loans, investments, banks or financial products, no blame and no preaching. Under 110 words.
+No greeting and no closing summary.`,
 };
 
 /** Numbers in a text, written one way: Arabic digits to ASCII, "2.500" and
@@ -331,47 +331,53 @@ export function onlyGivenNumbers(reply: string, given: string[]): boolean {
 export function rulePlan(x: CoachInput): string {
   const ar = x.language === 'ar';
   const { trim } = facts(x);
-  const steps: string[] = [];
+  // A short message in sentences, as a person would say it: no numbered steps.
+  const said: string[] = [];
   if (unsortedHeavy(x)) {
-    steps.push(ar
-      ? 'أغلب مصروفك غير مصنّف: صنّفه من القائمة علشان تعرف وين تروح فلوسك.'
-      : 'Most of your spending is not sorted: give each item a category to see where the money goes.');
+    said.push(ar
+      ? 'أغلب مصروفك للحين مو مصنّف، فأول شي صنّفه من القائمة علشان تبان لك وين تروح فلوسك.'
+      : "Most of your spending isn't sorted yet, so start there: give each item a category and you'll see where the money goes.");
   }
   if (trim) {
-    steps.push(ar
-      ? `خفّف ${name(trim.category, true)} 20٪ هالأسبوع: توفّر تقريباً ${money(trim.week, true)}، يعني ${money(trim.month, true)} في 4 أسابيع.`
-      : `Cut ${trim.category} by 20% this week: about ${money(trim.week, false)} kept, ${money(trim.month, false)} in 4 weeks.`);
+    said.push(ar
+      ? `لو خففت ${name(trim.category, true)} شوي، 20٪ بس، بيظل معاك تقريباً ${money(trim.week, true)} بالأسبوع، يعني ${money(trim.month, true)} في 4 أسابيع.`
+      : `If you eased off ${trim.category} by just 20%, you'd keep about ${money(trim.week, false)} a week, ${money(trim.month, false)} over 4 weeks.`);
   }
   if (x.lateCount >= 3) {
-    steps.push(ar
-      ? `${x.lateCount} مشتريات آخر الليل بمجموع ${money(x.lateFils, true)}: حط قاعدة ما تطلب بعد 10 بالليل.`
-      : `${x.lateCount} late-night purchases came to ${money(x.lateFils, false)}: make a rule of no orders after 10 pm.`);
+    said.push(ar
+      ? `ولاحظت إن عندك ${x.lateCount} مشتريات آخر الليل بـ ${money(x.lateFils, true)}، جرّب تتعشى قبل لا تسهر وخلك من الطلب بعد 10.`
+      : `You made ${x.lateCount} late-night purchases (${money(x.lateFils, false)}); eat before a late night and skip ordering after 10.`);
   }
   const often = x.shops.find((sh) => sh.count >= 4);
   if (often) {
-    steps.push(ar
-      ? `رحت ${often.name} ${often.count} مرات هالأسبوع بمجموع ${money(often.fils, true)}: جرّب تقللها مرتين.`
-      : `You went to ${often.name} ${often.count} times this week, ${money(often.fils, false)} in all: try two fewer visits.`);
+    said.push(ar
+      ? `ورحت ${often.name} ${often.count} مرات هالأسبوع بـ ${money(often.fils, true)}، لو تخليها مرتين أقل بتحس بالفرق.`
+      : `You went to ${often.name} ${often.count} times this week (${money(often.fils, false)}); two fewer visits would show.`);
   }
   if (x.smallCount >= 5) {
-    steps.push(ar
-      ? `عندك ${x.smallCount} مصاريف صغيرة مجموعها ${money(x.smallFils, true)}: اختار يومين بالأسبوع بدونها.`
-      : `${x.smallCount} small purchases came to ${money(x.smallFils, false)}: pick two days a week without them.`);
+    said.push(ar
+      ? `والمصاريف الصغيرة وصلت ${x.smallCount} مرات بـ ${money(x.smallFils, true)}، اختار يومين بالأسبوع تمشيهم بدونها.`
+      : `Small buys came to ${money(x.smallFils, false)} over ${x.smallCount} purchases; pick two days a week without them.`);
   }
   if (x.dailyLimitFils > 0 && x.daysOverLimit > 0) {
-    steps.push(ar
-      ? `تعدّيت حدك ${x.daysOverLimit} من 7 أيام: شيّك على الباقي قبل أي مصروف مو ضروري.`
-      : `You passed your limit on ${x.daysOverLimit} of 7 days: check what is left before anything you don't need.`);
+    said.push(ar
+      ? `وتعديت حدك ${x.daysOverLimit} أيام من 7، فقبل أي شي مو ضروري شيّك كم باقي لك.`
+      : `You passed your limit on ${x.daysOverLimit} of 7 days, so check what's left before anything you don't need.`);
   }
   if (x.dailyLimitFils === 0) {
-    steps.push(ar
-      ? 'حط حد يومي في بيزة علشان ينبهك قبل لا تتعداه.'
+    said.push(ar
+      ? 'وحط لك حد يومي في بيزة علشان ينبهك قبل لا تتعداه.'
       : 'Set a daily limit in Beaza so it can warn you before you pass it.');
   }
-  steps.push(ar
-    ? 'آخر الأسبوع افتح «أين ذهبت أموالي؟» وقارن.'
-    : 'At the end of the week, open "Where did my money go?" and compare.');
-  return steps.slice(0, 4).map((s, i) => `${i + 1}. ${s}`).join('\n');
+  if (said.length === 0) {
+    said.push(ar
+      ? 'صرفك هالأسبوع معقول. آخر الأسبوع افتح تقرير الأسبوع وقارن.'
+      : 'Your spending this week looks reasonable. At the end of the week, open the weekly report and compare.');
+  }
+  const out = said.slice(0, 3);
+  // The first sentence never starts with "and".
+  out[0] = out[0].replace(/^و(?=[^ا])/, '');
+  return out.join(' ');
 }
 
 export function textOf(r: unknown): string | null {

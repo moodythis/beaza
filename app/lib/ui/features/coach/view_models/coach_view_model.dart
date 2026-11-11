@@ -30,7 +30,10 @@ class CoachViewModel extends ChangeNotifier {
 
   /// The last AI plan and the request it answered: the same totals give
   /// the same plan at once, without asking the server again.
-  static const String planCacheKey = 'coach.lastPlan';
+  /// v2: plans became a short message instead of numbered steps, so a plan
+  /// kept under the old key is not shown again.
+  static const String planCacheKey = 'coach.lastPlan.v2';
+  static const String _oldPlanCacheKey = 'coach.lastPlan';
 
   /// The last cheaper options and the shops they were for, kept a week.
   static const String altCacheKey = 'coach.lastAlternatives';
@@ -82,6 +85,7 @@ class CoachViewModel extends ChangeNotifier {
   Future<void> withdraw() async {
     await _prefs.write(prefName, null);
     await _prefs.write(planCacheKey, null);
+    await _prefs.write(_oldPlanCacheKey, null);
     await _prefs.write(altCacheKey, null);
     _consented = false;
     _plan = null;
@@ -173,6 +177,7 @@ class CoachViewModel extends ChangeNotifier {
       if (_plan!.fromModel) {
         await _prefs.write(planCacheKey,
             jsonEncode({'request': key, 'text': _plan!.text, 'provider': _plan!.provider}));
+        await _prefs.write(_oldPlanCacheKey, null);
       }
     } on CoachException catch (e) {
       _error = e.code;

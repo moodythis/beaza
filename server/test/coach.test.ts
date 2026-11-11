@@ -75,7 +75,7 @@ describe('POST /v1/coach (AI savings plan)', () => {
     assert.equal(res.status, 200);
     assert.equal(res.body.source, 'rules');
     assert.doesNotMatch(res.body.plan, /50\.000/);
-    assert.match(res.body.plan, /^1\. خفّف التسوق 20٪/);
+    assert.match(res.body.plan, /لو خففت التسوق شوي، 20٪ بس/);
     assert.ok(onlyGivenNumbers(res.body.plan, res.body.facts));
   });
 
@@ -86,7 +86,7 @@ describe('POST /v1/coach (AI savings plan)', () => {
       const res = await s.call('POST', '/v1/coach', request({ language: 'en' }));
       assert.equal(res.status, 200);
       assert.equal(res.body.source, 'rules');
-      assert.match(res.body.plan, /^1\. Cut shopping by 20%/);
+      assert.match(res.body.plan, /If you eased off shopping by just 20%/);
     }
   });
 
@@ -111,7 +111,7 @@ describe('POST /v1/coach (AI savings plan)', () => {
       week_total_fils: 200000,
       categories: [{ category: 'unsorted', fils: 176000, percent: 88 }, { category: 'food', fils: 1800, percent: 1 }],
     }));
-    assert.match(res.body.plan, /^1\. Most of your spending is not sorted/);
+    assert.match(res.body.plan, /^Most of your spending isn't sorted yet/);
     assert.ok(res.body.facts.some((l: string) => /not sorted/.test(l)));
   });
 
@@ -135,7 +135,7 @@ describe('POST /v1/coach (AI savings plan)', () => {
       language: 'en',
       shops: [{ name: 'TALABAT', fils: 9200, count: 4 }],
     }));
-    assert.match(res.body.plan, /You went to TALABAT 4 times this week, BHD 9\.200/);
+    assert.match(res.body.plan, /You went to TALABAT 4 times this week \(BHD 9\.200\)/);
   });
 
   it('refuses shop names with digits, too many shops, or extra fields', async () => {
@@ -177,7 +177,7 @@ describe('POST /v1/coach (AI savings plan)', () => {
     assert.ok(res.body.facts.includes('Late-night purchases (10 pm to 3 am): 3, together BHD 4.500'));
     assert.ok(res.body.facts.includes('Weekend (Thursday to Saturday): BHD 9.575 (50% of the week)'));
     assert.ok(res.body.facts.includes('Left until the end of the month: BHD 158.300 for 16 days, about BHD 9.893 a day'));
-    assert.match(res.body.plan, /3 late-night purchases came to BHD 4\.500/);
+    assert.match(res.body.plan, /3 late-night purchases \(BHD 4\.500\)/);
   });
 
   it('month left needs both fields and at least one day', async () => {
