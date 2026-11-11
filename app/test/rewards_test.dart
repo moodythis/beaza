@@ -8,6 +8,7 @@ import 'package:beaza/domain/use_cases/spending_by_category.dart';
 import 'package:beaza/l10n/app_localizations.dart';
 import 'package:beaza/ui/features/savings/view_models/savings_view_model.dart';
 import 'package:beaza/ui/features/savings/views/savings_view.dart';
+import 'package:beaza/ui/features/savings/views/vouchers.dart';
 import 'package:beaza_extraction/beaza_extraction.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
@@ -94,7 +95,44 @@ void main() {
     await tester.tap(find.byKey(const Key('redeem_nakhla')));
     await tester.pumpAndSettle();
     expect(find.byKey(const Key('redeemCode')), findsOneWidget);
-    expect(find.text('Demo code: no real shop accepts it.'), findsOneWidget);
+    expect(find.byKey(const Key('voucherDisclaimer')), findsOneWidget);
+    expect(find.text('Valid 7 days'), findsOneWidget);
+    expect(find.byKey(const Key('voucherQr')), findsOneWidget);
+    final code = tester.widget<SelectableText>(find.byKey(const Key('redeemCode'))).data!;
+    expect(code, startsWith('DEMO-NAKHLA-'));
     expect(vm.pointsBalance, 80);
+
+    // Not enough points for a 100-point offer: a message, nothing taken.
+    Navigator.of(tester.element(find.byKey(const Key('voucherSheet')))).pop();
+    await tester.pumpAndSettle();
+    await tester.scrollUntilVisible(find.byKey(const Key('redeem_souq')), 300,
+        scrollable: find.byType(Scrollable).first);
+    await tester.tap(find.byKey(const Key('redeem_souq')));
+    await tester.pumpAndSettle();
+    expect(find.text('Not enough points: you need 20 more, from keeping to your daily limit and the 24-hour wait.'),
+        findsOneWidget);
+    expect(vm.pointsBalance, 80);
+
+    // My coupons lists the voucher; it opens again with its code.
+    await tester.scrollUntilVisible(find.byKey(const Key('openWallet')), -300,
+        scrollable: find.byType(Scrollable).first);
+    expect(find.text('My coupons (1)'), findsOneWidget);
+    await tester.tap(find.byKey(const Key('openWallet')));
+    await tester.pumpAndSettle();
+    expect(find.byKey(Key('voucher_$code')), findsOneWidget);
+    await tester.tap(find.byKey(Key('voucher_$code')));
+    await tester.pumpAndSettle();
+    expect(find.text(code), findsOneWidget);
+  });
+
+  test('a voucher lasts 7 days; the QR stand-in is fixed for a code', () {
+    final at = DateTime.utc(2026, 11, 1, 10);
+    final r = Redemption('nakhla', 'DEMO-NAKHLA-1234', 50, at);
+    expect(r.daysLeft(at), 7);
+    expect(r.daysLeft(at.add(const Duration(days: 6, hours: 1))), 1);
+    expect(r.activeAt(at.add(const Duration(days: 7))), isFalse);
+    expect(r.daysLeft(at.add(const Duration(days: 8))), 0);
+    expect(DemoQrPainter.pattern('DEMO-A'), DemoQrPainter.pattern('DEMO-A'));
+    expect(DemoQrPainter.pattern('DEMO-A'), isNot(DemoQrPainter.pattern('DEMO-B')));
   });
 }

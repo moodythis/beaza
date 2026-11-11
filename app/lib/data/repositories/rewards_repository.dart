@@ -6,8 +6,22 @@ import 'package:beaza/domain/use_cases/daily_close.dart';
 import 'package:beaza_extraction/beaza_extraction.dart' show Day;
 import 'package:flutter/foundation.dart';
 
+/// How long a demo voucher stays usable after it is redeemed.
+const Duration kVoucherLife = Duration(days: 7);
+
 class Redemption {
   const Redemption(this.offerId, this.code, this.cost, this.at);
+
+  DateTime get expiresAt => at.add(kVoucherLife);
+
+  bool activeAt(DateTime now) => now.isBefore(expiresAt);
+
+  /// Whole days left (rounded up); 0 once it has expired.
+  int daysLeft(DateTime now) {
+    final left = expiresAt.difference(now);
+    if (left <= Duration.zero) return 0;
+    return (left.inMinutes + 24 * 60 - 1) ~/ (24 * 60);
+  }
 
   final String offerId;
   final String code;

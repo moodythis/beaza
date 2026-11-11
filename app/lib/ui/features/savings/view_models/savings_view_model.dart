@@ -122,6 +122,17 @@ class SavingsViewModel extends ChangeNotifier {
   int get pointsBalance =>
       pointsEarned - redeemed.fold(0, (a, r) => a + r.cost);
 
+  /// Points still needed for [offer]; 0 when there are enough.
+  int pointsShort(DemoOffer offer) =>
+      offer.cost > pointsBalance ? offer.cost - pointsBalance : 0;
+
+  /// Redeemed vouchers, newest first (streak freezes are not vouchers).
+  List<Redemption> get vouchers => [
+        for (final r in redeemed.reversed)
+          if (r.offerId != RewardsRepository.freezeOffer) r,
+      ];
+
+
   /// Redeems [offer] if there are enough points; returns the code.
   Future<String?> redeem(DemoOffer offer) async {
     final r = rewards;

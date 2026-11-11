@@ -1,7 +1,9 @@
+import 'package:beaza/data/repositories/rewards_repository.dart' show Redemption;
 import 'package:beaza/l10n/app_localizations.dart';
 import 'package:beaza/ui/core/category_style.dart';
 import 'package:beaza/ui/core/formatting.dart';
 import 'package:beaza/ui/features/savings/view_models/savings_view_model.dart';
+import 'package:beaza/ui/features/savings/views/vouchers.dart';
 import 'package:beaza/ui/features/savings/views/leaderboard_card.dart';
 import 'package:beaza_extraction/beaza_extraction.dart' show Day;
 import 'package:beaza/ui/core/privacy_button.dart';
@@ -588,6 +590,25 @@ class RewardsCard extends StatelessWidget {
             padding: const EdgeInsets.fromLTRB(16, 0, 16, 0),
             child: Text(l10n.rewardsHow, style: theme.textTheme.bodySmall),
           ),
+          Padding(
+            padding: const EdgeInsets.fromLTRB(16, 8, 8, 0),
+            child: Row(
+              children: [
+                Expanded(
+                  child: Text(l10n.rewardsMarket,
+                      key: const Key('rewardsMarket'),
+                      style: theme.textTheme.titleMedium),
+                ),
+                TextButton.icon(
+                  key: const Key('openWallet'),
+                  icon: const Icon(Icons.confirmation_number_outlined),
+                  label: Text(l10n.walletButton(viewModel.vouchers.length)),
+                  onPressed: () => Navigator.of(context).push(MaterialPageRoute<void>(
+                      builder: (_) => RedeemedVouchersScreen(viewModel: viewModel))),
+                ),
+              ],
+            ),
+          ),
           SwitchListTile(
             key: const Key('offersPersonal'),
             value: viewModel.personalOffers,
@@ -600,38 +621,42 @@ class RewardsCard extends StatelessWidget {
               key: Key('offer_${o.id}'),
               leading: Icon(categoryIcon(o.category)),
               title: Text('${ar ? o.partnerAr : o.partnerEn} · ${l10n.rewardsDemoTag}'),
-              subtitle: Text(ar ? o.offerAr : o.offerEn),
+              subtitle: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(ar ? o.offerAr : o.offerEn),
+                  const SizedBox(height: 4),
+                  Container(
+                    key: Key('offerBadge_${o.id}'),
+                    padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+                    decoration: BoxDecoration(
+                      color: theme.colorScheme.secondaryContainer,
+                      borderRadius: BorderRadius.circular(8),
+                    ),
+                    child: Text(categoryName(l10n, o.category),
+                        style: theme.textTheme.labelSmall?.copyWith(
+                            color: theme.colorScheme.onSecondaryContainer)),
+                  ),
+                ],
+              ),
+              isThreeLine: true,
               trailing: FilledButton.tonal(
                 key: Key('redeem_${o.id}'),
-                onPressed: balance < o.cost
-                    ? null
-                    : () async {
-                        final code = await viewModel.redeem(o);
-                        if (code == null || !context.mounted) return;
-                        await showDialog<void>(
-                          context: context,
-                          builder: (context) => AlertDialog(
-                            title: Text(ar ? o.partnerAr : o.partnerEn),
-                            content: Column(
-                              mainAxisSize: MainAxisSize.min,
-                              children: [
-                                SelectableText(code,
-                                    key: const Key('redeemCode'),
-                                    style: theme.textTheme.headlineSmall),
-                                const SizedBox(height: 8),
-                                Text(l10n.rewardsCodeDemo,
-                                    style: theme.textTheme.bodySmall),
-                              ],
-                            ),
-                            actions: [
-                              TextButton(
-                                onPressed: () => Navigator.of(context).pop(),
-                                child: Text(l10n.receiptSave),
-                              ),
-                            ],
-                          ),
-                        );
-                      },
+                onPressed: () async {
+                  final messenger = ScaffoldMessenger.of(context);
+                  final short = viewModel.pointsShort(o);
+                  if (short > 0) {
+                    messenger.showSnackBar(SnackBar(
+                        key: const Key('pointsShort'),
+                        content: Text(l10n.rewardsShort(short))));
+                    return;
+                  }
+                  final when = viewModel.now();
+                  final code = await viewModel.redeem(o);
+                  if (code == null || !context.mounted) return;
+                  await showVoucherSheet(
+                      context, Redemption(o.id, code, o.cost, when), when);
+                },
                 child: Text(l10n.rewardsCost(o.cost)),
               ),
             ),

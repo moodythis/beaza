@@ -990,5 +990,17 @@
   "boardRank": "Your place online: {rank}",
   "@boardRank": {"placeholders": {"rank": {"type": "int"}}},
   "boardOutside": "Online: outside the top 50",
-  "aiOffTopic": "This box only adds expenses, like \"karak 200 fils\". Ask questions on the \"Ask about your spending\" screen."
+  "aiOffTopic": "This box only adds expenses, like \"karak 200 fils\". Ask questions on the \"Ask about your spending\" screen.",
+  "rewardsMarket": "Loyalty rewards & coupons",
+  "walletButton": "My coupons ({count})",
+  "@walletButton": {"placeholders": {"count": {"type": "int"}}},
+  "walletTitle": "My coupons",
+  "walletEmpty": "No coupons yet. Earn points by keeping to your daily limit and the 24-hour wait, then redeem them under Loyalty rewards.",
+  "rewardsShort": "Not enough points: you need {points} more, from keeping to your daily limit and the 24-hour wait.",
+  "@rewardsShort": {"placeholders": {"points": {"type": "int"}}},
+  "voucherDaysLeft": "Valid {days} days",
+  "@voucherDaysLeft": {"placeholders": {"days": {"type": "int"}}},
+  "voucherExpired": "Expired",
+  "voucherDisclaimer": "This offer is a demo for the Beaza graduation project; no real shop accepts it.",
+  "voucherQrNote": "Demo pattern: shops cannot scan it"
 }
