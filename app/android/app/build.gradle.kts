@@ -55,13 +55,19 @@ android {
             // The app is small, so it is not shrunk or renamed.
             isMinifyEnabled = false
             isShrinkResources = false
-            // The release is built for 64-bit ARM only (every phone the
-            // project supports), but ML Kit's text reader shipped its x86_64
-            // and 32-bit libraries too: about 18 MB nobody could use.
-            ndk {
-                abiFilters += listOf("arm64-v8a")
-            }
         }
+    }
+}
+
+// The release is built for 64-bit ARM only (every phone the project
+// supports), but ML Kit's text reader shipped its x86_64 and 32-bit
+// libraries too: about 18 MB nobody could use. Debug builds keep them for
+// emulators.
+androidComponents {
+    onVariants(selector().withBuildType("release")) { variant ->
+        variant.packaging.jniLibs.excludes.addAll(
+            listOf("lib/x86_64/**", "lib/x86/**", "lib/armeabi-v7a/**"),
+        )
     }
 }
 
