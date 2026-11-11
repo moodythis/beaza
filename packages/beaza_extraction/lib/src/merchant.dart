@@ -181,6 +181,9 @@ class MerchantNormalizer {
 
     s = s.replaceAll(_storeCode, '');
     s = _stripCity(s);
+    // A fixed-width field can cut the next word down to one letter
+    // ("ABUTAKI OFFERS COMPANY Y" + "MANAMA" on BBK): drop it.
+    s = s.replaceFirst(RegExp(r'\s+[A-Za-z]$'), '');
     s = s.replaceFirst(_legal, '').trim();
     s = s.replaceAll(RegExp(r'^[\s*#-]+|[\s*#-]+$'), '');
     if (s.isEmpty) return null;
