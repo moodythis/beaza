@@ -97,7 +97,7 @@ void main() {
                 amountFils: r.amountFils!,
                 currency: 'BHD',
                 type: Value(r.type!.name),
-                direction: r.direction!.name,
+                direction: r.direction.name,
                 timestampMs: r.timestamp!.millisecondsSinceEpoch,
                 merchantNorm: Value(r.merchantNorm),
                 reference: Value(r.reference),
