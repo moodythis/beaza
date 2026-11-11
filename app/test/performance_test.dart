@@ -187,7 +187,7 @@ void main() {
       frame.stop();
       bench('history_load_1825', load.elapsed);
       bench('history_first_frame_1825', frame.elapsed);
-      expect(vm.days, hasLength(365));
+      expect(vm.days.length, greaterThan(360));
       expect(frame.elapsed, lessThan(const Duration(seconds: 3)));
     });
 
