@@ -292,12 +292,13 @@ void main() {
       expect(ev.overall.messages, 30);
     });
 
-    // The 33 NBB and 1 KFH formats taken from real messages, with every
-    // account, reference and balance made up (eval/formats.jsonl).
+    // The 33 NBB, 1 KFH and 3 BBK formats taken from real messages, with
+    // every account, card, reference and balance made up (eval/formats.jsonl).
     test('B1 reads every message format exactly', () {
       final formats = parseGold(File('eval/formats.jsonl').readAsStringSync(),
           name: 'formats.jsonl');
-      expect(formats, hasLength(34));
+      expect(formats, hasLength(37));
+      expect(formats.where((m) => m.id.startsWith('f-bbk-')), hasLength(3));
       expect(formats.where((m) => m.id.startsWith('f-nbb-')), hasLength(33));
       final ev = evaluate(RulesSystem(), formats);
       expect(ev.errors.map((e) => '${e.id} ${e.field}'), isEmpty);

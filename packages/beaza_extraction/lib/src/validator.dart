@@ -264,7 +264,7 @@ class Validator {
     if (t.channel == TxChannel.card && t.direction == TxDirection.outgoing) {
       return TxnType.purchase;
     }
-    if (t.channel == TxChannel.fawri) {
+    if (t.channel == TxChannel.fawri || t.channel == TxChannel.transfer) {
       if (t.direction == TxDirection.outgoing) return TxnType.transferOut;
       if (t.direction == TxDirection.incoming) return TxnType.transferIn;
     }
@@ -277,6 +277,7 @@ class Validator {
       case TxChannel.card:
         return Channel.card;
       case TxChannel.fawri:
+      case TxChannel.transfer:
         return Channel.transfer;
       case TxChannel.account:
         return null;

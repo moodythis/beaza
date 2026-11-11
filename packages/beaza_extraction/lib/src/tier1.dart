@@ -9,7 +9,8 @@ import 'detector.dart' show SenderFamily;
 
 enum TxDirection { outgoing, incoming, unknown }
 
-enum TxChannel { card, fawri, account }
+/// [transfer]: a bank's own app transfer between accounts (not Fawri).
+enum TxChannel { card, fawri, account, transfer }
 
 /// Fields pulled out of one transaction message. Money is integer fils.
 class Tier1Result {
@@ -283,6 +284,36 @@ class Tier1Extractor {
         caseSensitive: false,
       ),
       dateLagsAfterMidnight: true,
+    ),
+    // ---- BBK ----
+    // Card: no year is printed ("on NOV 11, 11:39"), so it comes from the
+    // receive time. The merchant field ends with the country code ("BH"),
+    // which is dropped; name and city run together as on NBB.
+    _Template(
+      'bbk.card',
+      {SenderFamily.bbk},
+      TxChannel.card,
+      TxDirection.outgoing,
+      RegExp(
+        r'Thank you for using BBK (?:Debit |Credit |Prepaid )?CARD ending in (?<acct>\d{4}) for (?<cur>[A-Z]{3})\s?' +
+            _amt +
+            r' at (?<m>.+?)(?:\s+BH)?\s+on (?<mon>[A-Za-z]{3}) (?<d>\d{1,2}),\s*(?<h>\d{2}):(?<mi>\d{2})',
+        caseSensitive: false,
+      ),
+      hasMerchant: true,
+    ),
+    // Transfer in the BBK app: "debited by BHD 2.000 on 11/11/2026 at 11:03
+    // for BBK app TRNFR FROM 2000XXXX6220 TO 2000XXXX8456".
+    _Template(
+      'bbk.app.transfer.out',
+      {SenderFamily.bbk},
+      TxChannel.transfer,
+      TxDirection.outgoing,
+      RegExp(
+        r'your account (?<acct>\S+) has been debited by BHD\s?' + _amt +
+            r' on (?<d>\d{2})/(?<mo>\d{2})/(?<y>\d{4}) at (?<h>\d{2}):(?<mi>\d{2}) for BBK app TRNFR FROM \S+ TO (?<cp>\S+)',
+        caseSensitive: false,
+      ),
     ),
     // ---- KFH ----
     // Only the recipient's IBAN is printed (full, so only its last 4 digits
