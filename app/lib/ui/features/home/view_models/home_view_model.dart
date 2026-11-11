@@ -221,9 +221,35 @@ class HomeViewModel extends ChangeNotifier {
 
   bool _disposed = false;
 
+  /// The load running now, if any.
+  Future<void>? _running;
+
+  /// A change came in while a load was running: run once more after it.
+  bool _again = false;
+
   /// Recomputes everything from the ledger (FR-5.1), so an edit or a
   /// deletion can move the day back to a lower alert state.
-  Future<void> load() async {
+  ///
+  /// Calls that come while a load is running (a burst of new messages, or
+  /// the limit saved by this load) are folded into one more load after it,
+  /// instead of each starting its own.
+  Future<void> load() {
+    final running = _running;
+    if (running != null) {
+      _again = true;
+      return running;
+    }
+    final next = () async {
+      do {
+        _again = false;
+        await _load();
+      } while (_again && !_disposed);
+    }();
+    _running = next;
+    return next.whenComplete(() => _running = null);
+  }
+
+  Future<void> _load() async {
     _loading = true;
     _notify();
     try {

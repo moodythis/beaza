@@ -172,29 +172,32 @@ Future<void> main() async {
       store: SecureAccountStore(),
       google: PluginGoogleAuth(),
     );
-    await account.load().catchError((Object _) {});
     final sync = SyncRepository(
       api: api,
       account: account,
       collections: storage.syncables,
       preferences: storage.preferences,
     );
-    await sync.load().catchError((Object _) {});
-    account.addListener(sync.accountChanged);
-    storage.ledger.addListener(sync.localChanged);
-    storage.settings.addListener(sync.localChanged);
 
     appLifecycle = AppLifecycleListener(onResume: () {
       homeViewModel.checkMessages();
       alerts.evaluate();
       if (account.signedIn) sync.syncNow();
     });
+    // The first frame does not wait for the account: reading it goes
+    // through the Keystore, and only the Account screen shows it (it
+    // listens and updates when the load ends).
     runApp(BeazaApp(
       homeViewModel: homeViewModel,
       language: language,
       account: account,
       sync: sync,
     ));
+    await account.load().catchError((Object _) {});
+    await sync.load().catchError((Object _) {});
+    account.addListener(sync.accountChanged);
+    storage.ledger.addListener(sync.localChanged);
+    storage.settings.addListener(sync.localChanged);
     if (account.signedIn) unawaited(sync.syncNow());
 
     await notifier.requestPermission().catchError((Object _) => false);

@@ -39,10 +39,42 @@ class DriftLedgerRepository extends LedgerRepository implements Syncable {
         ]))
       .get();
 
+  /// The reconciled ledger, kept until the next change. Many screens read
+  /// it at start and after each change (the home screen, savings, the
+  /// challenge, the AI plan, the alerts), and reading every row and
+  /// reconciling them again each time was most of the start-up work.
+  /// Every change to live rows calls [notifyListeners], which drops it.
+  Future<List<LedgerEntry>>? _cached;
+
+  /// Bumped on every change, so a read that started before a change never
+  /// stores its older answer.
+  int _generation = 0;
+
   @override
-  Future<List<LedgerEntry>> entries() async {
-    final rows = await _liveRows();
-    return _reconciler.reconcile(rows.map(_toResult).toList(), _accounts);
+  Future<List<LedgerEntry>> entries() {
+    final cached = _cached;
+    if (cached != null) return cached;
+    final generation = _generation;
+    final read = () async {
+      final rows = await _liveRows();
+      return List<LedgerEntry>.unmodifiable(
+          _reconciler.reconcile(rows.map(_toResult).toList(), _accounts));
+    }();
+    _cached = read;
+    // A failed read is not kept; neither is one overtaken by a change.
+    read.then((_) {
+      if (_generation != generation && identical(_cached, read)) _cached = null;
+    }, onError: (Object _) {
+      if (identical(_cached, read)) _cached = null;
+    });
+    return read;
+  }
+
+  @override
+  void notifyListeners() {
+    _generation++;
+    _cached = null;
+    super.notifyListeners();
   }
 
   @override
