@@ -9,4 +9,5 @@ export 'src/llm.dart';
 export 'src/money.dart';
 export 'src/response.dart';
 export 'src/sanitizer.dart';
+export 'src/scope.dart';
 export 'src/text.dart';

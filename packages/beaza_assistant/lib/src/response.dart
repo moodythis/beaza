@@ -1,6 +1,15 @@
 import 'package:beaza_extraction/beaza_extraction.dart';
 
-enum AssistantIntent { spendingQuery, logExpense, guardrailAdvice, unknown }
+enum AssistantIntent {
+  spendingQuery,
+  logExpense,
+  guardrailAdvice,
+  unknown,
+
+  /// Not about the person's spending or budget (kAssistantScopeJson): turned
+  /// away on the phone, never sent to a model.
+  outOfScope,
+}
 
 /// Who wrote the reply text. The numbers are always computed on the phone.
 enum ResponseSource { local, llm }

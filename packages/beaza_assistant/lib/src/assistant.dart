@@ -11,6 +11,7 @@ import 'intent.dart';
 import 'llm.dart';
 import 'response.dart';
 import 'sanitizer.dart';
+import 'scope.dart';
 
 const String kSystemPrompt = '''
 You are the assistant inside Beaza, a daily spending app for young people in Bahrain.
@@ -18,7 +19,16 @@ Rewrite "draft_reply" in a friendly, short way (at most two sentences).
 If "language" is "ar-gulf", write in plain Gulf Arabic; otherwise in English.
 Use only the numbers that appear in "draft_reply" or in "metrics" (use their "display" text exactly).
 Never add, subtract, multiply or compute percentages yourself, and never invent a number.
-Do not recommend banks, loans, investments or any financial product.''';
+Do not recommend banks, loans, investments or any financial product.
+Speak like a Bahraini who helps students organise their spending: practical, kind, specific to the shops and habits named, never preachy.''';
+
+/// A habit is named only from this much in 7 days (BHD 3.000). A first
+/// guess, like the app's other tip thresholds.
+const int kHabitMinFils = 3000;
+
+/// The weekend is named only from BHD 5.000 (the app's weekend tip uses the
+/// same amount).
+const int kWeekendMinFils = 5000;
 
 /// "800 فلس", "1.500 د.ب" / "800 fils", "BHD 1.500".
 String formatMoney(int fils, {required bool arabic}) {
@@ -109,7 +119,8 @@ class BeazaAiAssistant {
     if (client == null ||
         !llmAllowed ||
         local.intent == AssistantIntent.logExpense ||
-        local.intent == AssistantIntent.unknown) {
+        local.intent == AssistantIntent.unknown ||
+        local.intent == AssistantIntent.outOfScope) {
       return local;
     }
     final arabic = detector.detect(text).arabic;
@@ -156,6 +167,11 @@ class BeazaAiAssistant {
         return _advice(s, req.arabic);
       case AssistantIntent.unknown:
         return _unknown(req.arabic);
+      case AssistantIntent.outOfScope:
+        return AssistantResponse(
+          intent: AssistantIntent.outOfScope,
+          replyText: kAssistantScope.reply(arabic: req.arabic),
+        );
     }
   }
 
@@ -364,6 +380,8 @@ class BeazaAiAssistant {
           : '${micro.count} small purchases in the last 7 days add up to $m.');
     }
 
+    lines.addAll(_habits(s, week, ar, metrics));
+
     final top = s
         .byBucket(week)
         .where((b) => _discretionary.contains(b.bucket) && b.totalFils >= 10000)
@@ -381,6 +399,76 @@ class BeazaAiAssistant {
       replyText: lines.join(' '),
       referencedMetrics: metrics,
     );
+  }
+
+  /// Concrete swaps from this week's own habits, the way someone who helps
+  /// students in Bahrain organise their money would put it: coffee and
+  /// karak runs, delivery orders, late nights and the weekend (Thursday to
+  /// Saturday, as in the app's budget). Only counts and totals worked out
+  /// here are quoted; at most two habits, the biggest first.
+  List<String> _habits(
+      SpendingSummaryBuilder s, Period week, bool ar, List<Metric> metrics) {
+    final found = <(int, String)>[];
+    String n(int c) => '$c';
+
+    final coffee = s.count(week, (r) => matchesTopic(Topic.coffee, r));
+    final coffeeFils = s.total(week, (r) => matchesTopic(Topic.coffee, r));
+    if (coffee >= 4 && coffeeFils >= kHabitMinFils) {
+      metrics
+        ..add(Metric('coffee_count_week', coffee, MetricUnit.count, display: n(coffee)))
+        ..add(_money('coffee_week_fils', coffeeFils, ar));
+      final m = formatMoney(coffeeFils, arabic: ar);
+      found.add((coffeeFils, ar
+          ? 'القهوة والكرك $coffee مرات هالأسبوع بـ $m. سوّ قهوتك بالبيت أيام الدوام وخل الكافيه طلعة الويكند.'
+          : 'Coffee and karak $coffee times this week, $m. Make it at home on study days and keep the café for the weekend.'));
+    }
+
+    final delivery = s.count(week, (r) => matchesTopic(Topic.delivery, r));
+    final deliveryFils = s.total(week, (r) => matchesTopic(Topic.delivery, r));
+    if (delivery >= 3 && deliveryFils >= kHabitMinFils) {
+      metrics
+        ..add(Metric('delivery_count_week', delivery, MetricUnit.count, display: n(delivery)))
+        ..add(_money('delivery_week_fils', deliveryFils, ar));
+      final m = formatMoney(deliveryFils, arabic: ar);
+      found.add((deliveryFils, ar
+          ? 'طلبت توصيل $delivery مرات بـ $m. اختار استلام من المطعم بدل التوصيل، أو جهّز غداك من الليل.'
+          : '$delivery delivery orders, $m. Pick up instead of delivery, or pack lunch the night before.'));
+    }
+
+    bool late(ExtractionResult r) {
+      final h = r.timestamp!.toUtc().add(kBahrainOffset).hour;
+      return h >= 22 || h < 3;
+    }
+
+    final lateCount = s.count(week, late);
+    final lateFils = s.total(week, late);
+    if (lateCount >= 3 && lateFils >= kHabitMinFils) {
+      metrics
+        ..add(Metric('late_count_week', lateCount, MetricUnit.count, display: n(lateCount)))
+        ..add(_money('late_week_fils', lateFils, ar));
+      final m = formatMoney(lateFils, arabic: ar);
+      found.add((lateFils, ar
+          ? '$lateCount مشتريات بعد 10 الليل بـ $m. تعشّى قبل لا تسهر، وشيل التطبيقات من أول شاشة.'
+          : '$lateCount purchases after 10 pm, $m. Eat before a late night and move the delivery apps off your home screen.'));
+    }
+
+    bool weekend(ExtractionResult r) {
+      final w = r.timestamp!.toUtc().add(kBahrainOffset).weekday;
+      return w == DateTime.thursday || w == DateTime.friday || w == DateTime.saturday;
+    }
+
+    final weekTotal = s.total(week);
+    final weekendFils = s.total(week, weekend);
+    if (weekendFils >= kWeekendMinFils && weekendFils * 2 >= weekTotal) {
+      metrics.add(_money('weekend_week_fils', weekendFils, ar));
+      final m = formatMoney(weekendFils, arabic: ar);
+      found.add((weekendFils, ar
+          ? 'الويكند (الخميس للسبت) أخذ $m، أكثر من نص الأسبوع. قرر مبلغ الطلعة قبل لا تطلع، وإذا خلص خلاص.'
+          : 'The weekend (Thursday to Saturday) took $m, over half the week. Decide what the outing costs before you go, and stop there.'));
+    }
+
+    found.sort((a, b) => b.$1.compareTo(a.$1));
+    return [for (final f in found.take(2)) f.$2];
   }
 
   AssistantResponse _unknown(bool ar) => AssistantResponse(

@@ -6,6 +6,7 @@ import 'package:beaza_extraction/beaza_extraction.dart';
 import 'analytics.dart';
 import 'money.dart';
 import 'response.dart';
+import 'scope.dart';
 import 'text.dart';
 
 enum Topic { coffee, delivery }
@@ -45,6 +46,7 @@ const Set<String> _remaining = {
 const Set<String> _breakdown = {
   'راحت', 'راح', 'توزيع', 'اصناف', 'breakdown', 'categories', 'go', 'went',
 };
+const Set<String> _howMuch = {'كم', 'جم', 'چم', 'بكم', 'شكثر', 'شقد', 'much'};
 const Set<String> _today = {'اليوم', 'هاليوم', 'today'};
 const Set<String> _yesterday = {'امس', 'البارحه', 'yesterday'};
 const Set<String> _week = {'اسبوع', 'week'};
@@ -69,7 +71,7 @@ const Map<Topic, Set<String>> _topicWords = {
 /// Shop-name patterns for a topic. Approximate: it goes by names only.
 final Map<Topic, RegExp> kTopicShops = {
   Topic.coffee: RegExp(
-      r'coffee|caf[eé]|\bcaf\b|roast|costa|starbucks|tim hortons|dunkin|كوفي|قهو[هة]|كافيه|كرك',
+      r'coffee|karak|caf[eé]|\bcaf\b|roast|costa|starbucks|tim hortons|dunkin|كوفي|قهو[هة]|كافيه|كرك',
       caseSensitive: false,
       unicode: true),
   Topic.delivery: RegExp(
@@ -129,12 +131,31 @@ class IntentDetector {
                     ? PeriodKind.week
                     : (remaining ? PeriodKind.today : PeriodKind.week);
 
+    // Only the person's own money is in scope (kAssistantScopeJson).
+    final scope = kAssistantScope;
+    final amounts = money.findAll(tokens).isNotEmpty;
+    // A category or shop type alone ("best restaurant?", "advice on my
+    // studies") is not about money; with "how much" or a period it is.
+    final kindAsked = (category != null || topic != null) &&
+        (_has(tokens, _howMuch) ||
+            _has(tokens, _today) ||
+            _has(tokens, _yesterday) ||
+            _has(tokens, _week) ||
+            _has(tokens, _month));
+    final aboutMoney = scope.hasMoneyWord(tokens) || kindAsked || amounts;
+    final words = tokens.where((t) => t != kBreak).length;
+    final shortLeft = scope.hasLeftWord(tokens) && words <= 3;
+
     AssistantIntent intent;
     if (_has(tokens, _advice)) {
-      intent = AssistantIntent.guardrailAdvice;
+      intent = aboutMoney || scope.onlyAdvice(tokens)
+          ? AssistantIntent.guardrailAdvice
+          : AssistantIntent.outOfScope;
     } else if (asks || remaining) {
-      intent = AssistantIntent.spendingQuery;
-    } else if (money.findAll(tokens).isNotEmpty) {
+      intent = aboutMoney || shortLeft
+          ? AssistantIntent.spendingQuery
+          : AssistantIntent.outOfScope;
+    } else if (amounts) {
       intent = AssistantIntent.logExpense;
     } else {
       intent = AssistantIntent.unknown;
