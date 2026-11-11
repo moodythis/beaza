@@ -324,7 +324,9 @@ class HoldsCard extends StatelessWidget {
             Row(children: [
               const Icon(Icons.shield_outlined),
               const SizedBox(width: 8),
-              Text(l10n.holdTitle, style: theme.textTheme.titleMedium),
+              Expanded(
+                  child: Text(l10n.holdTitle,
+                      style: theme.textTheme.titleMedium)),
             ]),
             const SizedBox(height: 4),
             Text(l10n.holdExplain, style: theme.textTheme.bodySmall),
