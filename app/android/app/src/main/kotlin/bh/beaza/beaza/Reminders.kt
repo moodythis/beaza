@@ -12,11 +12,13 @@ import org.json.JSONObject
  * One reminder at a set time (the end of a 24-hour hold, the daily close,
  * the weekly report). Inexact on purpose: no exact-alarm permission is
  * needed, and a few minutes late is fine. Texts come from Dart, already
- * localized, and never hold amounts.
+ * localized.
  *
  * Android forgets alarms when the phone restarts, so each pending reminder
  * is also kept in the app's private preferences and set again by
- * [BootReceiver]. It is removed when it is shown or cancelled.
+ * [BootReceiver]. It is removed when it is shown or cancelled. A hold's
+ * text names the item and its amount; the preferences are private to the
+ * app, and the app is left out of backups (allowBackup="false").
  */
 object Reminders {
     private const val PREFS = "beaza.reminders"
