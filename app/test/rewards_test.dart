@@ -114,8 +114,8 @@ void main() {
     expect(vm.pointsBalance, 80);
 
     // My coupons lists the voucher; it opens again with its code.
-    await tester.scrollUntilVisible(find.byKey(const Key('openWallet')), -300,
-        scrollable: find.byType(Scrollable).first);
+    await tester.ensureVisible(find.byKey(const Key('openWallet')));
+    await tester.pumpAndSettle();
     expect(find.text('My coupons (1)'), findsOneWidget);
     await tester.tap(find.byKey(const Key('openWallet')));
     await tester.pumpAndSettle();
