@@ -48,6 +48,9 @@ void main() {
   check('ila Fawri+ out',
       sum(ex.extract('Success! Fawri+ transfer of BHD 49.000 to IBAN ****9966 is completed on 01/11/2026 20:45 Ref ABCO260000000001 Balance BHD 9.999 Enquiry 17123456', family: SenderFamily.ila)),
       '49000|outgoing|fawri|null|9966|ABCO260000000001|null|2026-11-01T17:45:00.000Z');
+  check('Al Salam account credit',
+      sum(ex.extract('Dear Client, BHD 1.000 has been credited to your account XXXX23150000. Your balance is BHD 0.000 on 01/11/26 at 00:15. Thank you, Al Salam Bank.', family: SenderFamily.alSalam)),
+      '1000|incoming|account|0000|null|null|null|2026-10-31T21:15:00.000Z');
   check('Al Salam debit',
       sum(ex.extract('Dear Client, BHD 0.400 has been debited from your account XXXX10100777. Your balance is BHD 9.999 on 30/10/26 at 01:27. Thank you, Al Salam Bank.', family: SenderFamily.alSalam)),
       '400|outgoing|account|0777|null|null|null|2026-10-29T22:27:00.000Z');

@@ -46,6 +46,12 @@ void main() {
   // Other non-transactions
   test('Promotion', () => expect(kindOf('Get 20% cashback offer at Costa Coffee until 30/11. Terms apply'), MessageKind.promotion));
   test('Promotion wins over purchase', () => expect(kindOf('Make a purchase of BHD 10 and get 10% cashback offer'), MessageKind.promotion));
+  // Real ila Bank messages received on 11-12 November 2026 (Arabic marketing).
+  test('ila Arabic prize draw with an amount is a promotion', () => expect(kindOf('قدّم على بطاقة "إلى" بلاك أو "إلى" وايت الائتمانية للفوز بسيارة لاند روفر ديفيندر 2026! للدخول في السحب، أنفق 800 BHD أو أكثر باستخدام بطاقة "إلى" بلاك أو "إلى" وايت الائتمانية قبل 31 ديسمبر 2026. تطبق الشروط والأحكام.'), MessageKind.promotion));
+  test('ila Arabic gold draw is a promotion', () => expect(kindOf('سيربح 5 فائزين سبائك ذهب! لدخول السحب، أنفق 500 BHD أو أكثر على المجوهرات والذهب باستخدام بطاقات بنك "إلى" للخصم المباشر من 1 - 30 نوفمبر 2026. تطبق الشروط والأحكام.'), MessageKind.promotion));
+  test('ila Arabic treasure draw is a promotion', () => expect(kindOf('اليوم هو آخر يوم للمشاركة في السحب على جائزة الكنز لشهر أكتوبر بقيمة 100,000\$! قم بالإيداع الآن في حساب الكنز.'), MessageKind.promotion));
+  test('Al Salam account credit', () => expect(kindOf('Dear Client, BHD 1.000 has been credited to your account XXXX23150000. Your balance is BHD 0.000 on 01/11/26 at 00:15. Thank you, Al Salam Bank.'), tx));
+  test('A cash withdrawal is still a transaction', () => expect(kindOf('تم سحب 20.000 BHD من حسابك'), tx));
   test('Arabic promotion', () => expect(kindOf('عرض خاص: اربح قسيمة شراء بقيمة 10 BHD'), MessageKind.promotion));
   test('Statement', () => expect(kindOf('Your e-statement for October is ready'), MessageKind.statement));
   test('Arabic statement', () => expect(kindOf('كشف حسابك لشهر أكتوبر جاهز'), MessageKind.statement));

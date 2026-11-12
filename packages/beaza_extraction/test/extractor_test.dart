@@ -105,6 +105,29 @@ void main() {
     expect(r.kind, MessageKind.promotion);
   });
 
+  // Real messages from 11-12 November 2026, as they arrived (د.ب, diacritics).
+  test('ila Arabic prize draw is a promotion, not a purchase', () {
+    final r = run('ila Bank', 'قدّم على بطاقة "إلى" بلاك أو "إلى" وايت الائتمانية للفوز بسيارة لاند روفر ديفيندر 2026!\n\nللدخول في السحب، أنفق 800 د.ب أو أكثر باستخدام بطاقة "إلى" بلاك أو "إلى" وايت الائتمانية قبل 31 ديسمبر 2026.\n\nتطبق الشروط والأحكام.',
+        DateTime.utc(2026, 11, 12, 7, 7));
+    expect(r.status, ExtractionStatus.nonTransaction);
+    expect(r.kind, MessageKind.promotion);
+  });
+
+  test('ila Arabic draw with no amount in BHD is a promotion', () {
+    final r = run('ila Bank', 'اليوم هو آخر يوم للمشاركة في السحب على جائزة الكنز لشهر أكتوبر بقيمة 100,000\$!\n\nقم بالإيداع الآن في حساب الكنز.',
+        DateTime.utc(2026, 10, 31, 8, 41));
+    expect(r.status, ExtractionStatus.nonTransaction);
+    expect(r.kind, MessageKind.promotion);
+  });
+
+  test('Al Salam account credit is read', () {
+    final r = run('AlSalamBank', 'Dear Client, BHD 1.000 has been credited to your account XXXX23150000. Your balance is BHD 0.000 on 01/11/26 at 00:15. Thank you, Al Salam Bank.',
+        DateTime.utc(2026, 10, 31, 21, 57));
+    expect(r.kind, MessageKind.transaction);
+    expect(r.status, ExtractionStatus.transaction);
+    expect(r.amountFils, 1000);
+  });
+
   test('OTP from a bank is not a transaction', () {
     final r = run('BisB', 'Your OTP for card payment BHD 5.000 at SHOP is 123456. Do not share it.',
         DateTime.utc(2026, 11, 2, 11, 14));

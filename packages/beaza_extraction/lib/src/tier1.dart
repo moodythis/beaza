@@ -201,6 +201,19 @@ class Tier1Extractor {
         caseSensitive: false,
       ),
     ),
+    // Account credit in the same wording as the debit (seen on a real
+    // phone, 1 November 2026: "BHD 1.000 has been credited to your account").
+    _Template(
+      'alsalam.credit',
+      {SenderFamily.alSalam},
+      TxChannel.account,
+      TxDirection.incoming,
+      RegExp(
+        r'BHD\s?' + _amt +
+            r' has been credited to your account X+(?<acct>\d+)\. .*? on (?<d>\d{2})/(?<mo>\d{2})/(?<y>\d{2}) at (?<h>\d{2}):(?<mi>\d{2})',
+        caseSensitive: false,
+      ),
+    ),
     _Template(
       'alsalam.fawri.in',
       {SenderFamily.alSalam},

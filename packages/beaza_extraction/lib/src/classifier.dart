@@ -80,7 +80,7 @@ class MessageClassifier {
 
   // Plain "خصم" is NOT here: in bank messages it means "debited".
   static final RegExp _promotion = RegExp(
-    r'\boffers?\b|\bpromo(?:tion)?s?\b|cash\s?back|\bdiscounts?\b|\bwin\b|\bprizes?\b|\d+\s?%\s?off|apply\s+(?:for|now)|\bcampaign\b|chance\s+to|earn\s+more|high\s+yield|\bp\.a\.|rates?\s+(?:have\s+|has\s+)?increased|عرض|عروض|اربح|جوائز|تخفيض|خصومات|قدّم\s+الآن|حملة',
+    r'\boffers?\b|\bpromo(?:tion)?s?\b|cash\s?back|\bdiscounts?\b|\bwin\b|\bprizes?\b|\d+\s?%\s?off|apply\s+(?:for|now)|\bcampaign\b|chance\s+to|earn\s+more|high\s+yield|\bp\.a\.|rates?\s+(?:have\s+|has\s+)?increased|عرض|عروض|اربح|جوائز|تخفيض|خصومات|قدّم\s+الآن|حملة|\b(?:prize|lucky)\s+draws?\b|\bwinners?\b|terms\s+(?:and|&)\s+conditions\s+apply|للفوز|فائزين|سيربح|يربح|جائزة|جوائز|(?:في|لدخول|للدخول\s+في)\s+السحب|السحب\s+على|للمشاركة|الشروط\s+والأحكام|تطبق\s+الشروط',
     caseSensitive: false,
   );
 
