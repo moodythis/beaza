@@ -19,8 +19,8 @@ for the report:
   BisB, ila, Al Salam and BenefitPay. Names, balances and numbers are
   invented.
 - 6 Arabic or mixed-script messages (`source: synthetic-ar`) use invented
-  wording. Every real bank message collected so far is in English and no bank
-  has been seen sending Arabic alerts; these show that a message no template
+  wording. Every real transaction alert collected so far is in English (the only
+  Arabic bank messages seen are marketing, discarded as promotions); these show that a message no template
   reads goes to review instead of the budget.
 
 `formats.jsonl` (34 messages) keeps the NBB and KFH formats the templates
