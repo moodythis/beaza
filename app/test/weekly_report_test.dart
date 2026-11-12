@@ -4,8 +4,10 @@ import 'package:beaza/data/repositories/savings_repository.dart';
 import 'package:beaza/data/repositories/settings_repository.dart';
 import 'package:beaza/data/services/hold_reminders.dart';
 import 'package:beaza/domain/use_cases/weekly_report.dart';
+import 'package:beaza/l10n/app_localizations.dart';
 import 'package:beaza/ui/core/formatting.dart';
 import 'package:beaza/ui/features/home/view_models/home_view_model.dart';
+import 'package:beaza/ui/features/report/weekly_report_view.dart';
 import 'package:beaza_extraction/beaza_extraction.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
@@ -184,6 +186,34 @@ void main() {
       await tester.pumpAndSettle();
       return vm;
     }
+
+    testWidgets('a largest purchase without a shop shows no empty name',
+        (tester) async {
+      tester.view.physicalSize = const Size(1080, 4000);
+      tester.view.devicePixelRatio = 3;
+      addTearDown(tester.view.reset);
+      final vm = WeeklyReportViewModel(
+        // An account debit as Al Salam sends it: amount, no shop.
+        ledger: InMemoryLedgerRepository(initial: [
+          buy(5200, bh(7, 13)),
+          buy(2700, bh(6, 20), shop: 'SHAWARMA', category: 'food'),
+        ]),
+        settings: InMemorySettingsRepository(
+            const GuardrailSettings(dailyLimitFils: 10000)),
+        clock: () => bh(7, 18),
+      );
+      await vm.load();
+      await tester.pumpWidget(MaterialApp(
+        localizationsDelegates: AppLocalizations.localizationsDelegates,
+        supportedLocales: AppLocalizations.supportedLocales,
+        locale: const Locale('ar'),
+        home: WeeklyReportView(viewModel: vm),
+      ));
+      await tester.pumpAndSettle();
+      expect(find.textContaining('أكبر مشترى: السبت'), findsOneWidget);
+      expect(find.textContaining('مشترى: ،'), findsNothing);
+      expect(find.textContaining('مشترى: -'), findsNothing);
+    });
 
     testWidgets('the eye hides every amount and shows it again', (tester) async {
       await pump(tester);

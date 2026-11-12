@@ -606,6 +606,7 @@
   "reportShops": "أكثر المحلات",
   "reportShopLine": "{shop}: {count} مرات ({amount})",
   "reportLargest": "أكبر مشترى: {shop}، {day} ({amount})",
+  "reportLargestNoShop": "أكبر مشترى: {day} ({amount})",
   "reportMicroTitle": "المشتريات الصغيرة",
   "reportMicro": "{count} مشترى صغير أكلت {percent}% من الأسبوع ({amount})",
   "reportTimeTitle": "متى تصرف",

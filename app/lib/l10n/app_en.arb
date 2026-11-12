@@ -871,6 +871,8 @@
   "@reportShopLine": {"placeholders": {"shop": {"type": "String"}, "count": {"type": "int"}, "amount": {"type": "String"}}},
   "reportLargest": "Largest purchase: {shop}, {day} ({amount})",
   "@reportLargest": {"placeholders": {"shop": {"type": "String"}, "day": {"type": "String"}, "amount": {"type": "String"}}},
+  "reportLargestNoShop": "Largest purchase: {day} ({amount})",
+  "@reportLargestNoShop": {"placeholders": {"day": {"type": "String"}, "amount": {"type": "String"}}},
   "reportMicroTitle": "Small purchases",
   "reportMicro": "{count} small purchases took {percent}% of the week ({amount})",
   "@reportMicro": {"placeholders": {"count": {"type": "int"}, "percent": {"type": "int"}, "amount": {"type": "String"}}},

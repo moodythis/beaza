@@ -248,10 +248,13 @@ class WeeklyReportView extends StatelessWidget {
           for (final (i, s) in r.topShops.indexed)
             line('${i + 1}. ${l10n.reportShopLine(s.name, s.count, money(s.fils))}'),
           if (r.largest != null)
-            line(l10n.reportLargest(
-                r.largest!.shop.isEmpty ? '-' : r.largest!.shop,
-                dayName(r.largest!.day),
-                money(r.largest!.fils))),
+            line(r.largest!.shop.trim().isEmpty
+                // A debit message without a shop (an account debit): no
+                // empty name and no dash before the day.
+                ? l10n.reportLargestNoShop(
+                    dayName(r.largest!.day), money(r.largest!.fils))
+                : l10n.reportLargest(r.largest!.shop,
+                    dayName(r.largest!.day), money(r.largest!.fils))),
         ]),
       section(const Key('reportMicro'), l10n.reportMicroTitle, [
         line(l10n.reportMicro(
