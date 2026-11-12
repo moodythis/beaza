@@ -115,6 +115,8 @@
   "exportFailed": "تعذّر حفظ الملف",
   "entryManual": "أضفته بنفسك",
   "entryTransfer": "تحويل مرسل",
+  "entryTransferReceived": "تحويل وصلك",
+  "entryTransferFrom": "تحويل من حساب ينتهي بـ {last4}",
   "entryTransferTo": "تحويل إلى حساب ينتهي بـ {last4}",
   "entryCash": "سحب نقدي",
   "entryBill": "دفع فاتورة",

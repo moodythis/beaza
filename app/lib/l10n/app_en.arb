@@ -314,6 +314,9 @@
   "exportFailed": "Could not save the file",
   "entryManual": "Added by you",
   "entryTransfer": "Transfer sent",
+  "entryTransferReceived": "Transfer received",
+  "entryTransferFrom": "Transfer from account ending {last4}",
+  "@entryTransferFrom": {"placeholders": {"last4": {"type": "String"}}},
   "entryTransferTo": "Transfer to account ending {last4}",
   "@entryTransferTo": {
     "placeholders": {

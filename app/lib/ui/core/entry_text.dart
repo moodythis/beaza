@@ -20,6 +20,15 @@ String entryTitle(AppLocalizations l10n, ExtractionResult r) {
   if (r.templateVersion == InMemoryLedgerRepository.manualTemplate) {
     return l10n.entryManual;
   }
+  // Money coming in names the account it came from, never "to": a transfer
+  // received reads "from ... 95", not "to ... 95".
+  if (r.type == TxnType.transferIn ||
+      (r.channel == Channel.transfer && r.direction == TxDirection.incoming)) {
+    final from = r.counterpartyLast4;
+    return from == null
+        ? l10n.entryTransferReceived
+        : l10n.entryTransferFrom(from);
+  }
   if (r.type == TxnType.transferOut || r.channel == Channel.transfer) {
     final to = r.counterpartyLast4;
     return to == null ? l10n.entryTransfer : l10n.entryTransferTo(to);

@@ -9,6 +9,7 @@ final at = DateTime.utc(2026, 11, 2, 21, 45); // 00:45 on 3 Nov in Bahrain
 
 ExtractionResult msg({
   TxnType? type = TxnType.purchase,
+  TxDirection direction = TxDirection.outgoing,
   Channel? channel,
   String? merchant,
   String? norm,
@@ -21,7 +22,7 @@ ExtractionResult msg({
       amountFils: 500,
       currency: 'BHD',
       type: type,
-      direction: TxDirection.outgoing,
+      direction: direction,
       merchantRaw: merchant,
       merchantNorm: norm,
       channel: channel,
@@ -58,6 +59,19 @@ void main() {
         entryTitle(en, msg(template: InMemoryLedgerRepository.manualTemplate)),
         'Added by you');
     expect(entryTitle(ar, msg(type: TxnType.transferOut)), 'تحويل مرسل');
+  });
+
+  test('a transfer received says from, not to', () {
+    // Al Salam Fawri+ credit seen on a real phone, 12 November 2026.
+    expect(
+        entryTitle(ar, msg(type: TxnType.transferIn, direction: TxDirection.incoming, channel: Channel.transfer, to: '0095')),
+        'تحويل من حساب ينتهي بـ 0095');
+    expect(
+        entryTitle(en, msg(type: TxnType.transferIn, direction: TxDirection.incoming, to: '0095')),
+        'Transfer from account ending 0095');
+    expect(
+        entryTitle(en, msg(type: TxnType.transferIn, direction: TxDirection.incoming)),
+        'Transfer received');
   });
 
   test('the subtitle has the time, the bank and the last digits', () {
