@@ -391,7 +391,7 @@
       "before": { "type": "String" }
     }
   },
-  "tipOverLimit": "You went over your daily limit on {days} of the last 7 days",
+  "tipOverLimit": "You went over your daily limit on {days, plural, =1{1} other{{days}}} of the last 7 days",
   "@tipOverLimit": {
     "placeholders": {
       "days": { "type": "int" }
@@ -634,7 +634,7 @@
   "rewardsPoints": "points",
   "rewardsHow": "10 points for each day of the last 30 within your limit, 20 for each purchase you skipped after waiting, 10 each time you send a day's unspent money to your goal.",
   "offersPersonal": "Deals that fit my spending first",
-  "offersPersonalHow": "Puts offers for your biggest categories first. Worked out on this phone; nothing is sent.",
+  "offersPersonalHow": "Puts first the coupons that would have saved you most on your last 7 days of spending. Worked out on this phone; nothing is sent.",
   "rewardsCost": "{points} pts",
   "@rewardsCost": {
     "placeholders": {
@@ -689,7 +689,7 @@
   "buyAlreadyOver": "You are already over today's limit.",
   "buyTomorrow": "If you buy it today, your limit from tomorrow becomes {withIt} instead of {without}.",
   "buyBeyondMonth": "It is more than all the money left for this month ({left}).",
-  "buyDays": "It equals {days} days of your daily limit.",
+  "buyDays": "It equals {days, plural, =1{1 day} other{{days} days}} of your daily limit.",
   "buyNoPlan": "Work out your limit from your income to see what it does to the rest of the month.",
   "buyDecide": "Nothing is saved: you decide.",
   "buyClose": "OK",
@@ -699,9 +699,9 @@
   "@buyTomorrow": {"placeholders": {"withIt": {"type": "String"}, "without": {"type": "String"}}},
   "@buyBeyondMonth": {"placeholders": {"left": {"type": "String"}}},
   "@buyDays": {"placeholders": {"days": {"type": "int"}}},
-  "coachSendShop": "Shop {name}: {amount} ({count} times)",
+  "coachSendShop": "Shop {name}: {amount} ({count, plural, =1{once} other{{count} times}})",
   "@coachSendShop": {"placeholders": {"name": {"type": "String"}, "amount": {"type": "String"}, "count": {"type": "int"}}},
-  "coachSendLate": "{count} purchases late at night (10 pm to 3 am): {amount}",
+  "coachSendLate": "{count, plural, =1{1 purchase} other{{count} purchases}} late at night (10 pm to 3 am): {amount}",
   "coachSendWeekend": "Weekend (Thursday to Saturday): {amount}",
   "coachSendMonth": "Left for the month: {amount} for {days} days (not your income)",
   "@coachSendLate": {"placeholders": {"count": {"type": "int"}, "amount": {"type": "String"}}},
@@ -717,7 +717,7 @@
   "challengeSmall": "At most {count} small purchases in 7 days and keep about {saving}.",
   "challengeCategory": "Keep {category} under {limit} for 7 days and keep about {saving}.",
   "challengeAccept": "Take the challenge",
-  "challengeProgress": "So far {value} of {target} · {days} days left",
+  "challengeProgress": "So far {value} of {target} · {days, plural, =1{1 day left} other{{days} days left}}",
   "challengeStop": "Stop",
   "challengeWon": "Done! You kept to it.",
   "challengeLost": "Not this time. Try a new one.",
@@ -1000,13 +1000,13 @@
   "walletEmpty": "No coupons yet. Earn points by keeping to your daily limit and the 24-hour wait, then redeem them under Loyalty rewards.",
   "rewardsShort": "Not enough points: you need {points} more, from keeping to your daily limit and the 24-hour wait.",
   "@rewardsShort": {"placeholders": {"points": {"type": "int"}}},
-  "voucherDaysLeft": "Valid {days} days",
+  "voucherDaysLeft": "Valid {days, plural, =1{1 day} other{{days} days}}",
   "@voucherDaysLeft": {"placeholders": {"days": {"type": "int"}}},
   "voucherExpired": "Expired",
   "voucherDisclaimer": "This offer is a demo for the Beaza graduation project; no real shop accepts it.",
   "voucherQrNote": "Demo pattern: shops cannot scan it",
   "dealsHow": "Shops give Beaza free coupons, and Beaza puts the ones that fit your spending first. No points needed. The shops here are a demo for now.",
-  "dealFit": "You spent {spent} here in the last 7 days ({count} times). This coupon would have saved about {saving}.",
+  "dealFit": "You spent {spent} here in the last 7 days ({count, plural, =1{once} other{{count} times}}). This coupon would have saved about {saving}.",
   "@dealFit": {"placeholders": {"spent": {"type": "String"}, "count": {"type": "int"}, "saving": {"type": "String"}}},
   "dealGet": "Get coupon",
   "dealShow": "Show coupon",

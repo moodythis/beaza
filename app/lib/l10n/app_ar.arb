@@ -178,7 +178,7 @@
       "before": { "type": "String" }
     }
   },
-  "tipOverLimit": "تجاوزت حدك اليومي في {days} أيام من آخر 7 أيام",
+  "tipOverLimit": "تجاوزت حدك اليومي في {days, plural, =1{يوم واحد} =2{يومين} few{{days} أيام} other{{days} يوم}} من آخر 7 أيام",
   "@tipOverLimit": {
     "placeholders": {
       "days": { "type": "int" }
@@ -421,7 +421,7 @@
   "rewardsPoints": "نقطة",
   "rewardsHow": "10 نقاط عن كل يوم من آخر 30 بقيت فيه تحت حدك، و20 عن كل شي تركته بعد الانتظار، و10 كل مرة تودّي فائض يومك لهدفك.",
   "offersPersonal": "العروض اللي تناسب صرفي أول",
-  "offersPersonalHow": "يقدّم عروض أكثر أصنافك صرفاً. يتم على الجوال بس، وما ينرسل شي.",
+  "offersPersonalHow": "يرتّب الكوبونات حسب كم كانت بتوفّر لك على صرفك في آخر 7 أيام. الحساب على الجوال بس، وما ينرسل شي.",
   "rewardsCost": "{points} نقطة",
   "@rewardsCost": {
     "placeholders": {
@@ -465,12 +465,12 @@
   "buyAlreadyOver": "أنت متجاوز حدك اليوم أصلاً.",
   "buyTomorrow": "لو اشتريته اليوم يصير حدك من باجر {withIt} بدل {without}.",
   "buyBeyondMonth": "أكثر من كل الفلوس الباقية لهالشهر ({left}).",
-  "buyDays": "يساوي حدك اليومي لـ {days} أيام.",
+  "buyDays": "يساوي حدك اليومي لـ {days, plural, =1{يوم واحد} =2{يومين} few{{days} أيام} other{{days} يوم}}.",
   "buyNoPlan": "احسب حدك من دخلك عشان تشوف تأثيره على باقي الشهر.",
   "buyDecide": "ما ينحفظ شي: القرار لك.",
   "buyClose": "تمام",
-  "coachSendShop": "محل {name}: {amount} ({count} مرات)",
-  "coachSendLate": "{count} مشتريات آخر الليل (10 بالليل لين 3 الفجر): {amount}",
+  "coachSendShop": "محل {name}: {amount} ({count, plural, =1{مرة وحدة} =2{مرتين} few{{count} مرات} other{{count} مرة}})",
+  "coachSendLate": "{count, plural, =1{مشترى واحد} =2{مشتريين} few{{count} مشتريات} other{{count} مشترى}} آخر الليل (10 بالليل لين 3 الفجر): {amount}",
   "coachSendWeekend": "الويكند (الخميس إلى السبت): {amount}",
   "coachSendMonth": "الباقي للشهر: {amount} لـ {days} يوم (مو دخلك)",
   "coachSendRecent": "{day} {time}: {amount}، {category}، {shop}",
@@ -481,7 +481,7 @@
   "challengeSmall": "بس {count} مصاريف صغيرة خلال 7 أيام، وتوفّر تقريباً {saving}.",
   "challengeCategory": "خل {category} أقل من {limit} لمدة 7 أيام، وتوفّر تقريباً {saving}.",
   "challengeAccept": "أقبل التحدي",
-  "challengeProgress": "لين الحين {value} من {target} · باقي {days} أيام",
+  "challengeProgress": "لين الحين {value} من {target} · باقي {days, plural, =1{يوم واحد} =2{يومين} few{{days} أيام} other{{days} يوم}}",
   "challengeStop": "وقّف",
   "challengeWon": "نجحت! التزمت بالتحدي.",
   "challengeLost": "ما ضبطت هالمرة. جرّب تحدي جديد.",
@@ -577,7 +577,7 @@
   "streakHint": "أيام تحت حدك",
   "challengeTileNone": "ما فيه",
   "challengeTileStart": "ابدأ واحد من التحليل",
-  "streakValue": "{count, plural, =1{يوم} =2{يومين} other{{count} أيام}}",
+  "streakValue": "{count, plural, =1{يوم} =2{يومين} few{{count} أيام} other{{count} يوم}}",
   "challengeTileDays": "{days, plural, =1{باقي يوم} =2{باقي يومين} other{باقي {days} أيام}}",
   "buyHold": "انتظر 24 ساعة",
   "buyHoldDone": "انحط بالانتظار. قرّر من التوفير بعد 24 ساعة.",
@@ -704,12 +704,12 @@
   "walletTitle": "كوبوناتي",
   "walletEmpty": "ما استبدلت أي كوبون للحين. اجمع نقاط من التزامك بحدك اليومي ودرع التريث، وبعدين استبدلها من «مكافآت الولاء».",
   "rewardsShort": "نقاطك ما تكفي: تحتاج {points} نقطة زيادة من التزامك بحدك اليومي ودرع التريث.",
-  "voucherDaysLeft": "صالح {days} أيام",
+  "voucherDaysLeft": "صالح {days, plural, =1{يوم واحد} =2{يومين} few{{days} أيام} other{{days} يوم}}",
   "voucherExpired": "انتهت صلاحيته",
   "voucherDisclaimer": "هذا العرض تجريبي لمشروع التخرج بيزة، وما تقبله أي محلات حقيقية.",
   "voucherQrNote": "رمز تجريبي، ما ينقرأ في المحلات",
   "dealsHow": "المحلات تعطي بيزة كوبونات مجانية، وبيزة يطلّع لك اللي يناسب صرفك أول. ما تحتاج نقاط. المحلات هني تجريبية للحين.",
-  "dealFit": "صرفت {spent} هني في آخر 7 أيام ({count} مرات). بهذا الكوبون كنت بتوفر تقريباً {saving}.",
+  "dealFit": "صرفت {spent} هني في آخر 7 أيام ({count, plural, =1{مرة وحدة} =2{مرتين} few{{count} مرات} other{{count} مرة}}). بهذا الكوبون كنت بتوفر تقريباً {saving}.",
   "dealGet": "خذ الكوبون",
   "dealShow": "عرض الكوبون",
   "reclaimButton": "ما سويت هذا الحساب؟",
