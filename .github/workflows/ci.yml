@@ -130,6 +130,9 @@ jobs:
       - uses: subosito/flutter-action@v2
         with:
           channel: stable
+          # Pinned: Flutter 3.48 deprecates package:flutter/material.dart in
+          # favour of material_ui, which fails the analyzer step.
+          flutter-version: 3.47.9
           cache: true
       - name: Flutter version
         run: flutter --version
