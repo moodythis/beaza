@@ -78,7 +78,8 @@ are in the [Actions](https://github.com/moodythis/beaza/actions) tab.
 
 ## Known limits
 
-- Arabic bank messages are not read yet; AUB has no template.
+- No template reads Arabic; every real bank message collected so far is in
+  English. AUB has no template.
 - Wallet notifications are not read, only SMS.
 - Leaderboard scores are reported by each phone and not checked.
 - Sign-up by email does not verify the address.

@@ -18,9 +18,10 @@ for the report:
 - 24 English messages (`source: seed`) follow real Bahraini formats from
   BisB, ila, Al Salam and BenefitPay. Names, balances and numbers are
   invented.
-- 6 Arabic messages (`source: synthetic-ar`) use invented wording, because no
-  real Arabic bank samples have been collected yet. They show what happens
-  to Arabic messages today.
+- 6 Arabic or mixed-script messages (`source: synthetic-ar`) use invented
+  wording. Every real bank message collected so far is in English and no bank
+  has been seen sending Arabic alerts; these show that a message no template
+  reads goes to review instead of the budget.
 
 `formats.jsonl` (34 messages) keeps the NBB and KFH formats the templates
 were written from: 33 NBB messages the team received from 24 October to
