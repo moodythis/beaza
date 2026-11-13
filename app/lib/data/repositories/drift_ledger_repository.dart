@@ -127,6 +127,7 @@ class DriftLedgerRepository extends LedgerRepository implements Syncable {
       // "Paid back" is about one transfer, never the person's later ones.
       if (x.category == kRepaymentCategory ||
           x.category == kReceivedCategory ||
+          x.category == kOwnTransferCategory ||
           x.category == '') {
         continue;
       }

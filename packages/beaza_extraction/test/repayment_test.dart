@@ -97,4 +97,24 @@ void main() {
     expect(g.spentOn(e, today), -5000);
     expect(g.spentOn(e, today.previous) + g.spentOn(e, today), 3000);
   });
+
+  test('a transfer the person marks as between own accounts counts as neither',
+      () {
+    final top = received(2492, bh(9, 0), category: kOwnTransferCategory);
+    final sentOut = ExtractionResult(
+      status: ExtractionStatus.transaction,
+      amountFils: 5000,
+      currency: 'BHD',
+      type: TxnType.transferOut,
+      channel: Channel.transfer,
+      direction: TxDirection.outgoing,
+      category: kOwnTransferCategory,
+      reference: 'X1',
+      timestamp: bh(9, 1),
+    );
+    final e = rec([top, sentOut, out(100, bh(9, 2))]);
+    expect(e[0].role, EntryRole.internalTransfer);
+    expect(e[1].role, EntryRole.internalTransfer);
+    expect(g.summarize(e, today).spentFils, 100);
+  });
 }

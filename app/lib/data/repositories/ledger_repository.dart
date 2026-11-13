@@ -181,6 +181,7 @@ class InMemoryLedgerRepository extends LedgerRepository {
     for (final other in _results.reversed) {
       if (other.category == kRepaymentCategory ||
           other.category == kReceivedCategory ||
+          other.category == kOwnTransferCategory ||
           other.category == '') {
         continue;
       }

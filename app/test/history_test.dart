@@ -190,6 +190,31 @@ void main() {
     expect(vm.days.single.spentFils, 8000);
   });
 
+  test('a transfer marked as between own accounts leaves spending and income',
+      () async {
+    final ledger = InMemoryLedgerRepository(initial: [
+      spend(100, bh(2, 13), ref: 'rubiya'),
+      received(9984, bh(2, 1)),
+    ]);
+    final vm = HistoryViewModel(ledger: ledger);
+    await vm.load();
+    final money = vm.days.single.entries.firstWhere(
+        (e) => e.role == EntryRole.income);
+    await vm.setOwnTransfer(money, true);
+    await Future<void>.delayed(Duration.zero);
+    await vm.load();
+    expect(vm.days.single.entries
+        .where((e) => e.role == EntryRole.internalTransfer), hasLength(1));
+    expect(vm.days.single.spentFils, 100);
+    final own = vm.days.single.entries.firstWhere(
+        (e) => e.role == EntryRole.internalTransfer);
+    await vm.setOwnTransfer(own, false);
+    await Future<void>.delayed(Duration.zero);
+    await vm.load();
+    expect(vm.days.single.entries.where((e) => e.role == EntryRole.income),
+        hasLength(1));
+  });
+
   for (final lang in ['en', 'ar']) {
     testWidgets('a left-to-right drag deletes after asking ($lang)',
         (tester) async {

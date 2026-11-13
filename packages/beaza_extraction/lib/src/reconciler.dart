@@ -57,6 +57,11 @@ const String kRepaymentCategory = 'repayment';
 /// The person said money received is not a repayment: plain income.
 const String kReceivedCategory = 'received';
 
+/// The person said a transfer is between two of their own accounts: neither
+/// spending nor income. Bank messages for a top-up look like any transfer,
+/// so only the person can say this.
+const String kOwnTransferCategory = 'own';
+
 /// How far back spending can be paid back by a transfer found on its own.
 /// Friends often pay back after more than a week.
 const Duration kRepaymentWindow = Duration(days: 30);
@@ -161,7 +166,9 @@ class Reconciler {
         }
       }
 
-      if (_isTransfer(r) && accounts.isOwn(r.counterpartyLast4)) {
+      if (_isTransfer(r) &&
+          (r.category == kOwnTransferCategory ||
+              accounts.isOwn(r.counterpartyLast4))) {
         roles[i] = EntryRole.internalTransfer;
         continue;
       }

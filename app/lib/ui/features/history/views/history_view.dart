@@ -206,6 +206,15 @@ class HistoryView extends StatelessWidget {
                   style: Theme.of(sheet).textTheme.titleMedium),
               trailing: Text(l10n.bhd(formatFils(entry.result.amountFils ?? 0))),
             ),
+            if (_isTransfer(entry))
+              SwitchListTile(
+                key: const Key('entryOwn'),
+                secondary: const Icon(Icons.swap_horiz),
+                title: Text(l10n.ownTransferSwitch),
+                subtitle: Text(l10n.ownTransferHint),
+                value: entry.role == EntryRole.internalTransfer,
+                onChanged: (v) => Navigator.of(sheet).pop(v ? 'own' : 'notOwn'),
+              ),
             if (entry.role == EntryRole.income ||
                 entry.role == EntryRole.repayment)
               SwitchListTile(
@@ -254,7 +263,19 @@ class HistoryView extends StatelessWidget {
         await viewModel.setRepayment(entry, true);
       case 'notRepaid':
         await viewModel.setRepayment(entry, false);
+      case 'own':
+        await viewModel.setOwnTransfer(entry, true);
+      case 'notOwn':
+        await viewModel.setOwnTransfer(entry, false);
     }
+  }
+
+  static bool _isTransfer(LedgerEntry e) {
+    final r = e.result;
+    return e.role == EntryRole.internalTransfer ||
+        r.type == TxnType.transferIn ||
+        r.type == TxnType.transferOut ||
+        r.channel == Channel.transfer;
   }
 
   Future<void> _edit(BuildContext context, LedgerEntry entry) async {

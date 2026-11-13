@@ -149,6 +149,17 @@ class HistoryViewModel extends ChangeNotifier {
           entry, repaid ? kRepaymentCategory : kReceivedCategory,
           sameShop: false);
 
+  /// Marks a transfer as between the person's own accounts (neither
+  /// spending nor income), or undoes that. Only that one transaction changes.
+  Future<void> setOwnTransfer(LedgerEntry entry, bool own) => _ledger.setCategory(
+      entry,
+      own
+          ? kOwnTransferCategory
+          : (entry.result.direction == TxDirection.incoming
+              ? kReceivedCategory
+              : ''),
+      sameShop: false);
+
   Future<void> edit(LedgerEntry entry,
           {required int amountFils, String? merchant}) =>
       _ledger.edit(entry, amountFils: amountFils, merchant: merchant);
