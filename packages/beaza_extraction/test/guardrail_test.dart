@@ -313,4 +313,24 @@ void main() {
       expect(d.log.day, today);
     });
   });
+
+  // Seen on a real phone, 12 November 2026: BHD 2.050 came back at 14:37 and
+  // a BHD 1.000 payment at 18:54 left "spent today" at 0.000.
+  test('money paid back hides a later payment from spent, but both are kept', () {
+    final back = LedgerEntry(
+      index: _next++,
+      role: EntryRole.repayment,
+      result: ExtractionResult(
+        status: ExtractionStatus.transaction,
+        amountFils: 2050,
+        currency: 'BHD',
+        direction: TxDirection.incoming,
+        timestamp: bh(2, 14, 37),
+      ),
+    );
+    final s = g.summarize([back, spend(1000, bh(2, 18, 54))], today);
+    expect(s.spentFils, 0);
+    expect(s.grossSpentFils, 1000);
+    expect(s.paidBackFils, 2050);
+  });
 }

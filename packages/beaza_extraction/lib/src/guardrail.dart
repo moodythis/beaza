@@ -168,9 +168,19 @@ class DaySummary {
     required this.micro,
     required this.latestMicro,
     required this.level,
+    this.grossSpentFils = 0,
+    this.paidBackFils = 0,
   });
 
   final Day day;
+
+  /// What was paid today before money paid back is taken off.
+  final int grossSpentFils;
+
+  /// Money paid back to the person today (refunds, repayments). It comes off
+  /// [spentFils], so a payment made the same day can leave [spentFils]
+  /// unchanged; screens show both so the payment is still visible.
+  final int paidBackFils;
   final int baseLimitFils;
   final int rolloverFils;
   final int spentFils;
@@ -257,7 +267,9 @@ class Guardrail {
     final all = entries.toList();
     final spending = spendingOn(all, day);
     // Money paid back today comes off today's spending, never below 0.
-    final net = Reconciler.spentFils(spending) - repaidOn(all, day);
+    final gross = Reconciler.spentFils(spending);
+    final back = repaidOn(all, day);
+    final net = gross - back;
     final spent = net < 0 ? 0 : net;
     final micro = spending.where(isMicro).toList();
     final rollover = rolloverFor(all, day) + (boostFils < 0 ? 0 : boostFils);
@@ -270,6 +282,8 @@ class Guardrail {
       micro: _stats(micro),
       latestMicro: micro.reversed.take(_latestMicroShown).toList(),
       level: levelFor(spent, settings.dailyLimitFils + rollover),
+      grossSpentFils: gross,
+      paidBackFils: back,
     );
   }
 

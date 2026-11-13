@@ -4,6 +4,7 @@
   "remainingLabel": "المتبقي للصرف اليوم",
   "overLimitLabel": "تجاوزت حد اليوم بمبلغ",
   "editLimit": "تعديل الحد اليومي",
+  "spentPaidBack": "دفعت اليوم {paid} · رجع لك {back}، فينحسب الفرق بس",
   "spentOfLimit": "صرفت {spent} من {limit}",
   "setLimitTitle": "حدّد حدًا يوميًا للصرف",
   "spentToday": "مصروف اليوم: {amount}",

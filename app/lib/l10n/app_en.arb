@@ -13,6 +13,8 @@
     "description": "Label above the overrun amount when the limit is exceeded"
   },
   "editLimit": "Edit daily limit",
+  "spentPaidBack": "Paid today {paid} · {back} came back to you, so only the difference counts",
+  "@spentPaidBack": {"placeholders": {"paid": {"type": "String"}, "back": {"type": "String"}}},
   "spentOfLimit": "{spent} spent of {limit}",
   "@spentOfLimit": {
     "description": "Under the progress bar",

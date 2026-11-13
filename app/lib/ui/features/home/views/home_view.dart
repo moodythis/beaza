@@ -694,6 +694,17 @@ class LimitCard extends StatelessWidget {
                     ),
               key: const Key('spentOfLimit'),
             ),
+            if (summary.paidBackFils > 0) ...[
+              const SizedBox(height: 4),
+              Text(
+                l10n.spentPaidBack(
+                  l10n.bhd(formatFils(summary.grossSpentFils)),
+                  l10n.bhd(formatFils(summary.paidBackFils)),
+                ),
+                key: const Key('paidBackToday'),
+                style: theme.textTheme.bodySmall,
+              ),
+            ],
             const SizedBox(height: 4),
             Text(
               levelText(l10n, summary.level),
