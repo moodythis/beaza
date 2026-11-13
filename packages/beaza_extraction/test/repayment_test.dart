@@ -37,65 +37,37 @@ void main() {
   List<LedgerEntry> rec(List<ExtractionResult> r) =>
       reconciler.reconcile(r, OwnAccounts());
 
-  test('a transfer back after spending is a repayment on its own',
+  // A transfer in cannot tell a friend paying back from the person's own
+  // top-up (seen on a real phone: transfers from the person's other accounts
+  // were taken as repayments and hid real spending), so it stays income
+  // until the person says otherwise.
+  test('a transfer in after spending stays income until the person marks it',
       () {
     final e = rec([out(8000, bh(9, 13)), received(6000, bh(9, 16))]);
-    expect(e[1].role, EntryRole.repayment);
-    expect(e[1].countsTowardSpending, isFalse);
-    expect(e[1].countedFils, -6000);
-    expect(g.spentOn(e, today), 2000);
-    expect(g.summarize(e, today).spentFils, 2000);
-  });
-
-  test('more than the month spent (a salary) stays income', () {
-    final e = rec([out(8000, bh(9, 13)), received(50000, bh(9, 16))]);
     expect(e[1].role, EntryRole.income);
-    expect(g.spentOn(e, today), 8000);
+    expect(g.summarize(e, today).spentFils, 8000);
+    final m = rec([
+      out(8000, bh(9, 13)),
+      received(6000, bh(9, 16), category: kRepaymentCategory),
+    ]);
+    expect(m[1].role, EntryRole.repayment);
+    expect(m[1].countedFils, -6000);
+    expect(g.summarize(m, today).spentFils, 2000);
   });
 
-  test('a stipend stays income even when the month\'s spending adds up to it',
-      () {
-    // 45 purchases of 9.000 = 405.000 spent; 400.000 arrives.
+  test('a top-up then a payment the same day: the payment counts', () {
+    // 14 November 2026: 2.492 in from another account, then 0.250 spent.
+    final e = rec([received(2492, bh(9, 0)), out(250, bh(9, 0))]);
+    expect(e[0].role, EntryRole.income);
+    expect(g.summarize(e, today).spentFils, 250);
+  });
+
+  test('a stipend stays income', () {
     final e = rec([
       for (var i = 0; i < 45; i++) out(9000, bh(1 + i % 8, 10 + i % 10)),
       received(400000, bh(9, 16)),
     ]);
     expect(e.last.role, EntryRole.income);
-    // A friend's 9.000 the same day is still money paid back.
-    final f = rec([
-      for (var i = 0; i < 45; i++) out(9000, bh(1 + i % 8, 10 + i % 10)),
-      received(400000, bh(9, 16)),
-      received(9000, bh(9, 17)),
-    ]);
-    expect(f.last.role, EntryRole.repayment);
-  });
-
-  test('no more than the largest single purchase', () {
-    final e = rec([
-      out(5000, bh(8, 13)),
-      out(5000, bh(8, 14)),
-      received(8000, bh(9, 10)),
-    ]);
-    expect(e[2].role, EntryRole.income);
-  });
-
-  test('two transfers cannot pay back the same spending twice', () {
-    final e = rec([
-      out(8000, bh(8, 13)),
-      received(6000, bh(9, 10)),
-      received(6000, bh(9, 11)),
-    ]);
-    expect(e[1].role, EntryRole.repayment);
-    expect(e[2].role, EntryRole.income);
-  });
-
-  test('paid back up to 30 days later counts; older spending does not', () {
-    final late = DateTime.utc(2026, 11, 30, 10);
-    expect(rec([out(8000, bh(1, 13)), received(6000, late)])[1].role,
-        EntryRole.repayment);
-    final tooLate = DateTime.utc(2026, 12, 5, 10);
-    expect(rec([out(8000, bh(1, 13)), received(6000, tooLate)])[1].role,
-        EntryRole.income);
   });
 
   test('a shop refund is always a repayment', () {
@@ -118,7 +90,7 @@ void main() {
       () {
     final e = rec([
       out(8000, bh(8, 21)),
-      received(6000, bh(9, 10)),
+      received(6000, bh(9, 10), category: kRepaymentCategory),
       out(1000, bh(9, 12)),
     ]);
     expect(g.summarize(e, today).spentFils, 0);

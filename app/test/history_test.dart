@@ -167,19 +167,13 @@ void main() {
     expect((await ledger.entries()).single.result.merchantRaw, 'Jasmis Riffa');
   });
 
-  test('money sent back after a payment comes off on its own, and can be undone',
+  test('money sent in stays income until the person marks it as paid back',
       () async {
     final ledger = InMemoryLedgerRepository(initial: [
       spend(8000, bh(2, 13), ref: 'meal'),
       received(6000, bh(2, 18)),
     ]);
     final vm = HistoryViewModel(ledger: ledger);
-    await vm.load();
-    expect(vm.days.single.spentFils, 2000);
-    final repaid = vm.days.single.entries.firstWhere(
-        (e) => e.role == EntryRole.repayment);
-    await vm.setRepayment(repaid, false);
-    await Future<void>.delayed(Duration.zero);
     await vm.load();
     expect(vm.days.single.spentFils, 8000);
     final money = vm.days.single.entries.firstWhere(
@@ -188,6 +182,12 @@ void main() {
     await Future<void>.delayed(Duration.zero);
     await vm.load();
     expect(vm.days.single.spentFils, 2000);
+    final repaid = vm.days.single.entries.firstWhere(
+        (e) => e.role == EntryRole.repayment);
+    await vm.setRepayment(repaid, false);
+    await Future<void>.delayed(Duration.zero);
+    await vm.load();
+    expect(vm.days.single.spentFils, 8000);
   });
 
   for (final lang in ['en', 'ar']) {

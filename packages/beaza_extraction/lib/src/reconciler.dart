@@ -192,53 +192,21 @@ class Reconciler {
     ];
   }
 
-  /// Money received that the person did not label is a repayment when the
-  /// bank message shows it can only be one of two things and the amount fits:
-  /// a shop's refund always; a transfer from someone when it is no more than
-  /// the largest single purchase of the 30 days before it, and no more than
-  /// what was spent in that time less what was already paid back. A salary
-  /// or a stipend is more than any one purchase, so it stays income and is
-  /// not counted twice with a budget worked out from income, even when the
-  /// month's spending adds up to as much. The person can undo either way
-  /// ([kReceivedCategory], [kRepaymentCategory]).
+  /// Money received that the person did not label is a repayment only when
+  /// the bank message says it is a shop's refund. A transfer in stays income
+  /// until the person marks it as paid back ([kRepaymentCategory]): on a real
+  /// phone (November 2026) the earlier guess, "a transfer no larger than the
+  /// largest purchase of the last 30 days is a friend paying back", took the
+  /// person's own top-ups between accounts as repayments and hid real
+  /// spending. A transfer cannot tell a friend from the person's other
+  /// account, so the app asks instead of guessing.
   static void _findRepayments(
       List<ExtractionResult> results, List<EntryRole> roles) {
-    final candidates = <int>[
-      for (var i = 0; i < results.length; i++)
-        if (roles[i] == EntryRole.income &&
-            results[i].category == null &&
-            results[i].currency == 'BHD' &&
-            results[i].timestamp != null &&
-            (results[i].amountFils ?? 0) > 0 &&
-            (results[i].type == TxnType.refund || _isTransfer(results[i])))
-          i,
-    ]..sort((a, b) => results[a].timestamp!.compareTo(results[b].timestamp!));
-    for (final i in candidates) {
-      final r = results[i];
-      if (r.type == TxnType.refund) {
-        roles[i] = EntryRole.repayment;
-        continue;
-      }
-      final t = r.timestamp!;
-      final from = t.subtract(kRepaymentWindow);
-      var room = 0;
-      var largest = 0;
-      for (var j = 0; j < results.length; j++) {
-        final o = results[j];
-        final ot = o.timestamp;
-        if (ot == null || ot.isBefore(from) || ot.isAfter(t)) continue;
-        if (o.currency != 'BHD' || j == i) continue;
-        final a = o.amountFils ?? 0;
-        if (roles[j] == EntryRole.spending) {
-          room += a;
-          if (a > largest) largest = a;
-        }
-        if (roles[j] == EntryRole.repayment) room -= a;
-      }
-      // Someone pays back for one thing the person paid for, so it is never
-      // more than the largest single purchase; a stipend or a salary is,
-      // even when the month's spending adds up to as much.
-      if (r.amountFils! <= room && r.amountFils! <= largest) {
+    for (var i = 0; i < results.length; i++) {
+      if (roles[i] == EntryRole.income &&
+          results[i].category == null &&
+          results[i].currency == 'BHD' &&
+          results[i].type == TxnType.refund) {
         roles[i] = EntryRole.repayment;
       }
     }
