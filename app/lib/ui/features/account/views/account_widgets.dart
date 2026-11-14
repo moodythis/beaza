@@ -171,6 +171,9 @@ Future<void> openLegal(
 const int kPrivacyCoachSection = 4;
 const int kPrivacyMediaSection = 6;
 
+/// Where asking about spending with AI is explained.
+const int kPrivacyChatSection = 8;
+
 /// Where the online leaderboard is explained.
 const int kPrivacyBoardSection = 7;
 

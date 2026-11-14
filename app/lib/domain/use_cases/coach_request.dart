@@ -67,7 +67,9 @@ Map<String, Object> coachRequest(
     final a = e.result.amountFils;
     if (!e.countsTowardSpending || t == null || a == null || a <= 0) continue;
     if (t.isBefore(start) || !t.isBefore(end)) continue;
-    if (bucketOf(e.result) == kTransferBucket) continue;
+    if (isTransferOut(e.result) || bucketOf(e.result) == kTransferBucket) {
+      continue;
+    }
     final name = coachShopName(e.result.merchantNorm ?? e.result.merchantRaw);
     if (name == null) continue;
     final key = name.toUpperCase();
@@ -84,6 +86,7 @@ Map<String, Object> coachRequest(
           (e.result.amountFils ?? 0) > 0 &&
           !e.result.timestamp!.toUtc().isBefore(start) &&
           e.result.timestamp!.toUtc().isBefore(end) &&
+          !isTransferOut(e.result) &&
           bucketOf(e.result) != kTransferBucket)
         e,
   ]..sort((a, b) => b.result.timestamp!.compareTo(a.result.timestamp!));

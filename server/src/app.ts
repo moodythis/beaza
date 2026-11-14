@@ -22,6 +22,7 @@ import type { Bundle } from './validate.ts';
 import { legalPage, PRIVACY_VERSION, TERMS_VERSION } from './legal.ts';
 import { fetchGoogleKeys, verifyGoogleIdToken } from './google.ts';
 import { coach } from './coach.ts';
+import { chat } from './chat.ts';
 import { alternatives } from './alternatives.ts';
 import { categorize } from './categorize.ts';
 import { leaveBoard, postBoard, readBoard } from './leaderboard.ts';
@@ -48,6 +49,8 @@ export type Options = {
   googleKeys?: GoogleKeys;
   /** Daily cap on savings plans; tests set a small one. */
   coachCap?: number;
+  /** Daily cap on chat replies; tests set a small one. */
+  chatCap?: number;
   /** Per-caller limits; tests set small ones. */
   limits?: Partial<CallerLimits>;
 };
@@ -59,6 +62,8 @@ export type Options = {
 export type CallerLimits = {
   /** AI requests a day (the shared cap is 300). */
   aiPerDay: number;
+  /** Chat questions a day (counted apart from aiPerDay). */
+  chatPerDay: number;
   /** Leaderboard updates an hour (the shared cap is 20,000 a day). */
   boardPostsPerHour: number;
   /** New rows a day that would get a place on the board (it has 50). */
@@ -67,6 +72,7 @@ export type CallerLimits = {
 
 export const CALLER_LIMITS: CallerLimits = {
   aiPerDay: 60,
+  chatPerDay: 40,
   boardPostsPerHour: 60,
   boardNewRowsPerDay: 10,
 };
@@ -81,6 +87,7 @@ type Ctx = {
   google: (token: unknown) => Promise<GoogleIdentity>;
   ai?: AiLike;
   coachCap?: number;
+  chatCap?: number;
   limits: CallerLimits;
 };
 
@@ -131,6 +138,7 @@ export async function handle(
         env.AI,
       ),
       coachCap: options.coachCap,
+      chatCap: options.chatCap,
       limits: { ...CALLER_LIMITS, ...options.limits },
     };
     response = json(200, await dispatch(route, url, ctx));
@@ -183,6 +191,8 @@ async function dispatch(route: string, url: URL, ctx: Ctx): Promise<Record<strin
     case 'POST /v1/coach':
       // No account needed: the request holds only totals, no identity.
       return coach(await readJson(ctx.request), ctx.db, ctx.ai, ctx.now, ctx.coachCap, await aiShare(ctx));
+    case 'POST /v1/chat':
+      return chat(await readJson(ctx.request), ctx.db, ctx.ai, ctx.now, ctx.chatCap, await chatShare(ctx));
     case 'POST /v1/alternatives':
       // No account needed: only the shop names and totals of the plan.
       return alternatives(await readJson(ctx.request), ctx.db, ctx.ai, ctx.now, ctx.coachCap, await aiShare(ctx));
@@ -346,6 +356,10 @@ async function withinCallerLimit(ctx: Ctx, name: string, max: number, windowMs: 
   }
   return (row?.count ?? 0) <= max;
 }
+
+/** Chat has its own per-caller share, so a chat cannot use up the caller's
+ * savings plans, sorting, receipts and voice (or the reverse). */
+const chatShare = (ctx: Ctx) => withinCallerLimit(ctx, 'chat', ctx.limits.chatPerDay, DAY);
 
 /** Whether the caller is within its own share of the day's AI requests. A
  * caller past it is turned away before the shared count, so it cannot use

@@ -39,6 +39,7 @@ class ParsedRequest {
     this.priceFils,
     this.kind = QueryKind.total,
     this.words = const [],
+    this.aboutMoney = false,
   });
 
   /// The same question for another period: "لا، بس الأحد" after "كم صرفت؟".
@@ -54,6 +55,7 @@ class ParsedRequest {
         periodGiven: true,
         kind: kind,
         words: words,
+        aboutMoney: aboutMoney,
       );
 
   final AssistantIntent intent;
@@ -77,6 +79,11 @@ class ParsedRequest {
 
   /// The question's words, for matching a shop name.
   final List<String> words;
+
+  /// The text itself has a money word, a category or shop type with a
+  /// period, or an amount (kAssistantScopeJson). An [AssistantIntent.unknown]
+  /// request that is not about money may be anything the person typed.
+  final bool aboutMoney;
 }
 
 /// "Can I / should I buy or take it": with an amount and a question.
@@ -345,6 +352,7 @@ class IntentDetector {
       wantsBreakdown: category == null &&
           topic == null &&
           (_has(tokens, _breakdown) || whereWord),
+      aboutMoney: aboutMoney,
     );
   }
 }

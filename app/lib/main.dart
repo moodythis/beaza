@@ -9,6 +9,7 @@ import 'package:beaza/data/repositories/savings_repository.dart';
 import 'package:beaza/data/repositories/sync_repository.dart';
 import 'package:beaza/data/services/account_store.dart';
 import 'package:beaza/data/services/alert_notifier.dart';
+import 'package:beaza/data/services/chat_api.dart';
 import 'package:beaza/data/services/coach_api.dart';
 import 'package:beaza/data/services/device_service.dart';
 import 'package:beaza/data/services/google_auth.dart';
@@ -111,6 +112,7 @@ Future<void> main() async {
       preferences: storage.preferences,
       receipts: PlatformReceiptScanner(),
       mediaAi: HttpMediaAiApi(),
+      chatApi: HttpChatApi(),
       mediaConsent: MediaAiConsent(storage.preferences),
       recorder: PlatformVoiceRecorder(),
       autoSort: AutoCategorizer(

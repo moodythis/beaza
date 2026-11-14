@@ -178,4 +178,31 @@ void main() {
       expect(r.replyText, 'يمديك. لو صرفت 2.000 د.ب اليوم، بيظل لك 4.100 د.ب من حدك.');
     }
   });
+
+  group('aboutMoney says whether the text itself is about spending', () {
+    const detector = IntentDetector();
+
+    test('statements and questions with no money word are not', () {
+      for (final q in [
+        'my secret diary: I met Sara',
+        'ما هي عاصمة فرنسا',
+        'What is the capital of France?',
+        'شنو عاصمة فرنسا؟',
+        'hello',
+      ]) {
+        expect(detector.detect(q).aboutMoney, isFalse, reason: q);
+      }
+    });
+
+    test('a money word, a category with a period, or an amount is', () {
+      for (final q in [
+        'المصاريف هالأسبوع',
+        'how much did I spend',
+        'food this week',
+        'كرك 200',
+      ]) {
+        expect(detector.detect(q).aboutMoney, isTrue, reason: q);
+      }
+    });
+  });
 }

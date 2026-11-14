@@ -241,6 +241,9 @@ class HomeView extends StatelessWidget {
                               limitIfBoughtFils: c.limitIfBoughtFils,
                             );
                           },
+                          chat: viewModel.chatApi,
+                          preferences: viewModel.preferences,
+                          plan: () => viewModel.budget,
                           clock: viewModel.now,
                         ),
                       ),

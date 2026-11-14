@@ -74,6 +74,7 @@ export class Server {
   /** Pretend Workers AI (see test/coach.test.ts). */
   ai?: import('../src/coach.ts').AiLike;
   coachCap?: number;
+  chatCap?: number;
   limits?: Record<string, number>;
 
   advance(ms: number) {
@@ -99,7 +100,7 @@ export class Server {
     const response = await handle(
       request,
       { DB: this.d1, GOOGLE_CLIENT_ID: this.googleClientId, AI: this.ai },
-      { now: () => this.time, log: () => {}, googleKeys: this.googleKeys, coachCap: this.coachCap, limits: this.limits },
+      { now: () => this.time, log: () => {}, googleKeys: this.googleKeys, coachCap: this.coachCap, chatCap: this.chatCap, limits: this.limits },
     );
     return { status: response.status, body: await response.json(), headers: response.headers };
   }

@@ -1,10 +1,16 @@
 import 'package:beaza/l10n/app_localizations.dart';
+import 'package:beaza/ui/core/category_style.dart';
+import 'package:beaza/ui/core/formatting.dart';
+import 'package:beaza/ui/features/account/legal_text.dart';
+import 'package:beaza/ui/features/account/views/account_widgets.dart';
 import 'package:beaza/ui/features/ask/view_models/ask_view_model.dart';
+import 'package:beaza/ui/features/coach/views/coach_card.dart' show requestLines;
 import 'package:beaza_assistant/beaza_assistant.dart' show AssistantIntent;
 import 'package:flutter/material.dart';
 
 /// Ask about your spending ("How much did I spend on food this week?"),
-/// answered on the phone from your own list.
+/// answered on the phone from your own list, or, if the person turned on
+/// "Smarter answers", by Gemini from totals the phone worked out.
 class AskView extends StatefulWidget {
   const AskView({super.key, required this.viewModel});
 
@@ -21,6 +27,25 @@ class _AskViewState extends State<AskView> {
   AskViewModel get vm => widget.viewModel;
 
   @override
+  void initState() {
+    super.initState();
+    vm.loadChat();
+  }
+
+  Future<void> _turnOn() async {
+    final language = AppLocalizations.of(context).localeName;
+    final request = await vm.chatPreview(language.startsWith('ar') ? 'ar' : 'en');
+    if (!mounted) return;
+    final agreed = await showModalBottomSheet<bool>(
+      context: context,
+      isScrollControlled: true,
+      showDragHandle: true,
+      builder: (_) => _ChatConsentSheet(request: request),
+    );
+    if (agreed == true) await vm.agreeChat();
+  }
+
+  @override
   void dispose() {
     _text.dispose();
     _scroll.dispose();
@@ -30,7 +55,8 @@ class _AskViewState extends State<AskView> {
 
   Future<void> _send([String? preset]) async {
     final q = preset ?? _text.text;
-    if (q.trim().isEmpty) return;
+    // One question at a time: keep what was typed while one is waiting.
+    if (q.trim().isEmpty || vm.busy) return;
     _text.clear();
     await vm.ask(q);
     await Future<void>.delayed(Duration.zero);
@@ -64,7 +90,16 @@ class _AskViewState extends State<AskView> {
                     controller: _scroll,
                     padding: const EdgeInsets.all(16),
                     children: [
-                      Text(l10n.askIntro, style: theme.textTheme.bodySmall),
+                      Text(vm.chatOn ? l10n.askIntroChat : l10n.askIntro,
+                          style: theme.textTheme.bodySmall),
+                      if (vm.chatAvailable) ...[
+                        const SizedBox(height: 8),
+                        _ChatSwitch(
+                          on: vm.chatOn,
+                          onTurnOn: _turnOn,
+                          onTurnOff: vm.withdrawChat,
+                        ),
+                      ],
                       const SizedBox(height: 8),
                       Wrap(
                         spacing: 8,
@@ -98,6 +133,19 @@ class _AskViewState extends State<AskView> {
                             textColor: theme.colorScheme.onSurface,
                           ),
                         ),
+                        if (t.viaChat || t.chatFailed)
+                          Padding(
+                            padding: const EdgeInsetsDirectional.only(
+                                start: 4, top: 2),
+                            child: Align(
+                              alignment: AlignmentDirectional.centerStart,
+                              child: Text(
+                                t.viaChat ? l10n.chatByGemini : l10n.chatFallback,
+                                key: Key(t.viaChat ? 'chatByGemini' : 'chatFallback'),
+                                style: theme.textTheme.labelSmall,
+                              ),
+                            ),
+                          ),
                         if (t.answer.intent == AssistantIntent.logExpense &&
                             t.answer.draftTransactions.isNotEmpty)
                           Align(
@@ -114,6 +162,35 @@ class _AskViewState extends State<AskView> {
                                     ),
                             ),
                           ),
+                      ],
+                      if (vm.pending != null) ...[
+                        const SizedBox(height: 16),
+                        Align(
+                          alignment: AlignmentDirectional.centerEnd,
+                          child: _Bubble(
+                            text: vm.pending!,
+                            color: theme.colorScheme.primaryContainer,
+                            textColor: theme.colorScheme.onPrimaryContainer,
+                          ),
+                        ),
+                        const SizedBox(height: 8),
+                        Align(
+                          alignment: AlignmentDirectional.centerStart,
+                          child: Row(
+                            key: const Key('chatThinking'),
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              const SizedBox(
+                                width: 16,
+                                height: 16,
+                                child: CircularProgressIndicator(strokeWidth: 2),
+                              ),
+                              const SizedBox(width: 8),
+                              Text(l10n.chatThinking,
+                                  style: theme.textTheme.bodySmall),
+                            ],
+                          ),
+                        ),
                       ],
                     ],
                   );
@@ -180,4 +257,163 @@ class _Bubble extends StatelessWidget {
           ),
         ),
       );
+}
+
+/// "Smarter answers": off, a card that explains it and asks; on, a line to
+/// turn it off again.
+class _ChatSwitch extends StatelessWidget {
+  const _ChatSwitch({
+    required this.on,
+    required this.onTurnOn,
+    required this.onTurnOff,
+  });
+
+  final bool on;
+  final VoidCallback onTurnOn;
+  final VoidCallback onTurnOff;
+
+  @override
+  Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context);
+    final theme = Theme.of(context);
+    if (on) {
+      return Row(
+        key: const Key('chatOn'),
+        children: [
+          const Icon(Icons.auto_awesome, size: 18),
+          const SizedBox(width: 8),
+          Expanded(
+            child: Text(l10n.chatOnLabel, style: theme.textTheme.bodySmall),
+          ),
+          TextButton(
+            key: const Key('chatTurnOff'),
+            onPressed: onTurnOff,
+            child: Text(l10n.chatTurnOff),
+          ),
+        ],
+      );
+    }
+    return Card(
+      key: const Key('chatBanner'),
+      margin: EdgeInsets.zero,
+      child: Padding(
+        padding: const EdgeInsets.all(12),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Row(
+              children: [
+                const Icon(Icons.auto_awesome, size: 18),
+                const SizedBox(width: 8),
+                Expanded(
+                  child: Text(l10n.chatBannerTitle,
+                      style: theme.textTheme.titleSmall),
+                ),
+              ],
+            ),
+            const SizedBox(height: 4),
+            Text(l10n.chatBannerBody, style: theme.textTheme.bodySmall),
+            Align(
+              alignment: AlignmentDirectional.centerEnd,
+              child: FilledButton.tonal(
+                key: const Key('chatTurnOn'),
+                onPressed: onTurnOn,
+                child: Text(l10n.chatTurnOn),
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+/// The lines a person reads to know exactly what a question sends: the
+/// savings plan's list, plus what the chat adds.
+List<String> chatRequestLines(AppLocalizations l10n, Map<String, Object> r) {
+  String money(Object? fils) => l10n.bhd(formatFils(fils as int));
+  final periods = r['periods'] as Map<String, Object>;
+  String total(String k) => money((periods[k]! as Map<String, Object>)['fils']);
+  return [
+    l10n.chatSendQuestion,
+    ...requestLines(l10n, r),
+    l10n.chatSendToday(money(r['today_spent_fils'])),
+    l10n.chatSendPeriods(
+      total('today'),
+      total('yesterday'),
+      total('week'),
+      total('last_week'),
+      total('month'),
+      total('last_month'),
+    ),
+    for (final c in (r['month_categories'] as List).cast<Map<String, Object>>())
+      l10n.chatSendMonthCategory(categoryName(l10n, c['category'] as String),
+          money(c['fils']), c['percent'] as int),
+    for (final x in (r['month_shops'] as List).cast<Map<String, Object>>())
+      l10n.chatSendMonthShop(
+          x['name'] as String, money(x['fils']), x['count'] as int),
+    l10n.chatSendMetrics,
+  ];
+}
+
+class _ChatConsentSheet extends StatelessWidget {
+  const _ChatConsentSheet({required this.request});
+
+  final Map<String, Object> request;
+
+  @override
+  Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context);
+    final theme = Theme.of(context);
+    return SafeArea(
+      child: SingleChildScrollView(
+        padding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            Text(l10n.chatConsentTitle, style: theme.textTheme.titleLarge),
+            const SizedBox(height: 8),
+            Text(l10n.chatConsentBody),
+            Align(
+              alignment: AlignmentDirectional.centerStart,
+              child: TextButton(
+                key: const Key('chatPrivacy'),
+                style: TextButton.styleFrom(padding: EdgeInsets.zero),
+                onPressed: () => openLegal(context, privacyNotice,
+                    section: kPrivacyChatSection),
+                child: Text(l10n.privacyDetails),
+              ),
+            ),
+            // The exact list, folded so the buttons stay in view.
+            ExpansionTile(
+              key: const Key('chatWhat'),
+              tilePadding: EdgeInsets.zero,
+              childrenPadding: const EdgeInsets.only(bottom: 8),
+              expandedCrossAxisAlignment: CrossAxisAlignment.start,
+              title: Text(l10n.chatConsentWhat,
+                  style: theme.textTheme.titleSmall),
+              children: [
+                for (final line in chatRequestLines(l10n, request))
+                  Padding(
+                    padding: const EdgeInsets.symmetric(vertical: 2),
+                    child: Text('• $line', style: theme.textTheme.bodySmall),
+                  ),
+              ],
+            ),
+            const SizedBox(height: 16),
+            FilledButton(
+              key: const Key('chatAgree'),
+              onPressed: () => Navigator.of(context).pop(true),
+              child: Text(l10n.chatAgree),
+            ),
+            TextButton(
+              key: const Key('chatNotNow'),
+              onPressed: () => Navigator.of(context).pop(false),
+              child: Text(l10n.coachNotNow),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
 }
