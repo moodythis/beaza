@@ -357,13 +357,13 @@ async function withinCallerLimit(ctx: Ctx, name: string, max: number, windowMs: 
   return (row?.count ?? 0) <= max;
 }
 
-/** Whether the caller is within its own share of the day's AI requests. A
- * caller past it is turned away before the shared count, so it cannot use
- * up what is left for everyone else. */
 /** Chat has its own per-caller share, so a chat cannot use up the caller's
  * savings plans, sorting, receipts and voice (or the reverse). */
 const chatShare = (ctx: Ctx) => withinCallerLimit(ctx, 'chat', ctx.limits.chatPerDay, DAY);
 
+/** Whether the caller is within its own share of the day's AI requests. A
+ * caller past it is turned away before the shared count, so it cannot use
+ * up what is left for everyone else. */
 const aiShare = (ctx: Ctx) => withinCallerLimit(ctx, 'ai', ctx.limits.aiPerDay, DAY);
 
 // ---- sessions ----

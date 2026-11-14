@@ -65,6 +65,30 @@ export interface ChatInput {
  * ride in a number's place. */
 const DISPLAY = /^-?(?:BHD )?\d{1,9}(?:\.\d{1,3})?(?: (?:fils|فلس|د\.ب))?$/;
 
+const METRIC_KEYS = new Set([
+  'average_fils', 'biggest_fils', 'coffee_count_week', 'coffee_week_fils', 'count', 'days', 'days_of_limit',
+  'days_over', 'days_so_far', 'delivery_count_week', 'delivery_week_fils', 'diff_fils', 'diff_percent',
+  'half_limit_fils', 'late_count_week', 'late_week_fils', 'left_after_fils', 'limit_after_fils', 'limit_fils',
+  'limit_now_fils', 'micro_count_week', 'micro_total_week_fils', 'month_end_fils', 'month_fils',
+  'month_left_fils', 'over_fils', 'percent_used', 'period_days', 'price_fils', 'remaining_fils', 'save_days',
+  'shop_count', 'shop_fils', 'spent_today_fils', 'total_fils', 'week_before_fils', 'week_fils',
+  'weekend_week_fils',
+]);
+const CATEGORY_KEY = /^(?:bucket_([a-z]+)_(?:fils|percent)|trim_([a-z]+)_fils)$/;
+
+/** The keys the phone's rules use, nothing else: a key is shown to the model,
+ * so it must not be able to carry words. */
+export function metricKeyOk(key: string): boolean {
+  if (METRIC_KEYS.has(key)) return true;
+  const m = CATEGORY_KEY.exec(key);
+  return !!m && CATEGORIES.has(m[1] ?? m[2]);
+}
+
+const CATEGORIES = new Set([
+  'food', 'groceries', 'shopping', 'transport', 'bills', 'health',
+  'entertainment', 'education', 'other', 'transfer', 'unsorted',
+]);
+
 const DIGITS = '0-9٠-٩۰-۹';
 const LONG_NUMBER = new RegExp(`[${DIGITS}](?:[\\s-]?[${DIGITS}]){6,}`, 'g');
 const EMAIL = /[\w.+-]+@[\w-]+\.[\w.]+/g;
@@ -118,7 +142,7 @@ export function checkChatInput(body: Record<string, unknown>): ChatInput {
       !isObject(x) ||
       Object.keys(x).some((k) => !['key', 'display'].includes(k)) ||
       typeof x.key !== 'string' ||
-      !/^[a-z][a-z0-9_]{0,39}$/.test(x.key) ||
+      !metricKeyOk(x.key) ||
       typeof x.display !== 'string' ||
       !DISPLAY.test(x.display)
     ) {
@@ -235,12 +259,17 @@ const FORMAT = /https?:\/\/|www\.|```|\*\*|__|^\s*(?:[-*•#]|\d+[.)])\s/m;
 /** Defence in depth for a caller who skips the app: a kept answer must have
  * a number, a shop from the facts, or a spending word, so a poem or a
  * general-knowledge answer is not kept. */
-const SPENDING_WORDS = /spen[dt]|budget|limit|saving|save|purchase|shop|paid|pay|cost|money|bhd|fils|dinar|صرف|دفع|ميزاني|حد|توفير|وفر|مشتر|فلوس|دينار|فلس|محل|مصروف/i;
+const SPENDING_WORDS = new RegExp(
+  '(?<![\\p{L}])(?:ال|ب|و|ل)?(?:spen[dt]|spending|budget|limit|savings?|purchases?|paid|costs?|bhd|fils|dinars?|' +
+    'صرف\\p{L}*|مصروف\\p{L}*|مصاريف|ميزاني\\p{L}*|حدي|حدك|حده|الحد|توفير|وفر\\p{L}*|دفع\\p{L}*|مشتري\\p{L}*|مشترى|فلوس|دينار|دنانير|فلس|محل|محلات|عملية|عمليات)(?![\\p{L}])',
+  'iu',
+);
 
 type Kind = 'money' | 'int' | 'other';
 
-const CURRENCY_AFTER = /^\s*(?:BHD|BD|dinars?|دينار|دنانير|د\.ب)/i;
-const CURRENCY_BEFORE = /(?:BHD|BD|د\.ب)\s*-?$/i;
+const CURRENCY_WORDS = 'BHD|BD|KD|SAR|AED|USD|EUR|dinars?|dollars?|riyals?|dirhams?|euros?|دينار|دنانير|د\\.ب|ريال|درهم|دولار|يورو';
+const CURRENCY_AFTER = new RegExp(`^\\s*(?:bahraini\\s+)?(?:${CURRENCY_WORDS})`, 'i');
+const CURRENCY_BEFORE = new RegExp(`(?:${CURRENCY_WORDS}|\\$|€)\\s*-?$`, 'i');
 const FILS_AFTER = /^\s*(?:fils|فلس)/i;
 
 /** The numbers in [text] with how they are written. A BHD amount has three
@@ -259,7 +288,7 @@ function typedNumbers(text: string): { canon: string; kind: Kind }[] {
   for (const m of ascii.matchAll(/\d+(?:\.\d+)?/g)) {
     const raw = m[0];
     const at = m.index ?? 0;
-    const after = ascii.slice(at + raw.length, at + raw.length + 12);
+    const after = ascii.slice(at + raw.length, at + raw.length + 24);
     const before = ascii.slice(Math.max(0, at - 6), at);
     const frac = raw.split('.')[1];
     if (frac === undefined && FILS_AFTER.test(after)) {
@@ -269,7 +298,7 @@ function typedNumbers(text: string): { canon: string; kind: Kind }[] {
     }
     const [canon] = numbersIn(raw);
     const money =
-      frac !== undefined ? frac.length === 3 : CURRENCY_AFTER.test(after) || CURRENCY_BEFORE.test(before);
+      frac !== undefined ? frac.length === 3 : CURRENCY_AFTER.test(after) || /^\s*[$€]/.test(after) || CURRENCY_BEFORE.test(before);
     out.push({ canon, kind: frac === undefined ? (money ? 'money' : 'int') : money ? 'money' : 'other' });
   }
   return out;
@@ -302,8 +331,12 @@ export function judgeReply(
     if (!ok) return { kind: 'rejected', reason: 'unchecked_number' };
   }
   const lower = text.toLowerCase();
+  // A bare count (8) is not enough: an amount, a spending word or a shop of
+  // the person's will do.
   const onTopic =
-    used.length > 0 || SPENDING_WORDS.test(text) || names.some((n) => lower.includes(n.toLowerCase()));
+    used.some((n) => n.kind !== 'int') ||
+    SPENDING_WORDS.test(text) ||
+    names.some((n) => lower.includes(n.toLowerCase()));
   if (!onTopic) return { kind: 'rejected', reason: 'off_topic' };
   return { kind: 'answer', text };
 }

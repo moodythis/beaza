@@ -29,7 +29,26 @@ const Set<String> _sharedBuckets = {
   'entertainment', 'education', 'other', 'transfer', 'unsorted',
 };
 
-final RegExp _keyOk = RegExp(r'^[a-z][a-z0-9_]{0,39}$');
+/// The keys the phone's rules use (server: METRIC_KEYS). A key is shown to the
+/// model, so only these names go, never free text.
+const Set<String> _metricKeys = {
+  'average_fils', 'biggest_fils', 'coffee_count_week', 'coffee_week_fils', //
+  'count', 'days', 'days_of_limit', 'days_over', 'days_so_far',
+  'delivery_count_week', 'delivery_week_fils', 'diff_fils', 'diff_percent',
+  'half_limit_fils', 'late_count_week', 'late_week_fils', 'left_after_fils',
+  'limit_after_fils', 'limit_fils', 'limit_now_fils', 'micro_count_week',
+  'micro_total_week_fils', 'month_end_fils', 'month_fils', 'month_left_fils',
+  'over_fils', 'percent_used', 'period_days', 'price_fils', 'remaining_fils',
+  'save_days', 'shop_count', 'shop_fils', 'spent_today_fils',
+  'total_fils', 'week_before_fils', 'week_fils', 'weekend_week_fils',
+};
+
+bool _keyOk(String key) {
+  if (_metricKeys.contains(key)) return true;
+  final bucket = _bucketInKey.firstMatch(key)?.group(1);
+  return bucket != null && _sharedBuckets.contains(bucket);
+}
+
 /// A number as the phone writes it (server: DISPLAY): never free text.
 final RegExp _displayOk =
     RegExp(r'^-?(?:BHD )?\d{1,9}(?:\.\d{1,3})?(?: (?:fils|فلس|د\.ب))?$');
@@ -40,7 +59,8 @@ final RegExp _displayOk =
 final RegExp _anyLongNumber = RegExp(
     r'[0-9٠-٩۰-۹](?:[\s-]?[0-9٠-٩۰-۹]){6,}');
 final RegExp _anyCardNumber = RegExp(
-  r'(visa|master|mada|card|account|iban|acc|بطاق[هة]|حساب|رقم|فيزا|ماستر)\D{0,6}[0-9٠-٩۰-۹Xx*]{3,}',
+  r'(?<![A-Za-z])((?:visa|master|mada)(?:card)?|card|account|iban|acc|بطاق[هة]|حساب|رقم|فيزا|ماستر)(?![A-Za-z])'
+  r'[\s:#.\-]{0,3}(?:(?:no|number|num|ending|رقم)[\s:#.\-]{0,3})?[0-9٠-٩۰-۹Xx*]{3,}',
   caseSensitive: false,
   unicode: true,
 );
@@ -77,9 +97,7 @@ List<Map<String, Object>> chatMetrics(Iterable<Metric> metrics) {
   for (final m in metrics) {
     final display = m.display;
     if (display == null || !_displayOk.hasMatch(display)) continue;
-    if (!_keyOk.hasMatch(m.key)) continue;
-    final bucket = _bucketInKey.firstMatch(m.key)?.group(1);
-    if (bucket != null && !_sharedBuckets.contains(bucket)) continue;
+    if (!_keyOk(m.key)) continue;
     out.add({'key': m.key, 'display': display});
     if (out.length == kChatMaxMetrics) break;
   }

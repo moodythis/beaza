@@ -127,6 +127,9 @@ class AskViewModel extends ChangeNotifier {
 
   bool _asking = false;
 
+  /// A question is being answered; another cannot be sent yet.
+  bool get busy => _asking;
+
   Future<void> ask(String text) async {
     final q = text.trim();
     if (q.isEmpty || _asking) return;

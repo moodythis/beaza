@@ -56,7 +56,7 @@ class _AskViewState extends State<AskView> {
   Future<void> _send([String? preset]) async {
     final q = preset ?? _text.text;
     // One question at a time: keep what was typed while one is waiting.
-    if (q.trim().isEmpty || vm.pending != null) return;
+    if (q.trim().isEmpty || vm.busy) return;
     _text.clear();
     await vm.ask(q);
     await Future<void>.delayed(Duration.zero);
