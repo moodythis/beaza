@@ -117,4 +117,54 @@ void main() {
     expect(e[1].role, EntryRole.internalTransfer);
     expect(g.summarize(e, today).spentFils, 100);
   });
+
+  ExtractionResult sent(int fils, DateTime at, {String? category}) =>
+      ExtractionResult(
+        status: ExtractionStatus.transaction,
+        amountFils: fils,
+        currency: 'BHD',
+        type: TxnType.transferOut,
+        channel: Channel.transfer,
+        direction: TxDirection.outgoing,
+        category: category,
+        reference: 'S${_ref++}',
+        timestamp: at,
+      );
+
+  test('the same amount out of one bank and into another is a move, not spending',
+      () {
+    final e = rec([
+      sent(2492, bh(9, 0)),
+      received(2492, bh(9, 0).add(const Duration(minutes: 2))),
+      out(100, bh(9, 2)),
+    ]);
+    expect(e[0].role, EntryRole.internalTransfer);
+    expect(e[1].role, EntryRole.internalTransfer);
+    expect(g.summarize(e, today).spentFils, 100);
+  });
+
+  test('a move is not found across more than 30 minutes or different amounts',
+      () {
+    final far = rec([sent(5000, bh(9, 10)), received(5000, bh(9, 11))]);
+    expect(far[0].role, EntryRole.spending);
+    expect(far[1].role, EntryRole.income);
+    final diff = rec([sent(5000, bh(9, 10)), received(4990, bh(9, 10))]);
+    expect(diff[0].role, EntryRole.spending);
+  });
+
+  test('each transfer pairs once, and a label from the person wins', () {
+    final e = rec([
+      sent(2500, bh(9, 0)),
+      received(2500, bh(9, 0)),
+      received(2500, bh(9, 0)),
+    ]);
+    expect(e.where((x) => x.role == EntryRole.internalTransfer), hasLength(2));
+    expect(e.where((x) => x.role == EntryRole.income), hasLength(1));
+    final kept = rec([
+      sent(2500, bh(9, 0), category: ''),
+      received(2500, bh(9, 0)),
+    ]);
+    expect(kept[0].role, EntryRole.spending);
+    expect(kept[1].role, EntryRole.income);
+  });
 }

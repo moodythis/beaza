@@ -785,7 +785,7 @@
   "cheaperNone": "The AI had no ideas this time. Try again later.",
   "cheaperNote": "Ideas from AI for the shops where you spent most this week. It does not know prices, so check before you switch.",
   "ownTransferSwitch": "Between my own accounts",
-  "ownTransferHint": "Counts as neither spending nor income. Turn on for money moved to or from your other account.",
+  "ownTransferHint": "Counts as neither spending nor income. Found on its own when the same amount leaves one bank and reaches another within 30 minutes; you can turn it on or off yourself.",
   "repaidSwitch": "Money back to me",
   "repaidHint": "A shop's refund goes back to today's budget on its own. A transfer you receive counts as income unless you turn this on because it pays you back for a purchase.",
   "repaidNote": "money back, added to your budget",

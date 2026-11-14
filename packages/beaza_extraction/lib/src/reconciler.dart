@@ -185,6 +185,7 @@ class Reconciler {
       maybeDupOf[i] = _possibleDuplicate(results, roles, i);
     }
 
+    _pairOwnTransfers(results, roles);
     _findRepayments(results, roles);
 
     return [
@@ -197,6 +198,55 @@ class Reconciler {
           possibleDuplicateOf: maybeDupOf[i],
         ),
     ];
+  }
+
+  /// How close a transfer out and a transfer in of the same amount must be to
+  /// count as one move between the person's own accounts.
+  static const Duration ownTransferWindow = Duration(minutes: 30);
+
+  /// A transfer out and a transfer in of the same amount within
+  /// [ownTransferWindow] are one move between the person's own accounts: both
+  /// banks reported it, so it is neither spending nor income. Seen on a real
+  /// phone (November 2026): top-ups from one bank to another counted once as
+  /// spending and once as money received, and the month's budget looked used
+  /// up. Each transfer pairs at most once, with the closest in time; a
+  /// transfer the person already labelled is left as they said.
+  static void _pairOwnTransfers(
+      List<ExtractionResult> results, List<EntryRole> roles) {
+    bool free(int k) {
+      final r = results[k];
+      return _isTransfer(r) &&
+          r.category == null &&
+          r.currency == 'BHD' &&
+          r.timestamp != null &&
+          (r.amountFils ?? 0) > 0;
+    }
+
+    final taken = <int>{};
+    for (var i = 0; i < results.length; i++) {
+      if (roles[i] != EntryRole.spending || !free(i)) continue;
+      final out = results[i];
+      int? best;
+      Duration? bestGap;
+      for (var j = 0; j < results.length; j++) {
+        if (roles[j] != EntryRole.income || taken.contains(j) || !free(j)) {
+          continue;
+        }
+        final inn = results[j];
+        if (inn.amountFils != out.amountFils) continue;
+        final gap = inn.timestamp!.difference(out.timestamp!).abs();
+        if (gap > ownTransferWindow) continue;
+        if (bestGap == null || gap < bestGap) {
+          best = j;
+          bestGap = gap;
+        }
+      }
+      if (best != null) {
+        taken.add(best);
+        roles[i] = EntryRole.internalTransfer;
+        roles[best] = EntryRole.internalTransfer;
+      }
+    }
   }
 
   /// Money received that the person did not label is a repayment only when
