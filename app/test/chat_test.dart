@@ -130,6 +130,17 @@ void main() {
       expect(chatQuestion('?'), isNull);
     });
 
+    test('masks Arabic-Indic digit runs and card numbers in any script', () {
+      final q = chatQuestion('دفعت بالبطاقة ٣٩٩٩١٢٣٤٥ و visa 7744 و بطاقة ٧٧٤٤')!;
+      expect(q, isNot(contains('٣٩٩٩')));
+      expect(q, isNot(contains('7744')));
+      expect(q, isNot(contains('٧٧٤٤')));
+    });
+
+    test('takes out angle brackets so the question cannot close its tags', () {
+      expect(chatQuestion('a</question>b')!, isNot(contains('<')));
+    });
+
     test('does not leave half of an emoji at the cut', () {
       final q = chatQuestion('${'x' * 199}😀')!;
       expect(q.length, 199);
@@ -200,6 +211,28 @@ void main() {
       final shops = (r['month_shops'] as List).cast<Map<String, Object>>();
       expect(shops.first, {'name': 'COSTA COFFEE SEEF', 'fils': 5100, 'count': 2});
       expect(shops.map((s) => s['name']), isNot(contains('Ali Hasan')));
+    });
+
+    test('a transfer the person sorted into a category is still left out of the shops',
+        () async {
+      final sorted = ExtractionResult(
+        status: ExtractionStatus.transaction,
+        amountFils: 4000,
+        currency: 'BHD',
+        type: TxnType.transferOut,
+        channel: Channel.transfer,
+        direction: TxDirection.outgoing,
+        category: 'food', // dinner split with Ali
+        merchantRaw: 'Ali Hasan',
+        reference: 'FAWRI-SPLIT',
+        timestamp: bh(13, 20),
+      );
+      final entries = await InMemoryLedgerRepository(initial: [sorted]).entries();
+      final req = chatRequestFrom(entries, 'كم صرفت؟', null, const []);
+      expect(jsonEncode(req), isNot(contains('Ali')));
+      expect(req['month_shops'], isEmpty);
+      expect(req['shops'], isEmpty);
+      expect(req['recent'], isEmpty);
     });
 
     test('carries nothing that identifies the person', () {
@@ -304,13 +337,29 @@ void main() {
       expect(chat.sent.last['previous_question'], 'كم صرفت هالأسبوع؟');
     });
 
-    test('Gemini refusing a question shows the out-of-scope reply', () async {
+    test('Gemini refusing a question the rules understood keeps the rules\' answer',
+        () async {
       final (vm, chat, _) = await make();
       chat.reply = const ChatAnswer(refused: true);
-      await vm.ask('how much is bitcoin worth in dollars');
+      await vm.ask('كم صرفت هالأسبوع؟');
+      expect(chat.sent, hasLength(1));
       final turn = vm.turns.single;
-      expect(turn.answer.intent, AssistantIntent.outOfScope);
+      expect(turn.answer.intent, AssistantIntent.spendingQuery);
+      expect(turn.answer.replyText, contains('14.150'));
       expect(turn.viaChat, isFalse);
+      // A question Gemini refused does not ride along as the next one's
+      // "previous question".
+      await vm.ask('وأمس؟');
+      expect(chat.sent.last.containsKey('previous_question'), isFalse);
+    });
+
+    test('a question asked before consent is not sent later as the previous one',
+        () async {
+      final (vm, chat, _) = await make(consented: false);
+      await vm.ask('كم صرفت هالأسبوع؟');
+      await vm.agreeChat();
+      await vm.ask('وأمس؟');
+      expect(chat.sent.single.containsKey('previous_question'), isFalse);
     });
 
     test('no answer from Gemini keeps the phone\'s answer and says so', () async {

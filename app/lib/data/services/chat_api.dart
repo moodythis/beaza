@@ -31,7 +31,7 @@ class HttpChatApi implements ChatApi {
   HttpChatApi({
     http.Client? client,
     String baseUrl = kSyncServer,
-    this.timeout = const Duration(seconds: 30),
+    this.timeout = const Duration(seconds: 45),
   })  : _client = client ?? http.Client(),
         _base = Uri.parse(baseUrl);
 

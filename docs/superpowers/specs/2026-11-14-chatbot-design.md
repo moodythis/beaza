@@ -84,6 +84,18 @@ privacy version is bumped. The consent sheet shows the exact lines sent.
   wrong sense ("BHD 3.200 is your limit" when it is the spending). Metrics
   carry keys to reduce this; it is not eliminated.
 
+- The phone judges "about spending" by words (a money word, a category with a
+  period, an amount). A question such as "price of gold?" has a money word and
+  is sent; Gemini is then asked to refuse it. The consent text says so.
+- Review by a second model (14 Nov) found and fixed: unclear text with no money
+  word was being sent; transfers sorted into a category leaked the recipient as
+  a shop; `</question>` in a question; free text in a metric's display; the
+  number guard rejecting "BHD 25" and "800 fils"; replies with no number, shop
+  or spending word are dropped (a poem, a general-knowledge answer); chat has its
+  own per-caller share. Not fixed on purpose: a cash expense typed inside a
+  spending question is sent with the question (the person typed it as part of
+  it, and the consent says the question is sent).
+
 ## Left to the builder
 
 Wording of the consent text, example chips, exact fact lines.

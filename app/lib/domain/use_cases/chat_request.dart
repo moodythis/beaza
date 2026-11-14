@@ -40,6 +40,9 @@ String? chatQuestion(String text,
     [AiContextSanitizer sanitizer = const AiContextSanitizer()]) {
   var t = sanitizer
       .sanitizeText(text)
+      .replaceAllMapped(_anyCardNumber, (m) => '${m[1]} [number]')
+      .replaceAll(_anyLongNumber, '[number]')
+      .replaceAll(RegExp(r'[<>]'), ' ')
       .replaceAll(RegExp(r'[\u0000-\u001F]'), ' ')
       .replaceAll(RegExp(r'\s+'), ' ')
       .trim();
@@ -123,7 +126,9 @@ Map<String, Object>? chatRequest({
   final shops = <String, (String, int, int)>{};
   for (final r in s.items(month)) {
     final a = r.amountFils;
-    if (a == null || a <= 0 || bucketOf(r) == kTransferBucket) continue;
+    if (a == null || a <= 0 || isTransferOut(r) || bucketOf(r) == kTransferBucket) {
+      continue;
+    }
     final name = coachShopName(r.merchantNorm ?? r.merchantRaw);
     if (name == null) continue;
     final key = name.toUpperCase();

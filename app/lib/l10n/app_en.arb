@@ -1029,7 +1029,7 @@
   "chatTurnOff": "Turn off",
   "chatOnLabel": "Smarter answers are on (Gemini)",
   "chatConsentTitle": "Before Gemini answers your questions",
-  "chatConsentBody": "Beaza sends your question and the totals below (no name, number or bank message) to its server, which asks Google's Gemini (free tier) to answer only about your spending. A question that is not about spending is never sent. Google may keep what is sent and people there may read it, so do not type anything you would not want a person to read. You can stop at any time.",
+  "chatConsentBody": "Beaza sends your question and the totals below (no name, number or bank message) to its server, which asks Google's Gemini (free tier) to answer only about your spending. A question your phone can tell is about something else is not sent (it judges by words, so a question that mentions money is). Google may keep what is sent and people there may read it, so do not type anything you would not want a person to read. You can stop at any time.",
   "chatConsentWhat": "See exactly what will be sent",
   "chatAgree": "Agree and turn on",
   "chatByGemini": "Written by Gemini from your totals",

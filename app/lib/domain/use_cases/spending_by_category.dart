@@ -15,6 +15,11 @@ class CategoryTotal {
   final int count;
 }
 
+/// Money sent to someone, whatever category the person gave it. Its shop
+/// field is a person's name, so it is never sent to a server.
+bool isTransferOut(ExtractionResult r) =>
+    r.type == TxnType.transferOut || r.channel == Channel.transfer;
+
 /// The group a transaction is shown under.
 String bucketOf(ExtractionResult r) {
   final c = r.category;

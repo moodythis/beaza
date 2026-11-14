@@ -21,8 +21,9 @@ class AskTurn {
   /// phone's own.
   final bool chatFailed;
 
-  /// The phone judged the question to be about the person's spending, so it
-  /// could be sent to Gemini (and, if "Smarter answers" was on, was).
+  /// The question was sent to Gemini ("Smarter answers" was on, the phone
+  /// judged it to be about spending, and Gemini did not refuse it), so it may
+  /// go along as the previous question of the next one.
   final bool mayBeSent;
 
   /// Gemini wrote [answer], from numbers the phone worked out.
@@ -160,11 +161,13 @@ class AskViewModel extends ChangeNotifier {
 
     var answer = local;
     var failed = false;
+    var refused = false;
     final chat = _chat;
     // A question that is not about spending, text the rules do not take to
     // be about money, and a cash expense said in words are answered on the
     // phone and never sent.
     final eligible = _mayBeSent(local, asked.aboutMoney);
+    final chatWasOn = _chatOn;
     if (_chatOn && chat != null && eligible) {
       final request = chatRequest(
         entries: entries,
@@ -182,10 +185,15 @@ class AskViewModel extends ChangeNotifier {
         try {
           final reply = await chat.ask(request);
           if (reply.refused) {
-            answer = AssistantResponse(
-              intent: AssistantIntent.outOfScope,
-              replyText: kAssistantScope.reply(arabic: asked.arabic),
-            );
+            refused = true;
+            // The rules already understood the question: keep their answer.
+            // Only text they did not understand gets the scope message.
+            if (local.intent == AssistantIntent.unknown) {
+              answer = AssistantResponse(
+                intent: AssistantIntent.outOfScope,
+                replyText: kAssistantScope.reply(arabic: asked.arabic),
+              );
+            }
           } else if (reply.text != null) {
             answer = local.withText(reply.text!, ResponseSource.llm);
           } else {
@@ -199,7 +207,10 @@ class AskViewModel extends ChangeNotifier {
         }
       }
     }
-    _turns.add(AskTurn(q, answer, chatFailed: failed, mayBeSent: eligible));
+    // Only a question that was really sent while chat was on, and not
+    // refused, may ride along as the "previous question" later.
+    final wasSent = chatWasOn && eligible && !refused;
+    _turns.add(AskTurn(q, answer, chatFailed: failed, mayBeSent: wasSent));
     _changed();
   }
 
