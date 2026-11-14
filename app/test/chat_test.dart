@@ -348,15 +348,15 @@ void main() {
       expect(chat.sent.last['previous_question'], 'كم صرفت هالأسبوع؟');
     });
 
-    test('Gemini refusing a question the rules understood keeps the rules\' answer',
+    test('Gemini refusing a question shows the scope message, not a rules answer',
         () async {
       final (vm, chat, _) = await make();
       chat.reply = const ChatAnswer(refused: true);
       await vm.ask('كم صرفت هالأسبوع؟');
       expect(chat.sent, hasLength(1));
       final turn = vm.turns.single;
-      expect(turn.answer.intent, AssistantIntent.spendingQuery);
-      expect(turn.answer.replyText, contains('14.150'));
+      expect(turn.answer.intent, AssistantIntent.outOfScope);
+      expect(turn.answer.replyText, isNot(contains('14.150')));
       expect(turn.viaChat, isFalse);
       // A question Gemini refused does not ride along as the next one's
       // "previous question".

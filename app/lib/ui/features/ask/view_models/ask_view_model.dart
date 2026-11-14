@@ -189,14 +189,13 @@ class AskViewModel extends ChangeNotifier {
           final reply = await chat.ask(request);
           if (reply.refused) {
             refused = true;
-            // The rules already understood the question: keep their answer.
-            // Only text they did not understand gets the scope message.
-            if (local.intent == AssistantIntent.unknown) {
-              answer = AssistantResponse(
-                intent: AssistantIntent.outOfScope,
-                replyText: kAssistantScope.reply(arabic: asked.arabic),
-              );
-            }
+            // Gemini judged it not to be about the person's spending: a rules
+            // answer to a question that was not asked would mislead, so say
+            // what this screen is for.
+            answer = AssistantResponse(
+              intent: AssistantIntent.outOfScope,
+              replyText: kAssistantScope.reply(arabic: asked.arabic),
+            );
           } else if (reply.text != null) {
             answer = local.withText(reply.text!, ResponseSource.llm);
           } else {

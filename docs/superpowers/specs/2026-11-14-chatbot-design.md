@@ -65,7 +65,8 @@ Server (`POST /v1/chat`, `server/src/chat.ts`):
 - The model answers or replies exactly `out_of_scope`.
 - Reply is kept only if: not a refusal; at most 500 characters; no link, code
   fence or markdown list; every number is in the facts, the metrics or the
-  question. Otherwise `answer: null` with a reason.
+  question, or is the difference between a money amount in the facts and a
+  money amount the person typed ("if I spend 300 BD"). Otherwise `answer: null` with a reason.
 - Limits: the per-caller AI share (shared with the other AI calls) and its own
   daily cap (`CHAT_DAILY_CAP`), counted apart from the savings plan so chat
   cannot use up the plan's allowance. Nothing stored except counters.

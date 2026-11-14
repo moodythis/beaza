@@ -335,6 +335,15 @@ describe('judgeReply', () => {
     assert.equal(judgeReply('A BHD 300.000 phone is a lot.', [], ['can I buy a phone for 300 BD']).kind, 'answer');
   });
 
+  it('allows what is left after the amount the person named, and nothing else', () => {
+    const facts = ['Left in the budget to the end of the month: BHD 76.224'];
+    const q = ['if I spend 300 BD on a phone, what is left?'];
+    assert.equal(judgeReply('You would be over by BHD 223.776.', facts, q).kind, 'answer');
+    // Not an amount nobody asked about, nor without the person naming one.
+    assert.deepEqual(judgeReply('You would be over by BHD 223.777.', facts, q), { kind: 'rejected', reason: 'unchecked_number' });
+    assert.deepEqual(judgeReply('You would be over by BHD 223.776.', facts, ['what is left?']), { kind: 'rejected', reason: 'unchecked_number' });
+  });
+
   it('rejects an empty reply', () => {
     assert.deepEqual(judgeReply('  ', []), { kind: 'rejected', reason: 'empty_reply' });
     assert.deepEqual(judgeReply(null, []), { kind: 'rejected', reason: 'empty_reply' });
