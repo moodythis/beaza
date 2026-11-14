@@ -11,7 +11,7 @@ import 'package:flutter/foundation.dart';
 /// One question and its answer on the questions screen.
 class AskTurn {
   AskTurn(this.question, this.answer,
-      {this.chatFailed = false, this.mayBeSent = false});
+      {this.chatFailed = false, this.mayBeSent = false, this.chatReason});
 
   final String question;
   final AssistantResponse answer;
@@ -20,6 +20,11 @@ class AskTurn {
   /// busy, or its reply failed the number check), so [answer] is the
   /// phone's own.
   final bool chatFailed;
+
+  /// Why Gemini gave no answer, when the server's check said so: one of
+  /// `unchecked_number`, `off_topic`, `format`, `too_long`, `empty_reply`, or
+  /// `offline` (no reply at all). Never the reply itself.
+  final String? chatReason;
 
   /// The question was sent to Gemini ("Smarter answers" was on, the phone
   /// judged it to be about spending, and Gemini did not refuse it), so it may
@@ -164,6 +169,7 @@ class AskViewModel extends ChangeNotifier {
 
     var answer = local;
     var failed = false;
+    String? reason;
     var refused = false;
     final chat = _chat;
     // A question that is not about spending, text the rules do not take to
@@ -205,10 +211,12 @@ class AskViewModel extends ChangeNotifier {
             answer = local.withText(reply.text!, ResponseSource.llm);
           } else {
             failed = true;
+            reason = reply.reason;
           }
         } catch (_) {
           // Offline, busy or refused: the phone's own answer is already right.
           failed = true;
+          reason = 'offline';
         } finally {
           _pending = null;
         }
@@ -217,7 +225,8 @@ class AskViewModel extends ChangeNotifier {
     // Only a question that was really sent while chat was on, and not
     // refused, may ride along as the "previous question" later.
     final wasSent = chatWasOn && eligible && !refused;
-    _turns.add(AskTurn(q, answer, chatFailed: failed, mayBeSent: wasSent));
+    _turns.add(AskTurn(q, answer,
+        chatFailed: failed, mayBeSent: wasSent, chatReason: reason));
     _changed();
   }
 

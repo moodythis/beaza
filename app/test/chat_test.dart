@@ -380,6 +380,7 @@ void main() {
       expect(vm.turns.single.chatFailed, isTrue);
       expect(vm.turns.single.viaChat, isFalse);
       expect(vm.turns.single.answer.replyText, contains('14.150'));
+      expect(vm.turns.single.chatReason, 'unchecked_number');
     });
 
     test('a network or server error keeps the phone\'s answer', () async {
@@ -388,6 +389,7 @@ void main() {
         chat.handler = (_) async => throw CoachException(code);
         await vm.ask('كم صرفت هالأسبوع؟');
         expect(vm.turns.single.chatFailed, isTrue, reason: code);
+        expect(vm.turns.single.chatReason, 'offline', reason: code);
         expect(vm.pending, isNull);
       }
     });

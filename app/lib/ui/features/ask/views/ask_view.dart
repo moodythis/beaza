@@ -140,7 +140,7 @@ class _AskViewState extends State<AskView> {
                             child: Align(
                               alignment: AlignmentDirectional.centerStart,
                               child: Text(
-                                t.viaChat ? l10n.chatByGemini : l10n.chatFallback,
+                                t.viaChat ? l10n.chatByGemini : _fallbackText(l10n, t.chatReason),
                                 key: Key(t.viaChat ? 'chatByGemini' : 'chatFallback'),
                                 style: theme.textTheme.labelSmall,
                               ),
@@ -416,4 +416,18 @@ class _ChatConsentSheet extends StatelessWidget {
       ),
     );
   }
+}
+
+/// The fallback caption, with the check that failed when there is one.
+String _fallbackText(AppLocalizations l10n, String? reason) {
+  final why = switch (reason) {
+    'unchecked_number' => l10n.chatReasonNumber,
+    'off_topic' => l10n.chatReasonTopic,
+    'format' => l10n.chatReasonFormat,
+    'too_long' => l10n.chatReasonLong,
+    'empty_reply' => l10n.chatReasonEmpty,
+    'offline' => l10n.chatReasonOffline,
+    _ => null,
+  };
+  return why == null ? l10n.chatFallback : '${l10n.chatFallback} ($why)';
 }

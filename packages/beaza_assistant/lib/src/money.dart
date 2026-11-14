@@ -83,6 +83,14 @@ const Set<String> _notMoneyAfter = {
   'week', 'weeks', 'month', 'months', 'times', 'hours', 'percent',
 };
 
+/// Another currency: a number next to one is not dinars or fils ("300 دولار"
+/// is not 300 fils).
+const Set<String> _otherCurrency = {
+  'دولار', 'دولارات', 'دولارين', 'ريال', 'ريالات', 'ريالين', 'درهم', 'دراهم', //
+  'يورو', 'dollar', 'dollars', 'usd', 'kd', 'sar', 'aed', 'eur', 'euro', //
+  'euros', 'riyal', 'riyals', 'dirham', 'dirhams', r'$', '€', '£',
+};
+
 enum _Unit { dinar, rupee, fils }
 
 /// The word without a joined "ب", "و", "وب" or "ل" when that makes it pass
@@ -205,6 +213,10 @@ class BahrainiMoneyParser {
           return whole == null ? null : _Part(whole, i + 2);
         case null:
           if (number == null || !allowBare) return null;
+          if ((i + 1 < t.length && _otherCurrency.contains(t[i + 1])) ||
+              (i > 0 && _otherCurrency.contains(t[i - 1]))) {
+            return null;
+          }
           return _bare(t, i, number);
       }
     }

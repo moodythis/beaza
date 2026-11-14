@@ -4,6 +4,22 @@ import 'package:test/test.dart';
 void main() {
   const p = BahrainiMoneyParser();
 
+  group('not dinars', () {
+    test('a number next to another currency is not an amount', () {
+      for (final t in ['300 دولار', 'لو صرفت 300 دولار', '300 USD', '\$300', '300 ريال', '25 dollars', 'KD 20']) {
+        expect(p.parse(t), isNull, reason: t);
+      }
+      expect(p.parse('300 دينار'), 300000);
+    });
+
+    test('an IBAN or other long reference gives no amount', () {
+      for (final t in ['حوّل لي على ايبان BH67BMAG00001299123456', 'ref A1B2C3D4E5F6 paid', 'حول على BH67 BMAG 0000 1299 1234 56']) {
+        expect(p.parse(t), isNull, reason: t);
+      }
+      expect(p.parse('عشا 4 دنانير ورقم الطلب BH67BMAG00001299123456'), 4000);
+    });
+  });
+
   group('Bahraini money words', () {
     final cases = {
       'ربية': 100,

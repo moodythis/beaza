@@ -50,6 +50,14 @@ const String kBreak = '|';
 /// semicolons become [kBreak].
 List<String> tokenize(String input) {
   var s = normalizeText(input);
+  // An IBAN or any long run of letters and digits together is a reference,
+  // not an amount: "BH67BMAG00001299123456" must not give "67".
+  s = s.replaceAll(
+      RegExp(r'(?<![a-z0-9])[a-z]{2}\d{2}(?:\s?[a-z0-9]{4}){3,7}(?:\s?[a-z0-9]{1,4})?(?![a-z0-9])'),
+      ' ');
+  s = s.replaceAll(
+      RegExp(r'(?<![a-z0-9])(?=[a-z0-9]*[a-z])(?=[a-z0-9]*\d)[a-z0-9]{10,}(?![a-z0-9])'),
+      ' ');
   s = s.replaceAll(RegExp(r'[\n\r;]|(?<!\d),|,(?!\d)'), ' | ');
   s = s.replaceAll(RegExp(r'د\s*\.\s*ب'), ' دب ');
   s = s.replaceAll(RegExp(r'\bb\.\s?d\b\.?'), ' bd ');
