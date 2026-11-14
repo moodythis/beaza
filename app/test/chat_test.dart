@@ -178,7 +178,7 @@ void main() {
     test('at most 8', () {
       final m = chatMetrics([
         for (var i = 0; i < 20; i++)
-          Metric('m$i', i, MetricUnit.count, display: '$i'),
+          Metric(i.isEven ? 'count' : 'days', i, MetricUnit.count, display: '$i'),
       ]);
       expect(m, hasLength(kChatMaxMetrics));
     });
