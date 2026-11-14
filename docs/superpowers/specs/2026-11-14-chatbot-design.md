@@ -80,7 +80,7 @@ privacy version is bumped. The consent sheet shows the exact lines sent.
   steer Gemini off topic. The prompt, the output checks, the per-caller limit
   and the daily cap bound that; they do not make it impossible.
 - Questions needing a number outside the summary get "I can't see that".
-- The 30-minute number guard allows a reply that repeats a given number in a
+- The number guard allows a reply that repeats a given number in a
   wrong sense ("BHD 3.200 is your limit" when it is the spending). Metrics
   carry keys to reduce this; it is not eliminated.
 

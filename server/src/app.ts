@@ -22,6 +22,7 @@ import type { Bundle } from './validate.ts';
 import { legalPage, PRIVACY_VERSION, TERMS_VERSION } from './legal.ts';
 import { fetchGoogleKeys, verifyGoogleIdToken } from './google.ts';
 import { coach } from './coach.ts';
+import { chat } from './chat.ts';
 import { alternatives } from './alternatives.ts';
 import { categorize } from './categorize.ts';
 import { leaveBoard, postBoard, readBoard } from './leaderboard.ts';
@@ -48,6 +49,8 @@ export type Options = {
   googleKeys?: GoogleKeys;
   /** Daily cap on savings plans; tests set a small one. */
   coachCap?: number;
+  /** Daily cap on chat replies; tests set a small one. */
+  chatCap?: number;
   /** Per-caller limits; tests set small ones. */
   limits?: Partial<CallerLimits>;
 };
@@ -81,6 +84,7 @@ type Ctx = {
   google: (token: unknown) => Promise<GoogleIdentity>;
   ai?: AiLike;
   coachCap?: number;
+  chatCap?: number;
   limits: CallerLimits;
 };
 
@@ -131,6 +135,7 @@ export async function handle(
         env.AI,
       ),
       coachCap: options.coachCap,
+      chatCap: options.chatCap,
       limits: { ...CALLER_LIMITS, ...options.limits },
     };
     response = json(200, await dispatch(route, url, ctx));
@@ -183,6 +188,8 @@ async function dispatch(route: string, url: URL, ctx: Ctx): Promise<Record<strin
     case 'POST /v1/coach':
       // No account needed: the request holds only totals, no identity.
       return coach(await readJson(ctx.request), ctx.db, ctx.ai, ctx.now, ctx.coachCap, await aiShare(ctx));
+    case 'POST /v1/chat':
+      return chat(await readJson(ctx.request), ctx.db, ctx.ai, ctx.now, ctx.chatCap, await aiShare(ctx));
     case 'POST /v1/alternatives':
       // No account needed: only the shop names and totals of the plan.
       return alternatives(await readJson(ctx.request), ctx.db, ctx.ai, ctx.now, ctx.coachCap, await aiShare(ctx));

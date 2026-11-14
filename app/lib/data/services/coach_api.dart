@@ -114,32 +114,39 @@ class HttpCoachApi implements CoachApi {
   }
 
   Future<Map<String, Object?>> _post(
-      String path, Map<String, Object> request) async {
-    final http.Response res;
-    try {
-      res = await _client
-          .post(
-            _base.resolve(path),
-            headers: {'content-type': 'application/json'},
-            body: jsonEncode(request),
-          )
-          .timeout(timeout);
-    } on TimeoutException {
-      throw const CoachException('timeout');
-    } on Exception catch (e) {
-      final text = e.toString().replaceAll(RegExp(r'\s+'), ' ');
-      throw CoachException('network',
-          detail: text.length > 160 ? text.substring(0, 160) : text);
-    }
-    Map<String, Object?> body;
-    try {
-      body = jsonDecode(res.body) as Map<String, Object?>;
-    } on Object {
-      throw const CoachException('server_error');
-    }
-    if (res.statusCode != 200) {
-      throw CoachException(body['error'] as String? ?? 'server_error');
-    }
-    return body;
+          String path, Map<String, Object> request) =>
+      postCoachJson(_client, _base, path, request, timeout);
+}
+
+/// POST [request] as JSON to Beaza's server and the decoded 200 reply. Any
+/// other outcome is a [CoachException]: `network`, `timeout` or the server's
+/// own error code. Shared by the savings plan and the spending chat.
+Future<Map<String, Object?>> postCoachJson(http.Client client, Uri base,
+    String path, Map<String, Object> request, Duration timeout) async {
+  final http.Response res;
+  try {
+    res = await client
+        .post(
+          base.resolve(path),
+          headers: {'content-type': 'application/json'},
+          body: jsonEncode(request),
+        )
+        .timeout(timeout);
+  } on TimeoutException {
+    throw const CoachException('timeout');
+  } on Exception catch (e) {
+    final text = e.toString().replaceAll(RegExp(r'\s+'), ' ');
+    throw CoachException('network',
+        detail: text.length > 160 ? text.substring(0, 160) : text);
   }
+  Map<String, Object?> body;
+  try {
+    body = jsonDecode(res.body) as Map<String, Object?>;
+  } on Object {
+    throw const CoachException('server_error');
+  }
+  if (res.statusCode != 200) {
+    throw CoachException(body['error'] as String? ?? 'server_error');
+  }
+  return body;
 }

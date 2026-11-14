@@ -27,7 +27,7 @@ class LegalDocument {
 }
 
 const privacyNotice = LegalDocument(
-  version: '2026-11-11.1',
+  version: '2026-11-14.1',
   titleAr: 'إشعار الخصوصية لتطبيق بيزة',
   titleEn: 'Beaza privacy notice',
   ar: [
@@ -86,9 +86,16 @@ const privacyNotice = LegalDocument(
       ],
     ),
     LegalSection(
+      'السؤال عن مصروفك بالذكاء الاصطناعي (اختياري، بموافقة منفصلة)',
+      [
+        'شاشة «اسألني» تجيب على هاتفك بالقواعد. فقط إذا فعّلت «إجابات أذكى» فيها، يُرسل سؤالك عن مصروفك أيضًا إلى خادم بيزة، فيطلب من نموذج ذكاء اصطناعي (انظر «نماذج الذكاء الاصطناعي») أن يجيب عنه. المرسل: سؤالك (تُخفى الأرقام المتتابعة من 7 خانات فأكثر وعناوين البريد)، وسؤالك السابق في الشاشة، ومجاميع من نوع مجاميع خطة التوفير أعلاه محسوبة على هاتفك: آخر 7 أيام والـ7 التي قبلها، واليوم وأمس، وهذا الشهر حتى اليوم والشهر الماضي (مجموع وعدد لكل منها)، وحدك اليومي وما صرفته اليوم، ومجموعًا ونسبة لكل فئة للأسبوع وللشهر، وأسماء حتى 5 محلات صرفت فيها أكثر مع مجاميعها وعدد الزيارات، وكل عملية شراء من آخر 7 أيام (حتى 40) بيومها وساعتها ومبلغها وفئتها واسم المحل، والأرقام التي حسبها هاتفك لذلك السؤال. تعرض لك الشاشة القائمة قبل أن توافق. لا يُرسل أي شيء يدل عليك: لا رسالة بنك ولا رقم حساب أو بطاقة ولا رقم هاتف ولا رقم شخصي ولا مرجع ولا تاريخ تقويمي ولا اسم شخص حوّلت له، ويرفض الخادم أي حقل آخر.',
+        'يُطلب من الذكاء الاصطناعي الإجابة عن مصروفك وميزانيتك فقط ورفض أي شيء آخر؛ والسؤال الواضح أنه عن موضوع آخر يُرد على هاتفك ولا يُرسل أبدًا. يحتفظ الخادم بالإجابة فقط إذا كانت نصًا عاديًا قصيرًا وكل رقم فيها من الأرقام التي أُعطيت له؛ وإلا يعرض هاتفك إجابته الخاصة. لا يُخزَّن شيء مما تسأل عنه: لا على الخادم الذي لا يحفظ إلا عدًّا يوميًا بلا ربط بك، ولا على هاتفك بعد إغلاق الشاشة. ما قد يفعله مزوّد الذكاء الاصطناعي بالسؤال مذكور تحت «نماذج الذكاء الاصطناعي»: وبسبب شروط Google المجانية، لا تكتب ما لا تريد أن يقرأه شخص. الأساس القانوني هو موافقتك، ويمكنك سحبها في أي وقت من شاشة «اسألني»؛ وسحبها يوقف أي إرسال لاحق.',
+      ],
+    ),
+    LegalSection(
       'نماذج الذكاء الاصطناعي',
       [
-        'يرسل خادم بيزة كل طلب ذكاء اصطناعي (خطة التوفير، التصنيف، صور الإيصالات، الصوت) أولًا إلى نموذج Gemini من Google عبر خدمتها المجانية. في الخدمة المجانية قد تحتفظ Google بما يُرسل وبالرد، وتستخدمهما لتحسين منتجاتها ونماذجها، وقد يقرؤهما موظفون لديها؛ وتذكر Google أنها تفصلهما أولًا عن حساب بيزة. إذا لم يرد Gemini (مثلًا عند انتهاء الحصة المجانية اليومية)، لا يُسأل أي ذكاء اصطناعي آخر: تُكتب الخطة بالقواعد وتُقرأ الصور والكلام على هاتفك. لا يُرسل مع طلب الذكاء الاصطناعي أي حساب أو اسم أو رقم هاتف. وبسبب شروط Google المجانية، لا ترسل ما لا تريد أن يقرأه شخص، وغطِّ أرقام البطاقة في صورة الإيصال.',
+        'يرسل خادم بيزة كل طلب ذكاء اصطناعي (خطة التوفير، التصنيف، أسئلة شاشة «اسألني»، صور الإيصالات، الصوت) أولًا إلى نموذج Gemini من Google عبر خدمتها المجانية. في الخدمة المجانية قد تحتفظ Google بما يُرسل وبالرد، وتستخدمهما لتحسين منتجاتها ونماذجها، وقد يقرؤهما موظفون لديها؛ وتذكر Google أنها تفصلهما أولًا عن حساب بيزة. إذا لم يرد Gemini (مثلًا عند انتهاء الحصة المجانية اليومية)، لا يُسأل أي ذكاء اصطناعي آخر: تُكتب الخطة بالقواعد ويُجاب عن السؤال بالقواعد على هاتفك وتُقرأ الصور والكلام على هاتفك. لا يُرسل مع طلب الذكاء الاصطناعي أي حساب أو اسم أو رقم هاتف. وبسبب شروط Google المجانية، لا ترسل ما لا تريد أن يقرأه شخص، وغطِّ أرقام البطاقة في صورة الإيصال.',
       ],
     ),
     LegalSection(
@@ -208,9 +215,16 @@ const privacyNotice = LegalDocument(
       ],
     ),
     LegalSection(
+      'Asking about your spending with AI (optional, separate consent)',
+      [
+        'The Ask screen answers on your phone by rules. Only if you turn on "Smarter answers" there, a question about your own spending is also sent to Beaza\'s server, which asks an AI model (see "Which AI models") to answer it. What is sent: your question (digit runs of 7 or more and e-mail addresses are masked), your previous question on that screen, and the same kind of totals as the AI savings plan above, worked out on your phone: the last 7 days and the 7 before, today and yesterday, this month so far and last month (a total and a count for each), your daily limit and what you spent today, a total and share per category for the week and for the month, the names of up to 5 shops where you spent most with their totals and visit counts, each purchase of the last 7 days (up to 40) with its weekday, hour, amount, category and shop name, and the numbers your phone worked out for that question. The screen shows you the list before you agree. Nothing that identifies you is sent: no bank message, account or card number, phone number, CPR, reference, calendar date or name of a person you transferred to, and the server refuses any other field.',
+        'The AI is told to answer only about your own spending and budget and to refuse anything else; a question that is clearly about something else is turned away on your phone and never sent. The server keeps an answer only if it is short plain text and every number in it is one it was given; otherwise your phone shows its own answer. Nothing you ask is stored: not on the server, which keeps only a daily count with no link to you, and not on your phone after you close the screen. What the AI provider may do with a question is set out under "Which AI models": because of Google\'s free-tier terms, do not type anything you would not want a person to read. The legal basis is your consent, which you can withdraw at any time on the Ask screen; withdrawing stops any further sending.',
+      ],
+    ),
+    LegalSection(
       'Which AI models',
       [
-        'Beaza\'s server first sends each AI request (savings plan, sorting, receipt photos, voice) to Google\'s Gemini model through Google\'s free tier. On the free tier, Google may keep what is sent and the answer, use them to improve its products and models, and people at Google may read them; Google says it first separates them from Beaza\'s account. If Gemini does not answer (for example when the free daily allowance is used up), no other AI is asked: the plan is written by rules and photos and speech are read on your phone. No account, name or phone number is sent with an AI request. Because of Google\'s free-tier terms, send nothing you would not want a person to read, and cover card digits on a receipt photo.',
+        'Beaza\'s server first sends each AI request (savings plan, sorting, questions in the Ask screen, receipt photos, voice) to Google\'s Gemini model through Google\'s free tier. On the free tier, Google may keep what is sent and the answer, use them to improve its products and models, and people at Google may read them; Google says it first separates them from Beaza\'s account. If Gemini does not answer (for example when the free daily allowance is used up), no other AI is asked: the plan is written by rules, the question is answered by rules on your phone, and photos and speech are read on your phone. No account, name or phone number is sent with an AI request. Because of Google\'s free-tier terms, send nothing you would not want a person to read, and cover card digits on a receipt photo.',
       ],
     ),
     LegalSection(

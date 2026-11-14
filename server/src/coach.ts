@@ -43,7 +43,7 @@ const TRIM_MIN_FILS = 10000;
 
 const DISCRETIONARY = ['food', 'shopping', 'entertainment'];
 
-const MAX_FILS = 100_000_000; // BHD 100,000
+export const MAX_FILS = 100_000_000; // BHD 100,000
 
 export type CoachInput = {
   language: 'ar' | 'en';
@@ -82,11 +82,55 @@ export function shopName(v: unknown, code = 'bad_shops'): string {
   return s;
 }
 
-function int(v: unknown, max: number, code: string): number {
+export function int(v: unknown, max: number, code: string): number {
   if (typeof v !== 'number' || !Number.isInteger(v) || v < 0 || v > max) {
     throw new HttpError(400, code);
   }
   return v;
+}
+
+/** A list of category totals as the phone sends them (week or month). */
+export function parseCategories(list: unknown): { category: string; fils: number; percent: number }[] {
+  if (!Array.isArray(list) || list.length > BUCKETS.size) {
+    throw new HttpError(400, 'bad_categories');
+  }
+  const seen = new Set<string>();
+  return list
+    .map((c) => {
+      if (!isObject(c) || Object.keys(c).some((k) => !['category', 'fils', 'percent'].includes(k))) {
+        throw new HttpError(400, 'bad_categories');
+      }
+      const category = c.category;
+      if (typeof category !== 'string' || !BUCKETS.has(category) || seen.has(category)) {
+        throw new HttpError(400, 'bad_categories');
+      }
+      seen.add(category);
+      return {
+        category,
+        fils: int(c.fils, MAX_FILS, 'bad_categories'),
+        percent: int(c.percent, 100, 'bad_categories'),
+      };
+    })
+    .sort((a, b) => b.fils - a.fils);
+}
+
+/** A list of shops with totals and visit counts (at most COACH_MAX_SHOPS). */
+export function parseShops(list: unknown): { name: string; fils: number; count: number }[] {
+  if (!Array.isArray(list) || list.length > COACH_MAX_SHOPS) {
+    throw new HttpError(400, 'bad_shops');
+  }
+  return list
+    .map((x) => {
+      if (!isObject(x) || Object.keys(x).some((k) => !['name', 'fils', 'count'].includes(k))) {
+        throw new HttpError(400, 'bad_shops');
+      }
+      return {
+        name: shopName(x.name),
+        fils: int(x.fils, MAX_FILS, 'bad_shops'),
+        count: int(x.count, 10_000, 'bad_shops'),
+      };
+    })
+    .sort((a, b) => b.fils - a.fils);
 }
 
 export function checkCoachInput(body: Record<string, unknown>): CoachInput {
@@ -99,40 +143,8 @@ export function checkCoachInput(body: Record<string, unknown>): CoachInput {
   if (body.language !== 'ar' && body.language !== 'en') {
     throw new HttpError(400, 'bad_language');
   }
-  const list = body.categories;
-  if (!Array.isArray(list) || list.length > BUCKETS.size) {
-    throw new HttpError(400, 'bad_categories');
-  }
-  const seen = new Set<string>();
-  const categories = list.map((c) => {
-    if (!isObject(c) || Object.keys(c).some((k) => !['category', 'fils', 'percent'].includes(k))) {
-      throw new HttpError(400, 'bad_categories');
-    }
-    const category = c.category;
-    if (typeof category !== 'string' || !BUCKETS.has(category) || seen.has(category)) {
-      throw new HttpError(400, 'bad_categories');
-    }
-    seen.add(category);
-    return {
-      category,
-      fils: int(c.fils, MAX_FILS, 'bad_categories'),
-      percent: int(c.percent, 100, 'bad_categories'),
-    };
-  });
-  const shopList = body.shops ?? [];
-  if (!Array.isArray(shopList) || shopList.length > COACH_MAX_SHOPS) {
-    throw new HttpError(400, 'bad_shops');
-  }
-  const shops = shopList.map((x) => {
-    if (!isObject(x) || Object.keys(x).some((k) => !['name', 'fils', 'count'].includes(k))) {
-      throw new HttpError(400, 'bad_shops');
-    }
-    return {
-      name: shopName(x.name),
-      fils: int(x.fils, MAX_FILS, 'bad_shops'),
-      count: int(x.count, 10_000, 'bad_shops'),
-    };
-  });
+  const categories = parseCategories(body.categories);
+  const shops = parseShops(body.shops ?? []);
   const recentList = body.recent ?? [];
   if (!Array.isArray(recentList) || recentList.length > COACH_MAX_RECENT) {
     throw new HttpError(400, 'bad_recent');
@@ -160,8 +172,8 @@ export function checkCoachInput(body: Record<string, unknown>): CoachInput {
     daysOverLimit: int(body.days_over_limit, 7, 'bad_number'),
     smallCount: int(body.small_purchases_count, 10_000, 'bad_number'),
     smallFils: int(body.small_purchases_fils, MAX_FILS, 'bad_number'),
-    categories: categories.sort((a, b) => b.fils - a.fils),
-    shops: shops.sort((a, b) => b.fils - a.fils),
+    categories,
+    shops,
     lateCount: int(body.late_night_count ?? 0, 10_000, 'bad_number'),
     lateFils: int(body.late_night_fils ?? 0, MAX_FILS, 'bad_number'),
     weekendFils: int(body.weekend_fils ?? 0, MAX_FILS, 'bad_number'),
@@ -197,6 +209,8 @@ const DAYS_AR: Record<string, string> = {
 function name(category: string, ar: boolean): string {
   return ar ? (NAMES_AR[category] ?? category) : category;
 }
+
+export const categoryName = name;
 
 /** Most of the week is "unsorted" (and not a trivial amount). */
 function unsortedHeavy(x: CoachInput): boolean {
@@ -392,8 +406,8 @@ export function textOf(r: unknown): string | null {
 }
 
 /** Counts this request against today's cap; false when the cap is reached. */
-export async function allow(db: D1Like, now: number, cap: number): Promise<boolean> {
-  const day = new Date(now).toISOString().slice(0, 10);
+export async function allow(db: D1Like, now: number, cap: number, scope = ''): Promise<boolean> {
+  const day = scope + new Date(now).toISOString().slice(0, 10);
   const row = await db
     .prepare(
       'INSERT INTO coach_usage (day, count) VALUES (?, 1) ' +

@@ -4,6 +4,7 @@ import 'package:beaza/domain/use_cases/streak.dart';
 import 'package:beaza/domain/use_cases/custom_categories.dart';
 import 'package:beaza/data/repositories/ledger_repository.dart';
 import 'package:beaza/data/repositories/preferences_store.dart';
+import 'package:beaza/data/services/chat_api.dart';
 import 'package:beaza/data/repositories/settings_repository.dart';
 import 'package:beaza/domain/use_cases/auto_categorize.dart';
 import 'package:beaza/domain/use_cases/daily_budget.dart' as daily;
@@ -71,6 +72,7 @@ class HomeViewModel extends ChangeNotifier {
     this.voice,
     this.receipts,
     this.coach,
+    this.chatApi,
     this.savings,
     this.challenge,
     this.autoSort,
@@ -129,6 +131,13 @@ class HomeViewModel extends ChangeNotifier {
 
   /// The optional AI savings plan; null hides its card.
   final CoachViewModel? coach;
+
+  /// Gemini for the questions screen ("Smarter answers"); null hides the
+  /// switch and the screen answers by rules on the phone.
+  final ChatApi? chatApi;
+
+  /// Small app preferences, for the questions screen's consent.
+  PreferencesStore? get preferences => _prefs;
 
   /// Receipt photos to text on the phone; null hides the receipt button.
   final ReceiptScanner? receipts;
