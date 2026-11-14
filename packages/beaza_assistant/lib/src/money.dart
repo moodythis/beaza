@@ -240,6 +240,13 @@ class BahrainiMoneyParser {
     }
 
     final dinarWord = stripJoined(w, _dinarWords.containsKey);
+    // The "دينار" left behind after "20 دينار كويتي" was turned down is not
+    // a dinar of its own.
+    if (dinarWord != null &&
+        ((i > 0 && isNumberToken(t[i - 1])) ||
+            (i + 1 < t.length && const {'كويتي', 'kuwaiti'}.contains(t[i + 1])))) {
+      return null;
+    }
     if (dinarWord != null) return _fraction(t, i + 1, _dinarWords[dinarWord]!);
     final plain = stripJoined(w, _plainWords.containsKey);
     if (plain != null) return _Part(_plainWords[plain]!, i + 1);
