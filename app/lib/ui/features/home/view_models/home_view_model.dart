@@ -456,14 +456,34 @@ class HomeViewModel extends ChangeNotifier {
   /// Turns on the worked-out limit.
   Future<void> setBudget(BudgetPlan plan) async {
     final prefs = _prefs;
-    if (prefs != null) await daily.writeBudgetPlan(prefs, plan);
+    if (prefs != null) {
+      // Keep the hand-set limit, so turning the plan off gives it back.
+      if (_budget == null) {
+        final hand = (await _settings.load()).dailyLimitFils;
+        await prefs.write(_handLimitKey, '$hand');
+      }
+      await daily.writeBudgetPlan(prefs, plan);
+    }
     await load();
   }
 
-  /// Back to a limit set by hand; the last worked-out value stays as it is.
+  static const _handLimitKey = 'budget.handLimit';
+
+  /// Back to the limit set by hand before the plan was turned on. The value
+  /// the plan worked out last is not kept: on a real phone it was 0.001
+  /// (the month's free money looked used up) and stayed as the daily limit
+  /// after the plan was turned off. With no hand-set limit to go back to,
+  /// the limit is cleared and the app asks for one.
   Future<void> clearBudget() async {
     final prefs = _prefs;
-    if (prefs != null) await daily.clearBudgetPlan(prefs);
+    if (prefs != null) {
+      await daily.clearBudgetPlan(prefs);
+      final hand = int.tryParse(await prefs.read(_handLimitKey) ?? '') ?? 0;
+      await prefs.write(_handLimitKey, null);
+      final current = await _settings.load();
+      await _settings.save(
+          current.copyWith(dailyLimitFils: hand > 1 ? hand : 0));
+    }
     await load();
   }
 

@@ -77,6 +77,29 @@ void main() {
     expect(withFixed, lessThan(without));
   });
 
+  test('turning the plan off gives back the limit set by hand, never 0.001',
+      () async {
+    // Seen on a real phone: the plan had worked out 0.001 and that stayed.
+    final ledger = InMemoryLedgerRepository(
+        initial: [purchase(400000, bh(1, 23))]);
+    final settings = InMemorySettingsRepository(
+        const GuardrailSettings(dailyLimitFils: 5000));
+    final prefs = MemoryPreferencesStore();
+    final vm = HomeViewModel(
+        ledger: ledger,
+        settings: settings,
+        preferences: prefs,
+        clock: () => bh(2, 12));
+    await vm.setBudget(plan);
+    await settle();
+    expect((await settings.load()).dailyLimitFils, 1);
+    await vm.clearBudget();
+    await settle();
+    expect(vm.budget, isNull);
+    expect((await settings.load()).dailyLimitFils, 5000);
+    vm.dispose();
+  });
+
   test('the view model keeps the saved limit in step with the plan', () async {
     final ledger = InMemoryLedgerRepository(
         initial: [purchase(9000, bh(1, 23))]);
