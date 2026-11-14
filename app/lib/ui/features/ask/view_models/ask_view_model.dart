@@ -192,10 +192,15 @@ class AskViewModel extends ChangeNotifier {
             // Gemini judged it not to be about the person's spending: a rules
             // answer to a question that was not asked would mislead, so say
             // what this screen is for.
-            answer = AssistantResponse(
-              intent: AssistantIntent.outOfScope,
-              replyText: kAssistantScope.reply(arabic: asked.arabic),
-            );
+            // The phone's own affordability and guardrail answers stay: they
+            // come from the person's plan, not from a guess about words.
+            if (local.intent != AssistantIntent.canIBuy &&
+                local.intent != AssistantIntent.guardrailAdvice) {
+              answer = AssistantResponse(
+                intent: AssistantIntent.outOfScope,
+                replyText: kAssistantScope.reply(arabic: asked.arabic),
+              );
+            }
           } else if (reply.text != null) {
             answer = local.withText(reply.text!, ResponseSource.llm);
           } else {

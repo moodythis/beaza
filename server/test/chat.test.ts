@@ -339,6 +339,13 @@ describe('judgeReply', () => {
     const facts = ['Left in the budget to the end of the month: BHD 76.224'];
     const q = ['if I spend 300 BD on a phone, what is left?'];
     assert.equal(judgeReply('You would be over by BHD 223.776.', facts, q).kind, 'answer');
+    // Decimals and a plain number work too; another currency, typed-minus-typed
+    // and a zero result do not.
+    assert.equal(judgeReply('Over by BHD 223.776.', facts, ['if I spend 300 on a phone']).kind, 'answer');
+    assert.equal(judgeReply('You would have BHD 72.724 left.', facts, ['if I spend 3.5 BD']).kind, 'answer');
+    assert.equal(judgeReply('Over by BHD 223.776.', facts, ['if I spend 300 USD']).kind, 'rejected');
+    assert.equal(judgeReply('BHD 200.000 is the gap.', facts, ['300 BD minus 100 BD']).kind, 'rejected');
+    assert.equal(judgeReply('BHD 0.000 left.', facts, ['if I spend 76.224 BD']).kind, 'rejected');
     // Not an amount nobody asked about, nor without the person naming one.
     assert.deepEqual(judgeReply('You would be over by BHD 223.777.', facts, q), { kind: 'rejected', reason: 'unchecked_number' });
     assert.deepEqual(judgeReply('You would be over by BHD 223.776.', facts, ['what is left?']), { kind: 'rejected', reason: 'unchecked_number' });

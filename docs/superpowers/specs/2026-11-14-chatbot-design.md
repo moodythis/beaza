@@ -53,8 +53,11 @@ Phone (`AskViewModel`):
    count), month categories and shops, today's spent/limit, and the numbers the
    rules computed for this question (`metrics`: key and display text only).
 4. Show the reply; mark it as Gemini's. If there is no reply (consent off,
-   network, busy, number guard, refusal) show the local reply; a refusal shows
-   the scope message.
+   network, busy, number guard) show the local reply. A refusal shows the scope
+   message, except for "can I buy it" and guardrail advice, whose rules answers
+   come from the person's plan and stay. Trade-off: a wrongly refused spending
+   question loses its rules answer; a right refusal no longer shows a rules
+   answer to a question that was not asked (e.g. "gold price today").
 
 Server (`POST /v1/chat`, `server/src/chat.ts`):
 - Strict field validation (reuses the coach validators), own consent version.
@@ -65,8 +68,10 @@ Server (`POST /v1/chat`, `server/src/chat.ts`):
 - The model answers or replies exactly `out_of_scope`.
 - Reply is kept only if: not a refusal; at most 500 characters; no link, code
   fence or markdown list; every number is in the facts, the metrics or the
-  question, or is the difference between a money amount in the facts and a
-  money amount the person typed ("if I spend 300 BD"). Otherwise `answer: null` with a reason.
+  question, or is the difference between a money amount in the facts and an
+  amount typed in the current question ("if I spend 300 BD"; not when another
+  currency is written). Known limit: only the size of the difference is
+  checked, not whether the reply says "left" or "over". Otherwise `answer: null` with a reason.
 - Limits: the per-caller AI share (shared with the other AI calls) and its own
   daily cap (`CHAT_DAILY_CAP`), counted apart from the savings plan so chat
   cannot use up the plan's allowance. Nothing stored except counters.
