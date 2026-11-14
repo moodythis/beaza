@@ -100,7 +100,13 @@ void main() {
   test('"كم يبقى" after an amount in dinars is a what-if, in dollars it is not', () {
     expect(a.answerLocally('لو صرفت 5 دنانير كم يبقى؟', const []).intent,
         AssistantIntent.canIBuy);
-    expect(a.answerLocally('لو صرفت 300 دولار كم يبقى؟', const []).intent,
-        isNot(AssistantIntent.canIBuy));
+    final usd = a.answerLocally('لو صرفت 300 دولار كم يبقى؟', const []);
+    expect(usd.intent, AssistantIntent.outOfScope);
+    expect(usd.replyText, contains('بالدينار البحريني'));
+    final en = a.answerLocally('if I spend 300 USD what is left?', const []);
+    expect(en.replyText, contains('Bahraini dinars'));
+    // An amount in dinars next to a dollar one is still answered.
+    expect(a.answerLocally('لو صرفت 5 دنانير كم يبقى؟', const []).intent,
+        AssistantIntent.canIBuy);
   });
 }

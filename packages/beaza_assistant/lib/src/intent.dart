@@ -234,6 +234,9 @@ class IntentDetector {
         money.findAll(tokens).isNotEmpty;
   }
 
+  /// The text has an amount only in another currency ("300 دولار").
+  bool onlyOtherCurrency(String text) => money.onlyOtherCurrency(tokenize(text));
+
   ParsedRequest detect(String text) {
     final tokens = tokenize(text);
     final arabic = isArabic(text);

@@ -169,6 +169,15 @@ class BeazaAiAssistant {
   AssistantResponse answerLocally(String text, Iterable<LedgerEntry> entries,
       {String? previous, AffordFacts? afford}) {
     var req = detector.detect(text);
+    // Only dinars and fils are counted: say so instead of guessing.
+    if (detector.onlyOtherCurrency(text)) {
+      return AssistantResponse(
+        intent: AssistantIntent.outOfScope,
+        replyText: req.arabic
+            ? 'أحسب بالدينار البحريني بس. اكتب المبلغ بالدينار.'
+            : 'I only count in Bahraini dinars. Please write the amount in dinars.',
+      );
+    }
     if (previous != null &&
         req.periodGiven &&
         req.category == null &&

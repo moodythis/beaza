@@ -136,6 +136,21 @@ class BahrainiMoneyParser {
     return all.length == 1 ? all.single.fils : null;
   }
 
+  /// A number written next to another currency ("300 دولار") and no
+  /// amount in dinars or fils: the question is about money in a currency the
+  /// app does not count.
+  bool onlyOtherCurrency(List<String> tokens) {
+    if (findAll(tokens).isNotEmpty) return false;
+    for (var i = 0; i < tokens.length; i++) {
+      if (!isNumberToken(tokens[i])) continue;
+      if ((i + 1 < tokens.length && _isOtherCurrency(tokens[i + 1])) ||
+          (i > 0 && _isOtherCurrency(tokens[i - 1]))) {
+        return true;
+      }
+    }
+    return false;
+  }
+
   /// Every amount in [tokens] (from [tokenize]), left to right.
   List<MoneyMatch> findAll(List<String> tokens) {
     final out = <MoneyMatch>[];
