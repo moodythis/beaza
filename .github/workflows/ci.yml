@@ -118,6 +118,8 @@ jobs:
   app:
     name: Flutter app (analyze, test, build APK)
     runs-on: ubuntu-latest
+    permissions:
+      contents: write
     defaults:
       run:
         working-directory: app
@@ -220,3 +222,16 @@ jobs:
           name: beaza-apk
           path: app/build/app/outputs/flutter-apk/app-release.apk
           retention-days: 14
+      # On main only: the same APK as a release, a direct download link that
+      # opens on the phone (the artifact above needs the Actions page).
+      - name: Publish APK as the latest release
+        if: github.ref == 'refs/heads/main' && github.event_name == 'push'
+        env:
+          GH_TOKEN: ${{ github.token }}
+        working-directory: .
+        run: |
+          cp app/build/app/outputs/flutter-apk/app-release.apk beaza.apk
+          gh release delete latest-apk --cleanup-tag --yes 2>/dev/null || true
+          gh release create latest-apk beaza.apk --target "$GITHUB_SHA" \
+            --title "Beaza APK (build ${{ github.run_number }})" \
+            --notes "Built from $GITHUB_SHA by CI run ${{ github.run_number }}. For testing."
