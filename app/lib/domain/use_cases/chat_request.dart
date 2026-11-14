@@ -30,7 +30,20 @@ const Set<String> _sharedBuckets = {
 };
 
 final RegExp _keyOk = RegExp(r'^[a-z][a-z0-9_]{0,39}$');
-final RegExp _displayOk = RegExp(r'^[0-9A-Za-z؀-ۿ.\- +]{1,40}$');
+/// A number as the phone writes it (server: DISPLAY): never free text.
+final RegExp _displayOk =
+    RegExp(r'^-?(?:BHD )?\d{1,9}(?:\.\d{1,3})?(?: (?:fils|فلس|د\.ب))?$');
+
+/// Digit runs of seven or more in any script, and a short number after a
+/// card or account word, which the shared sanitizer only covers for
+/// Western digits.
+final RegExp _anyLongNumber = RegExp(
+    r'[0-9٠-٩۰-۹](?:[\s-]?[0-9٠-٩۰-۹]){6,}');
+final RegExp _anyCardNumber = RegExp(
+  r'(visa|master|mada|card|account|iban|acc|بطاق[هة]|حساب|رقم|فيزا|ماستر)\D{0,6}[0-9٠-٩۰-۹Xx*]{3,}',
+  caseSensitive: false,
+  unicode: true,
+);
 final RegExp _bucketInKey = RegExp(r'^(?:bucket|trim)_(.+?)(?:_fils|_percent)$');
 
 /// The person's question as it may be sent: contact and account details
