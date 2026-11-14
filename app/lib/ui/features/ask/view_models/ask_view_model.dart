@@ -10,7 +10,8 @@ import 'package:flutter/foundation.dart';
 
 /// One question and its answer on the questions screen.
 class AskTurn {
-  AskTurn(this.question, this.answer, {this.chatFailed = false});
+  AskTurn(this.question, this.answer,
+      {this.chatFailed = false, this.mayBeSent = false});
 
   final String question;
   final AssistantResponse answer;
@@ -19,6 +20,10 @@ class AskTurn {
   /// busy, or its reply failed the number check), so [answer] is the
   /// phone's own.
   final bool chatFailed;
+
+  /// The phone judged the question to be about the person's spending, so it
+  /// could be sent to Gemini (and, if "Smarter answers" was on, was).
+  final bool mayBeSent;
 
   /// Gemini wrote [answer], from numbers the phone worked out.
   bool get viaChat => answer.source == ResponseSource.llm;
@@ -139,9 +144,8 @@ class AskViewModel extends ChangeNotifier {
     final previous = _turns.isEmpty ? null : _turns.last.question;
     // The question before is sent along only if it was itself one that may
     // be sent: not a turned-away question, not a cash expense.
-    final previousForChat = _turns.isEmpty || !_mayBeSent(_turns.last.answer)
-        ? null
-        : _turns.last.question;
+    final previousForChat =
+        _turns.isEmpty || !_turns.last.mayBeSent ? null : _turns.last.question;
     final asked = assistant.detector.detect(q);
     final price = asked.priceFils;
     final afford = _afford;
@@ -157,9 +161,11 @@ class AskViewModel extends ChangeNotifier {
     var answer = local;
     var failed = false;
     final chat = _chat;
-    // A question that is not about spending, and a cash expense said in
-    // words, are answered on the phone and never sent.
-    if (_chatOn && chat != null && _mayBeSent(local)) {
+    // A question that is not about spending, text the rules do not take to
+    // be about money, and a cash expense said in words are answered on the
+    // phone and never sent.
+    final eligible = _mayBeSent(local, asked.aboutMoney);
+    if (_chatOn && chat != null && eligible) {
       final request = chatRequest(
         entries: entries,
         settings: await _settings.load(),
@@ -193,13 +199,23 @@ class AskViewModel extends ChangeNotifier {
         }
       }
     }
-    _turns.add(AskTurn(q, answer, chatFailed: failed));
+    _turns.add(AskTurn(q, answer, chatFailed: failed, mayBeSent: eligible));
     _changed();
   }
 
-  static bool _mayBeSent(AssistantResponse a) =>
-      a.intent != AssistantIntent.outOfScope &&
-      a.intent != AssistantIntent.logExpense;
+  /// Only a question the phone's own rules take to be about spending may be
+  /// sent: not a turned-away question, not a cash expense said in words, and
+  /// not text the rules did not understand unless it has a money word or an
+  /// amount (what is left is whatever the person typed).
+  static bool _mayBeSent(AssistantResponse a, bool aboutMoney) =>
+      switch (a.intent) {
+        AssistantIntent.spendingQuery ||
+        AssistantIntent.guardrailAdvice ||
+        AssistantIntent.canIBuy =>
+          true,
+        AssistantIntent.unknown => aboutMoney,
+        AssistantIntent.outOfScope || AssistantIntent.logExpense => false,
+      };
 
   /// Saves the drafts of one answer (cash spending said in words).
   Future<void> add(AskTurn turn) async {

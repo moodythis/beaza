@@ -276,11 +276,16 @@ void main() {
 
     test('a question that is not about spending never leaves the phone', () async {
       final (vm, chat, _) = await make();
-      await vm.ask('what is the capital of France');
+      await vm.ask('what is the capital of France?');
+      expect(vm.turns.single.answer.intent, AssistantIntent.outOfScope);
+      expect(vm.turns.single.answer.replyText,
+          kAssistantScope.reply(arabic: false));
+      // Text the rules did not understand, with no money word, is not sent
+      // either: it could be anything the person typed.
       await vm.ask('ما هي عاصمة فرنسا');
+      await vm.ask('my secret diary: I met Sara');
       expect(chat.sent, isEmpty);
-      expect(vm.turns.every((t) => t.answer.intent == AssistantIntent.outOfScope), isTrue);
-      expect(vm.turns.first.answer.replyText, kAssistantScope.reply(arabic: false));
+      expect(vm.turns.every((t) => !t.mayBeSent), isTrue);
     });
 
     test('a cash expense said in words is not sent', () async {
