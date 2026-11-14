@@ -321,10 +321,20 @@ void main() {
       expect(r.timestamp, DateTime.utc(2026, 11, 2, 21, 41));
     });
 
-    test('other banks are not moved', () {
+    test('ila also prints the previous day after midnight: the date is moved on', () {
+      // Real message, 14 November 2026 at 00:23 Bahrain time (balance masked).
       final r = run(
           'ilabank',
-          'Success! Purchase at SAMPLE SHOP using card ****8855 for BHD 1.500 on 02/11/2026 00:30 debited from BHD Ac Balance BHD 9.999 Enquiry 17123456',
+          'Success! Purchase at CHICKET - MADINAT HAMA using card ****2990 for BHD 12.460 on 13/11/2026 00:23 debited from BHD Ac Balance BHD 9.999 Enquiry 17123456',
+          DateTime.utc(2026, 11, 13, 21, 23));
+      expect(r.amountFils, 12460);
+      expect(r.timestamp, DateTime.utc(2026, 11, 13, 21, 23));
+    });
+
+    test('banks that print the right date are not moved', () {
+      final r = run(
+          'AlSalamBank',
+          'Dear Client, BHD 1.000 has been debited from your account XXXX10100777. Your balance is BHD 9.999 on 02/11/26 at 00:30. Thank you, Al Salam Bank.',
           DateTime.utc(2026, 11, 2, 21, 31));
       expect(r.timestamp, DateTime.utc(2026, 11, 1, 21, 30));
     });

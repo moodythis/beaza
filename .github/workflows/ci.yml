@@ -205,7 +205,7 @@ jobs:
       - name: Build APK (arm64)
         env:
           BEAZA_KEYSTORE_PASSWORD: ${{ secrets.BEAZA_KEYSTORE_PASSWORD }}
-        run: flutter build apk --release --no-shrink --target-platform android-arm64
+        run: flutter build apk --release --no-shrink --target-platform android-arm64 --dart-define=BEAZA_BUILD=${{ github.run_number }}-${{ github.sha }}
       - name: List APK permissions
         run: |
           AAPT="$(ls -d "$ANDROID_HOME"/build-tools/*/ | sort -V | tail -1)aapt"

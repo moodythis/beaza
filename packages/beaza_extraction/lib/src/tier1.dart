@@ -164,6 +164,9 @@ class Tier1Extractor {
         caseSensitive: false,
       ),
       hasMerchant: true,
+      // Like NBB, ila prints the previous day's date after midnight (a
+      // purchase on 14 November at 00:23 read "13/11/2026 00:23").
+      dateLagsAfterMidnight: true,
     ),
     _Template(
       'ila.fawri.in',
@@ -176,6 +179,7 @@ class Tier1Extractor {
             r' Ref (?<ref>\w+)',
         caseSensitive: false,
       ),
+      dateLagsAfterMidnight: true,
     ),
     _Template(
       'ila.fawri.out',
@@ -188,6 +192,7 @@ class Tier1Extractor {
             r' Ref (?<ref>\w+)',
         caseSensitive: false,
       ),
+      dateLagsAfterMidnight: true,
     ),
     // ---- Al Salam ----
     _Template(

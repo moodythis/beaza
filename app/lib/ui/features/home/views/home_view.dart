@@ -37,6 +37,10 @@ import 'package:beaza_assistant/beaza_assistant.dart' show AffordFacts;
 import 'package:beaza_extraction/beaza_extraction.dart';
 import 'package:flutter/material.dart';
 
+/// CI run number and commit of this build, shown so a tester can tell
+/// which APK is installed. Empty in local builds.
+const String _build = String.fromEnvironment('BEAZA_BUILD');
+
 /// Home: spent versus limit, what is left, micro-expenses and today's list.
 class HomeView extends StatelessWidget {
   const HomeView({
@@ -387,6 +391,17 @@ class HomeView extends StatelessWidget {
                     entry: entry,
                     onTap: () => _chooseCategory(context, entry),
                   ),
+                          if (_build.isNotEmpty)
+                Padding(
+                  padding: const EdgeInsets.only(top: 16),
+                  child: Text(
+                    'build $_build',
+                    key: const Key('buildStamp'),
+                    textAlign: TextAlign.center,
+                    textDirection: TextDirection.ltr,
+                    style: Theme.of(context).textTheme.labelSmall,
+                  ),
+                ),
             ].indexed.map((x) => Rise(index: x.$1, child: x.$2)).toList(),
           );
         },
