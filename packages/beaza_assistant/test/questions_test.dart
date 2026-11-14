@@ -96,4 +96,11 @@ void main() {
     expect(a.answerLocally('إذا دفعت 3 دينار شنو يصير؟', entries).intent,
         AssistantIntent.canIBuy);
   });
+
+  test('"كم يبقى" after an amount in dinars is a what-if, in dollars it is not', () {
+    expect(a.answerLocally('لو صرفت 5 دنانير كم يبقى؟', const []).intent,
+        AssistantIntent.canIBuy);
+    expect(a.answerLocally('لو صرفت 300 دولار كم يبقى؟', const []).intent,
+        isNot(AssistantIntent.canIBuy));
+  });
 }

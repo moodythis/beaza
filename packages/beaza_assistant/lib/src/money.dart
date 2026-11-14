@@ -88,8 +88,22 @@ const Set<String> _notMoneyAfter = {
 const Set<String> _otherCurrency = {
   'دولار', 'دولارات', 'دولارين', 'ريال', 'ريالات', 'ريالين', 'درهم', 'دراهم', //
   'يورو', 'dollar', 'dollars', 'usd', 'kd', 'sar', 'aed', 'eur', 'euro', //
-  'euros', 'riyal', 'riyals', 'dirham', 'dirhams', r'$', '€', '£',
+  'euros', 'riyal', 'riyals', 'dirham', 'dirhams', r'$', '€', '£', 'bucks', //
+  'buck', 'دولارا', 'ريالا',
 };
+
+/// [w] is another currency, with a joined "ب", "ال" or "و" ("بالدولار").
+bool _isOtherCurrency(String w) {
+  if (_otherCurrency.contains(w)) return true;
+  for (final p in const ['وبال', 'بال', 'وال', 'ال', 'وب', 'ب', 'و', 'ل']) {
+    if (w.length > p.length + 1 &&
+        w.startsWith(p) &&
+        _otherCurrency.contains(w.substring(p.length))) {
+      return true;
+    }
+  }
+  return false;
+}
 
 enum _Unit { dinar, rupee, fils }
 
@@ -205,6 +219,10 @@ class BahrainiMoneyParser {
       }
       switch (unit) {
         case _Unit.dinar:
+          // "20 دينار كويتي" is Kuwaiti dinars, not Bahraini.
+          if (i + 2 < t.length && const {'كويتي', 'kuwaiti'}.contains(t[i + 2])) {
+            return null;
+          }
           final f = number != null ? decimalToFils(number) : whole! * 1000;
           return f == null ? null : _fraction(t, i + 2, f);
         case _Unit.rupee:
@@ -213,8 +231,8 @@ class BahrainiMoneyParser {
           return whole == null ? null : _Part(whole, i + 2);
         case null:
           if (number == null || !allowBare) return null;
-          if ((i + 1 < t.length && _otherCurrency.contains(t[i + 1])) ||
-              (i > 0 && _otherCurrency.contains(t[i - 1]))) {
+          if ((i + 1 < t.length && _isOtherCurrency(t[i + 1])) ||
+              (i > 0 && _isOtherCurrency(t[i - 1]))) {
             return null;
           }
           return _bare(t, i, number);

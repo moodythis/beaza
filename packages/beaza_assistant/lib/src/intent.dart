@@ -14,7 +14,7 @@ enum Topic { coffee, delivery }
 /// What a spending question asks for, beyond a plain total.
 enum QueryKind { total, biggest, topShop, compare, average, projection, overLimit }
 
-const Set<String> _biggestWords = {'اكبر', 'اغلى', 'biggest', 'largest', 'expensive'};
+const Set<String> _biggestWords = {'اكبر', 'اغلى', 'اغلي', 'biggest', 'largest', 'expensive'};
 const Set<String> _shopWords = {'محل', 'محلات', 'مكان', 'shop', 'shops', 'store', 'stores', 'place'};
 const Set<String> _mostWords = {'اكثر', 'most', 'often', 'وايد'};
 const Set<String> _compareWords = {'قارن', 'مقارنه', 'compare', 'compared', 'vs', 'than'};
@@ -133,7 +133,7 @@ const Set<String> _question = {
 
 /// "If ...": a what-if, never an expense to add.
 const Set<String> _conditional = {'لو', 'اذا', 'if'};
-const Set<String> _outcome = {'يصير', 'بيصير', 'يبقى', 'يظل', 'يقه', 'happens', 'happen'};
+const Set<String> _outcome = {'يصير', 'بيصير', 'يبقى', 'يبقي', 'يظل', 'يقه', 'happens', 'happen'};
 
 /// Words of a question that are never part of a shop's name.
 final Set<String> _questionVocabulary = {
@@ -163,7 +163,7 @@ const Set<String> _advice = {
   'advice', 'tip', 'tips', 'save', 'saving', 'coach',
 };
 const Set<String> _remaining = {
-  'باقي', 'باقيلي', 'يتبقى', 'تبقى', 'متبقي', 'حدي', 'حد', 'limit', //
+  'باقي', 'باقيلي', 'يتبقى', 'تبقى', 'يتبقي', 'تبقي', 'متبقي', 'حدي', 'حد', 'limit', //
   'left', 'remaining',
 };
 const Set<String> _breakdown = {

@@ -10,11 +10,21 @@ void main() {
         expect(p.parse(t), isNull, reason: t);
       }
       expect(p.parse('300 دينار'), 300000);
+      for (final t in ['300 دولارا', '300 بالدولار', '100 bucks', '20 دينار كويتي']) {
+        expect(p.parse(t), isNull, reason: t);
+      }
+    });
+
+    test('amounts written without spaces, and short words with digits, stay', () {
+      expect(p.parse('starbucks2bd'), 2000);
+      expect(p.parse('karak200fils'), 200);
+      expect(p.parse('bd12 taxi from home'), 12000);
+      expect(p.parse('carrefour25bd'), 25000);
     });
 
     test('an IBAN or other long reference gives no amount', () {
       for (final t in ['حوّل لي على ايبان BH67BMAG00001299123456', 'ref A1B2C3D4E5F6 paid', 'حول على BH67 BMAG 0000 1299 1234 56']) {
-        expect(p.parse(t), isNull, reason: t);
+        expect(p.findAll(tokenize(t)), isEmpty, reason: t);
       }
       expect(p.parse('عشا 4 دنانير ورقم الطلب BH67BMAG00001299123456'), 4000);
     });

@@ -2,6 +2,7 @@ import 'package:beaza/data/repositories/ledger_repository.dart';
 import 'package:beaza/data/repositories/preferences_store.dart';
 import 'package:beaza/data/repositories/settings_repository.dart';
 import 'package:beaza/data/services/chat_api.dart';
+import 'package:beaza/data/services/coach_api.dart' show CoachException;
 import 'package:beaza/domain/use_cases/chat_request.dart';
 import 'package:beaza/domain/use_cases/daily_budget.dart';
 import 'package:beaza_assistant/beaza_assistant.dart';
@@ -213,10 +214,12 @@ class AskViewModel extends ChangeNotifier {
             failed = true;
             reason = reply.reason;
           }
-        } catch (_) {
+        } catch (e) {
           // Offline, busy or refused: the phone's own answer is already right.
           failed = true;
-          reason = 'offline';
+          reason = e is CoachException && (e.code == 'network' || e.code == 'timeout')
+              ? 'offline'
+              : null;
         } finally {
           _pending = null;
         }

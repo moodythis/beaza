@@ -389,7 +389,9 @@ void main() {
         chat.handler = (_) async => throw CoachException(code);
         await vm.ask('كم صرفت هالأسبوع؟');
         expect(vm.turns.single.chatFailed, isTrue, reason: code);
-        expect(vm.turns.single.chatReason, 'offline', reason: code);
+        expect(vm.turns.single.chatReason,
+            code == 'network' || code == 'timeout' ? 'offline' : isNull,
+            reason: code);
         expect(vm.pending, isNull);
       }
     });
