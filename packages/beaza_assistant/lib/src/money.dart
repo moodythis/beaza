@@ -387,7 +387,8 @@ class BahrainiMoneyParser {
     if (dinarWord != null &&
         ((i > 0 && isNumberToken(t[i - 1])) ||
             (i + 1 < t.length &&
-                (_kuwaiti.contains(t[i + 1]) || _otherDinar.contains(t[i + 1])))) {
+                (_kuwaiti.contains(t[i + 1]) ||
+                    _otherDinar.contains(t[i + 1]))))) {
       return null;
     }
     if (dinarWord != null) return _fraction(t, i + 1, _dinarWords[dinarWord]!);
