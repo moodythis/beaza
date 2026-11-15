@@ -373,6 +373,17 @@ void main() {
       expect(chat.sent.single.containsKey('previous_question'), isFalse);
     });
 
+    test('a what-if in another currency is answered on the phone, not sent', () async {
+      final (vm, chat, _) = await make();
+      await vm.ask('لو صرفت 300 دولار كم يبقى؟');
+      expect(chat.sent, isEmpty);
+      final turn = vm.turns.single;
+      expect(turn.answer.intent, AssistantIntent.canIBuy);
+      expect(turn.answer.replyText, contains('112.800'));
+      expect(turn.viaChat, isFalse);
+      expect(turn.mayBeSent, isFalse);
+    });
+
     test('no answer from Gemini keeps the phone\'s answer and says so', () async {
       final (vm, chat, _) = await make();
       chat.reply = const ChatAnswer(reason: 'unchecked_number');

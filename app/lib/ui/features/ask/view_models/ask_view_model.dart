@@ -176,7 +176,11 @@ class AskViewModel extends ChangeNotifier {
     // A question that is not about spending, text the rules do not take to
     // be about money, and a cash expense said in words are answered on the
     // phone and never sent.
-    final eligible = _mayBeSent(local, asked.aboutMoney);
+    // A what-if in another currency is answered exactly on the phone: Gemini
+    // cannot check the conversion or subtract from it.
+    final converted = local.intent == AssistantIntent.canIBuy &&
+        assistant.conversionNote(q) != null;
+    final eligible = !converted && _mayBeSent(local, asked.aboutMoney);
     final chatWasOn = _chatOn;
     if (_chatOn && chat != null && eligible) {
       final request = chatRequest(

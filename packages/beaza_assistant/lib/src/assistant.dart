@@ -196,10 +196,10 @@ class BeazaAiAssistant {
     final name = ar ? _currencyAr[m.currency] : m.currency;
     if (ar) {
       return 'حسبت ${m.original} $name بالدينار البحريني: ${about ? 'تقريبًا ' : ''}$amount'
-          '${about ? ' (سعر $kKwdRateDate)' : ''}';
+          '${about ? ' (سعر $kKwdRateDateAr)' : ''}';
     }
     return 'I counted ${m.original} $name as ${about ? 'about ' : ''}$amount'
-        '${about ? ' (rate of $kKwdRateDate)' : ''}';
+        '${about ? ' (rate of $kKwdRateDateEn)' : ''}';
   }
 
   static const Map<String, String> _currencyAr = {

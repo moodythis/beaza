@@ -115,7 +115,7 @@ void main() {
     expect(kwd.intent, AssistantIntent.canIBuy);
     expect(kwd.replyText, contains('تقريبًا'));
     expect(kwd.replyText, contains('24.146'));
-    expect(kwd.replyText, contains('2026-11-15'));
+    expect(kwd.replyText, contains('15 نوفمبر 2026'));
     // A ledger question that mentions a foreign amount carries no note.
     final ledger = a.answerLocally('كم صرفت على سبوتيفاي؟ 5 دولار اشتراكي', const []);
     expect(ledger.replyText, isNot(contains('حسبت')));

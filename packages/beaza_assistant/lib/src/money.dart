@@ -129,8 +129,9 @@ const Map<String, (int, int)> kForeignFilsPerUnit = {
   'KWD': (12073, 10),
 };
 
-/// The day the Kuwaiti dinar rate was taken.
-const String kKwdRateDate = '2026-11-15';
+/// The day the Kuwaiti dinar rate was taken, as the reply shows it.
+const String kKwdRateDateEn = '15 Nov 2026';
+const String kKwdRateDateAr = '15 نوفمبر 2026';
 
 /// The currencies whose rate is not fixed: the reply says "about".
 const Set<String> kApproximateCurrencies = {'KWD'};
