@@ -9,6 +9,7 @@ import 'analytics.dart';
 import 'expense.dart';
 import 'intent.dart';
 import 'llm.dart';
+import 'money.dart';
 import 'response.dart';
 import 'sanitizer.dart';
 import 'scope.dart';
@@ -168,14 +169,50 @@ class BeazaAiAssistant {
   /// a "can I buy it?" question is answered from the daily limit alone.
   AssistantResponse answerLocally(String text, Iterable<LedgerEntry> entries,
       {String? previous, AffordFacts? afford}) {
+    final answer = _answerLocally(text, entries, previous: previous, afford: afford);
+    if (answer.intent == AssistantIntent.outOfScope ||
+        answer.intent == AssistantIntent.unknown) {
+      return answer;
+    }
+    // Say how another currency was turned into dinars.
+    final ar = isArabic(text);
+    final notes = [
+      for (final m in detector.money.findAll(tokenize(text)))
+        if (m.currency != null) _conversionNote(m, ar),
+    ];
+    if (notes.isEmpty) return answer;
+    return answer.withText('${notes.join(ar ? ' و' : ', ')}. ${answer.replyText}',
+        answer.source);
+  }
+
+  String _conversionNote(MoneyMatch m, bool ar) {
+    final about = kApproximateCurrencies.contains(m.currency);
+    final amount = formatMoney(m.fils, arabic: ar);
+    final name = ar ? _currencyAr[m.currency] : m.currency;
+    if (ar) {
+      return 'حسبت ${m.original} $name بالدينار: ${about ? 'تقريبًا ' : ''}$amount';
+    }
+    return 'I counted ${m.original} $name as ${about ? 'about ' : ''}$amount';
+  }
+
+  static const Map<String, String> _currencyAr = {
+    'USD': 'دولار',
+    'SAR': 'ريال سعودي',
+    'AED': 'درهم',
+    'QAR': 'ريال قطري',
+    'KWD': 'دينار كويتي',
+  };
+
+  AssistantResponse _answerLocally(String text, Iterable<LedgerEntry> entries,
+      {String? previous, AffordFacts? afford}) {
     var req = detector.detect(text);
     // Only dinars and fils are counted: say so instead of guessing.
     if (detector.onlyOtherCurrency(text)) {
       return AssistantResponse(
         intent: AssistantIntent.outOfScope,
         replyText: req.arabic
-            ? 'أحسب بالدينار البحريني بس، اكتب لي المبلغ بالدينار.'
-            : 'I only count in Bahraini dinars. Please write the amount in dinars.',
+            ? 'أحسب بالدينار البحريني، وأحوّل الدولار والريال السعودي والريال القطري والدرهم والدينار الكويتي. بالعملات الثانية اكتب لي المبلغ بالدينار.'
+            : 'I count in Bahraini dinars and convert dollars, Saudi and Qatari riyals, dirhams and Kuwaiti dinars. For other currencies please write the amount in dinars.',
       );
     }
     if (previous != null &&

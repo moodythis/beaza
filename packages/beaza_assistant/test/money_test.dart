@@ -4,17 +4,50 @@ import 'package:test/test.dart';
 void main() {
   const p = BahrainiMoneyParser();
 
-  group('not dinars', () {
-    test('a number next to another currency is not an amount', () {
-      for (final t in ['300 دولار', 'لو صرفت 300 دولار', '300 USD', '\$300', '300 ريال', '25 dollars', 'KD 20']) {
+  group('other currencies', () {
+    test('the pegged ones and the Kuwaiti dinar are converted to fils', () {
+      final cases = {
+        '300 دولار': 112800,
+        '300 USD': 112800,
+        '\$300': 112800,
+        '300\$': 112800,
+        'US\$300': 112800,
+        '100 bucks': 37600,
+        '300 بالدولار': 112800,
+        '20.5 دولار': 7708,
+        '100 ريال': 10027,
+        '100 ريال سعودي': 10027,
+        '100 SAR': 10027,
+        '100 ريال قطري': 10330,
+        '100 QAR': 10330,
+        '100 درهم': 10238,
+        '100 AED': 10238,
+        '20 دينار كويتي': 24146,
+        'KD 20': 24146,
+        '20 KWD': 24146,
+      };
+      cases.forEach((text, fils) {
+        expect(p.parse(text), fils, reason: text);
+      });
+      final m = p.findAll(tokenize('300 دولار')).single;
+      expect(m.currency, 'USD');
+      expect(m.original, '300');
+      expect(m.guessed, isFalse);
+    });
+
+    test('a riyal that is not Saudi or Qatari, and other currencies, are not an amount', () {
+      for (final t in ['300 ريال عماني', '300 يورو', '25 euros', '100 pounds', '20 جنيه', 'EUR 20']) {
         expect(p.parse(t), isNull, reason: t);
       }
       expect(p.parse('300 دينار'), 300000);
-      for (final t in ['300 دولارا', '300 بالدولار', '100 bucks', '20 دينار كويتي']) {
-        expect(p.parse(t), isNull, reason: t);
-      }
     });
 
+    test('dinars written next to dollars are two amounts, not one', () {
+      expect(p.findAll(tokenize('5 دنانير و 300 دولار')), hasLength(2));
+    });
+  });
+
+  group('references', () {
     test('amounts written without spaces, and short words with digits, stay', () {
       expect(p.parse('starbucks2bd'), 2000);
       expect(p.parse('karak200fils'), 200);

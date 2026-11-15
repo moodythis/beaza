@@ -97,32 +97,43 @@ void main() {
         AssistantIntent.canIBuy);
   });
 
-  test('"كم يبقى" after an amount in dinars is a what-if, in dollars it is not', () {
+  test('"كم يبقى" after an amount in dinars is a what-if', () {
     expect(a.answerLocally('لو صرفت 5 دنانير كم يبقى؟', const []).intent,
         AssistantIntent.canIBuy);
+  });
+
+  test('another currency is converted and the answer says how', () {
     final usd = a.answerLocally('لو صرفت 300 دولار كم يبقى؟', const []);
-    expect(usd.intent, AssistantIntent.outOfScope);
-    expect(usd.replyText, contains('بالدينار البحريني'));
-    final en = a.answerLocally('if I spend 300 USD what is left?', const []);
-    expect(en.replyText, contains('Bahraini dinars'));
-    // Dinars next to a dollar amount are still answered; a stray bare
-    // number does not hide the dollar amount; Kuwaiti dinars and US$ count
-    // as another currency.
-    expect(
-        a.answerLocally('لو صرفت 5 دنانير بدل 300 دولار كم يبقى؟', const []).intent,
-        AssistantIntent.canIBuy);
+    expect(usd.intent, AssistantIntent.canIBuy);
+    expect(usd.replyText, contains('112.800'));
+    expect(usd.replyText, contains('300 دولار'));
+    final kwd = a.answerLocally('لو صرفت 20 دينار كويتي كم يبقى؟', const []);
+    expect(kwd.intent, AssistantIntent.canIBuy);
+    expect(kwd.replyText, contains('تقريبًا'));
+    expect(kwd.replyText, contains('24.146'));
+    final en = a.answerLocally('if I spend 100 AED what is left?', const []);
+    expect(en.intent, AssistantIntent.canIBuy);
+    expect(en.replyText, contains('BHD 10.238'));
+    final log = a.answerLocally('اشتريت قهوة 5 دولار', const []);
+    expect(log.intent, AssistantIntent.logExpense);
+    expect(log.draftTransactions.single.amountFils, 1880);
+    expect(log.draftTransactions.single.amountGuessed, isTrue);
+  });
+
+  test('a currency that is not converted gets the dinars message, never a guess', () {
     for (final q in [
-      'لو صرفت 300 دولار على 2 تذاكر كم يبقى؟',
-      'لو صرفت 20 دينار كويتي كم يبقى؟',
-      'if I spend US\$300 what is left?',
-      'اشتريت قهوة 5 دولار',
+      'لو صرفت 300 يورو كم يبقى؟',
+      'لو صرفت 300 ريال عماني كم يبقى؟',
+      'if I spend 300 EUR what is left?',
+      'لو صرفت 20 جنيه كم يبقى؟',
     ]) {
-      expect(a.answerLocally(q, const []).intent, AssistantIntent.outOfScope,
-          reason: q);
+      final r = a.answerLocally(q, const []);
+      expect(r.intent, AssistantIntent.outOfScope, reason: q);
+      expect(r.replyText, contains('الدينار'), reason: q);
     }
-    // A question about the ledger that mentions a dollar amount is answered.
+    // A question about the ledger that mentions one is answered.
     expect(
-        a.answerLocally('كم صرفت على سبوتيفاي؟ 5 دولار اشتراكي', const []).intent,
+        a.answerLocally('كم صرفت على سبوتيفاي؟ 5 يورو اشتراكي', const []).intent,
         isNot(AssistantIntent.outOfScope));
   });
 }
