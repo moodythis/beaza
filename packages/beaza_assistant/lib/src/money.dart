@@ -112,21 +112,25 @@ bool _isOtherCurrency(String w) {
   return false;
 }
 
-/// Milli-fils (thousandths of a fil) for one unit of a neighbouring currency.
+/// Fils per unit of a neighbouring currency, as a fraction (numerator,
+/// denominator) so the pegs are exact.
 ///
 /// The dollar, riyal, dirham and Qatari riyal are pegged to the US dollar,
 /// and the dinar is pegged at 1 USD = 0.376 BHD, so these four are fixed:
 /// 1 USD = 376 fils, 1 SAR = 376 / 3.75, 1 AED = 376 / 3.6725, 1 QAR =
 /// 376 / 3.64. The Kuwaiti dinar is not pegged to one currency: 1 KWD =
 /// 1.2073 BHD on 15 Nov 2026 (moneyconvert.net, mid-market). It moves a
-/// little, so a reply that uses it says "about".
-const Map<String, int> kForeignMilliFils = {
-  'USD': 376000,
-  'SAR': 100267,
-  'AED': 102383,
-  'QAR': 103297,
-  'KWD': 1207300,
+/// little, so a reply that uses it says "about" and gives the date.
+const Map<String, (int, int)> kForeignFilsPerUnit = {
+  'USD': (376, 1),
+  'SAR': (1504, 15),
+  'AED': (150400, 1469),
+  'QAR': (9400, 91),
+  'KWD': (12073, 10),
 };
+
+/// The day the Kuwaiti dinar rate was taken.
+const String kKwdRateDate = '2026-11-15';
 
 /// The currencies whose rate is not fixed: the reply says "about".
 const Set<String> kApproximateCurrencies = {'KWD'};
@@ -143,8 +147,18 @@ const Map<String, String> _currencyCodes = {
 };
 
 /// Names that follow a riyal and make it another riyal.
-const Set<String> _qatari = {'قطري', 'قطر', 'qatari'};
-const Set<String> _otherRiyal = {'عماني', 'عمان', 'omani', 'يمني', 'ايراني'};
+const Set<String> _qatari = {'قطري', 'قطريه', 'القطري', 'القطريه', 'قطر', 'qatari'};
+const Set<String> _otherRiyal = {
+  'عماني', 'عمانيه', 'العماني', 'العمانيه', 'عمان', 'omani', 'يمني', 'يمنيه', //
+  'ايراني', 'ايرانيه',
+};
+const Set<String> _kuwaiti = {'كويتي', 'كويتيه', 'الكويتي', 'الكويتيه', 'kuwaiti'};
+
+/// A dinar of another country: not Bahraini dinars.
+const Set<String> _otherDinar = {
+  'اردني', 'اردنيه', 'الاردني', 'عراقي', 'عراقيه', 'العراقي', 'ليبي', 'ليبيه', //
+  'تونسي', 'تونسيه', 'جزائري', 'جزائريه', 'jordanian', 'iraqi',
+};
 
 class _Foreign {
   const _Foreign(this.code, this.end);
@@ -171,6 +185,9 @@ _Foreign? _foreignAt(List<String> t, int j) {
     if (_qatari.contains(next)) return _Foreign('QAR', j + 2);
     if (_otherRiyal.contains(next)) return null;
     if (next == 'سعودي' || next == 'saudi') return _Foreign('SAR', j + 2);
+  }
+  if (code == 'AED' && const {'مغربي', 'مغربيه', 'المغربي', 'moroccan'}.contains(next)) {
+    return null;
   }
   if (code == 'AED' && (next == 'اماراتي' || next == 'emirati')) {
     return _Foreign('AED', j + 2);
@@ -207,9 +224,10 @@ class _Part {
 /// zero, a text that is not a plain number, or an amount over a million.
 _Part? _converted(String number, String code, int end) {
   final milli = decimalToFils(number);
-  final rate = kForeignMilliFils[code];
+  final rate = kForeignFilsPerUnit[code];
   if (milli == null || rate == null || milli > 1000000000) return null;
-  final fils = (milli * rate + 500000) ~/ 1000000;
+  final (n, d) = rate;
+  final fils = (milli * n + 500 * d) ~/ (1000 * d);
   if (fils <= 0) return null;
   return _Part(fils, end, currency: code, original: number);
 }
@@ -237,7 +255,8 @@ class BahrainiMoneyParser {
           // "20 دينار كويتي"
           (i + 2 < tokens.length &&
               _dinarUnits.contains(tokens[i + 1]) &&
-              const {'كويتي', 'kuwaiti'}.contains(tokens[i + 2]))) {
+              (_kuwaiti.contains(tokens[i + 2]) ||
+                  _otherDinar.contains(tokens[i + 2])))) {
         return true;
       }
     }
@@ -268,7 +287,7 @@ class BahrainiMoneyParser {
     // "4 دنانير و5 ربيات", "دينار و200 فلس": parts joined by "و".
     while (first.currency == null) {
       final next = _joined(t, end);
-      if (next == null) break;
+      if (next == null || next.currency != null) break;
       fils += next.fils;
       end = next.end;
     }
@@ -340,9 +359,10 @@ class BahrainiMoneyParser {
       switch (unit) {
         case _Unit.dinar:
           // "20 دينار كويتي" is Kuwaiti dinars, not Bahraini.
-          if (i + 2 < t.length && const {'كويتي', 'kuwaiti'}.contains(t[i + 2])) {
+          if (i + 2 < t.length && _kuwaiti.contains(t[i + 2])) {
             return number == null ? null : _converted(number, 'KWD', i + 3);
           }
+          if (i + 2 < t.length && _otherDinar.contains(t[i + 2])) return null;
           final f = number != null ? decimalToFils(number) : whole! * 1000;
           return f == null ? null : _fraction(t, i + 2, f);
         case _Unit.rupee:
@@ -366,7 +386,8 @@ class BahrainiMoneyParser {
     // a dinar of its own.
     if (dinarWord != null &&
         ((i > 0 && isNumberToken(t[i - 1])) ||
-            (i + 1 < t.length && const {'كويتي', 'kuwaiti'}.contains(t[i + 1])))) {
+            (i + 1 < t.length &&
+                (_kuwaiti.contains(t[i + 1]) || _otherDinar.contains(t[i + 1])))) {
       return null;
     }
     if (dinarWord != null) return _fraction(t, i + 1, _dinarWords[dinarWord]!);

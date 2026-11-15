@@ -170,19 +170,24 @@ class BeazaAiAssistant {
   AssistantResponse answerLocally(String text, Iterable<LedgerEntry> entries,
       {String? previous, AffordFacts? afford}) {
     final answer = _answerLocally(text, entries, previous: previous, afford: afford);
-    if (answer.intent == AssistantIntent.outOfScope ||
-        answer.intent == AssistantIntent.unknown) {
+    if (answer.intent != AssistantIntent.canIBuy &&
+        answer.intent != AssistantIntent.logExpense) {
       return answer;
     }
-    // Say how another currency was turned into dinars.
+    final note = conversionNote(text);
+    if (note == null) return answer;
+    return answer.withText('$note. ${answer.replyText}', answer.source);
+  }
+
+  /// How amounts in another currency were turned into dinars, or null when
+  /// the text has none. Shown before an answer that uses them.
+  String? conversionNote(String text) {
     final ar = isArabic(text);
     final notes = [
       for (final m in detector.money.findAll(tokenize(text)))
         if (m.currency != null) _conversionNote(m, ar),
     ];
-    if (notes.isEmpty) return answer;
-    return answer.withText('${notes.join(ar ? ' و' : ', ')}. ${answer.replyText}',
-        answer.source);
+    return notes.isEmpty ? null : notes.join(ar ? '، ' : '; ');
   }
 
   String _conversionNote(MoneyMatch m, bool ar) {
@@ -190,9 +195,11 @@ class BeazaAiAssistant {
     final amount = formatMoney(m.fils, arabic: ar);
     final name = ar ? _currencyAr[m.currency] : m.currency;
     if (ar) {
-      return 'حسبت ${m.original} $name بالدينار: ${about ? 'تقريبًا ' : ''}$amount';
+      return 'حسبت ${m.original} $name بالدينار البحريني: ${about ? 'تقريبًا ' : ''}$amount'
+          '${about ? ' (سعر $kKwdRateDate)' : ''}';
     }
-    return 'I counted ${m.original} $name as ${about ? 'about ' : ''}$amount';
+    return 'I counted ${m.original} $name as ${about ? 'about ' : ''}$amount'
+        '${about ? ' (rate of $kKwdRateDate)' : ''}';
   }
 
   static const Map<String, String> _currencyAr = {

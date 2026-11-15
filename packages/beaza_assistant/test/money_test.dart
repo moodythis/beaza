@@ -43,7 +43,24 @@ void main() {
     });
 
     test('dinars written next to dollars are two amounts, not one', () {
-      expect(p.findAll(tokenize('5 دنانير و 300 دولار')), hasLength(2));
+      final two = p.findAll(tokenize('5 دنانير و 300 دولار'));
+      expect(two, hasLength(2));
+      expect(two.first.fils, 5000);
+      expect(two.first.currency, isNull);
+      expect(p.findAll(tokenize('5 دنانير و 20 دينار كويتي')).first.fils, 5000);
+    });
+
+    test('a thousands comma is part of the number', () {
+      expect(p.parse('1,500 دولار'), 564000);
+      expect(p.parse('1,500 فلس'), 1500);
+    });
+
+    test('feminine and plural forms and other dinars and dirhams', () {
+      for (final t in ['5 ريالات عمانيه', '5 ريال العماني', '20 دينار اردني', '20 دينار عراقي', '100 درهم مغربي']) {
+        expect(p.findAll(tokenize(t)), isEmpty, reason: t);
+      }
+      expect(p.findAll(tokenize('5 ريالات قطريه')).single.currency, 'QAR');
+      expect(p.findAll(tokenize('5 دنانير كويتيه')).single.currency, 'KWD');
     });
   });
 

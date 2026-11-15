@@ -324,7 +324,12 @@ class IntentDetector {
             _has(tokens, _week) ||
             _has(tokens, _month));
 
-    final prices = money.findAll(tokens);
+    // A bare number next to a written amount ("300 دولار على 2 تذاكر") is
+    // not a second price.
+    final found = money.findAll(tokens);
+    final prices = found.any((m) => !m.guessed)
+        ? found.where((m) => !m.guessed).toList()
+        : found;
     AssistantIntent intent;
     // "Can I buy it for 300?" and "if I spend 2 BD today, what is left?".
     final hypothetical = _has(tokens, _conditional);

@@ -59,6 +59,8 @@ List<String> tokenize(String input) {
   s = s.replaceAll(
       RegExp(r'(?<![a-z0-9])(?=[a-z0-9]*[a-z])(?=(?:[a-z0-9]*\d){6})[a-z0-9]{10,}(?![a-z0-9])'),
       ' ');
+  // A thousands comma is part of the number: "1,500" is 1500.
+  s = s.replaceAll(RegExp(r'(?<=\d),(?=\d{3}(?!\d))'), '');
   s = s.replaceAll(RegExp(r'[\n\r;]|(?<!\d),|,(?!\d)'), ' | ');
   s = s.replaceAll(RegExp(r'د\s*\.\s*ب'), ' دب ');
   s = s.replaceAll(RegExp(r'\bb\.\s?d\b\.?'), ' bd ');

@@ -92,7 +92,7 @@ class ExpenseParser {
         timestamp: at,
         merchantRaw: what,
         category: what == null ? null : categoryOf(what),
-        amountGuessed: m.guessed || m.currency != null,
+        amountGuessed: m.guessed,
       ));
       prevEnd = m.end;
     }

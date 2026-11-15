@@ -107,17 +107,25 @@ void main() {
     expect(usd.intent, AssistantIntent.canIBuy);
     expect(usd.replyText, contains('112.800'));
     expect(usd.replyText, contains('300 دولار'));
+    // A bare number next to a written amount is not a second price.
+    final tickets = a.answerLocally('لو صرفت 300 دولار على 2 تذاكر كم يبقى؟', const []);
+    expect(tickets.intent, AssistantIntent.canIBuy);
+    expect(tickets.replyText, contains('112.800'));
     final kwd = a.answerLocally('لو صرفت 20 دينار كويتي كم يبقى؟', const []);
     expect(kwd.intent, AssistantIntent.canIBuy);
     expect(kwd.replyText, contains('تقريبًا'));
     expect(kwd.replyText, contains('24.146'));
+    expect(kwd.replyText, contains('2026-11-15'));
+    // A ledger question that mentions a foreign amount carries no note.
+    final ledger = a.answerLocally('كم صرفت على سبوتيفاي؟ 5 دولار اشتراكي', const []);
+    expect(ledger.replyText, isNot(contains('حسبت')));
     final en = a.answerLocally('if I spend 100 AED what is left?', const []);
     expect(en.intent, AssistantIntent.canIBuy);
     expect(en.replyText, contains('BHD 10.238'));
     final log = a.answerLocally('اشتريت قهوة 5 دولار', const []);
     expect(log.intent, AssistantIntent.logExpense);
     expect(log.draftTransactions.single.amountFils, 1880);
-    expect(log.draftTransactions.single.amountGuessed, isTrue);
+    expect(log.draftTransactions.single.amountGuessed, isFalse);
   });
 
   test('a currency that is not converted gets the dinars message, never a guess', () {

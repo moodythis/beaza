@@ -209,7 +209,15 @@ class AskViewModel extends ChangeNotifier {
               );
             }
           } else if (reply.text != null) {
-            answer = local.withText(reply.text!, ResponseSource.llm);
+            // Gemini's text does not say how another currency was turned
+            // into dinars; the phone adds that.
+            final note = (local.intent == AssistantIntent.canIBuy ||
+                    local.intent == AssistantIntent.logExpense)
+                ? assistant.conversionNote(q)
+                : null;
+            answer = local.withText(
+                note == null ? reply.text! : '$note. ${reply.text!}',
+                ResponseSource.llm);
           } else {
             failed = true;
             reason = reply.reason;
