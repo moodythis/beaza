@@ -88,7 +88,8 @@ const Set<String> _notMoneyAfter = {
 const Set<String> _otherCurrency = {
   'دولار', 'دولارات', 'دولارين', 'ريال', 'ريالات', 'ريالين', 'درهم', 'دراهم', //
   'يورو', 'dollar', 'dollars', 'usd', 'kd', 'sar', 'aed', 'eur', 'euro', //
-  'euros', 'riyal', 'riyals', 'dirham', 'dirhams', r'$', '€', '£', 'bucks', //
+  'euros', 'riyal', 'us$', 'kwd', 'omr', 'qar', 'gbp', 'جنيه', 'جنيهات', 'ليره', //
+  'riyal', 'riyals', 'dirham', 'dirhams', r'$', '€', '£', 'bucks', //
   'buck', 'دولارا', 'ريالا',
 };
 
@@ -140,11 +141,17 @@ class BahrainiMoneyParser {
   /// amount in dinars or fils: the question is about money in a currency the
   /// app does not count.
   bool onlyOtherCurrency(List<String> tokens) {
-    if (findAll(tokens).isNotEmpty) return false;
+    // A bare number with no unit ("على 2 تذاكر") is only a guess, so it does
+    // not count as an amount in dinars.
+    if (findAll(tokens).any((m) => !m.guessed)) return false;
     for (var i = 0; i < tokens.length; i++) {
       if (!isNumberToken(tokens[i])) continue;
       if ((i + 1 < tokens.length && _isOtherCurrency(tokens[i + 1])) ||
-          (i > 0 && _isOtherCurrency(tokens[i - 1]))) {
+          (i > 0 && _isOtherCurrency(tokens[i - 1])) ||
+          // "20 دينار كويتي"
+          (i + 2 < tokens.length &&
+              _dinarUnits.contains(tokens[i + 1]) &&
+              const {'كويتي', 'kuwaiti'}.contains(tokens[i + 2]))) {
         return true;
       }
     }

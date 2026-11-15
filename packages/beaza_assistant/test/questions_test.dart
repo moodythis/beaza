@@ -105,8 +105,24 @@ void main() {
     expect(usd.replyText, contains('بالدينار البحريني'));
     final en = a.answerLocally('if I spend 300 USD what is left?', const []);
     expect(en.replyText, contains('Bahraini dinars'));
-    // An amount in dinars next to a dollar one is still answered.
-    expect(a.answerLocally('لو صرفت 5 دنانير كم يبقى؟', const []).intent,
+    // Dinars next to a dollar amount are still answered; a stray bare
+    // number does not hide the dollar amount; Kuwaiti dinars and US$ count
+    // as another currency.
+    expect(
+        a.answerLocally('لو صرفت 5 دنانير بدل 300 دولار كم يبقى؟', const []).intent,
         AssistantIntent.canIBuy);
+    for (final q in [
+      'لو صرفت 300 دولار على 2 تذاكر كم يبقى؟',
+      'لو صرفت 20 دينار كويتي كم يبقى؟',
+      'if I spend US\$300 what is left?',
+      'اشتريت قهوة 5 دولار',
+    ]) {
+      expect(a.answerLocally(q, const []).intent, AssistantIntent.outOfScope,
+          reason: q);
+    }
+    // A question about the ledger that mentions a dollar amount is answered.
+    expect(
+        a.answerLocally('كم صرفت على سبوتيفاي؟ 5 دولار اشتراكي', const []).intent,
+        isNot(AssistantIntent.outOfScope));
   });
 }

@@ -234,8 +234,19 @@ class IntentDetector {
         money.findAll(tokens).isNotEmpty;
   }
 
-  /// The text has an amount only in another currency ("300 دولار").
-  bool onlyOtherCurrency(String text) => money.onlyOtherCurrency(tokenize(text));
+  /// The text is a what-if, a purchase or an expense with an amount only in
+  /// another currency ("لو صرفت 300 دولار"). A question about the ledger that
+  /// happens to mention one ("كم صرفت على سبوتيفاي؟ 5 دولار اشتراكي") is not.
+  bool onlyOtherCurrency(String text) {
+    final tokens = tokenize(text);
+    if (!money.onlyOtherCurrency(tokens)) return false;
+    final asks =
+        text.contains('?') || text.contains('؟') || _has(tokens, _question);
+    return _has(tokens, _conditional) ||
+        _has(tokens, _afford) ||
+        _has(tokens, _outcome) ||
+        !asks;
+  }
 
   ParsedRequest detect(String text) {
     final tokens = tokenize(text);

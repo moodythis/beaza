@@ -174,7 +174,7 @@ class BeazaAiAssistant {
       return AssistantResponse(
         intent: AssistantIntent.outOfScope,
         replyText: req.arabic
-            ? 'أحسب بالدينار البحريني بس. اكتب المبلغ بالدينار.'
+            ? 'أحسب بالدينار البحريني بس، اكتب لي المبلغ بالدينار.'
             : 'I only count in Bahraini dinars. Please write the amount in dinars.',
       );
     }
