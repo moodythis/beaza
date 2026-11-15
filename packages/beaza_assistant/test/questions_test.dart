@@ -129,7 +129,8 @@ void main() {
     ]) {
       final r = a.answerLocally(q, const []);
       expect(r.intent, AssistantIntent.outOfScope, reason: q);
-      expect(r.replyText, contains('الدينار'), reason: q);
+      expect(r.replyText, contains(q.startsWith('if') ? 'dinars' : 'الدينار'),
+          reason: q);
     }
     // A question about the ledger that mentions one is answered.
     expect(
