@@ -3,6 +3,7 @@
   var AR = window.BEAZA_AR || {};
   var root = document.documentElement;
   var EN = {};
+  var EN_TITLE = document.title;
   document.querySelectorAll('[data-i18n]').forEach(function (el) { EN[el.getAttribute('data-i18n')] = el.textContent; });
 
   function store(l) { try { localStorage.setItem('beaza-lang', l); } catch (e) {} }
@@ -18,7 +19,7 @@
     });
     var tk = document.body.getAttribute('data-title');
     var name = ar ? 'بيزة' : 'Beaza';
-    if (tk) document.title = (ar ? AR[tk] : EN[tk] || '') + ' · ' + name;
+    if (tk) document.title = ar ? (AR[tk] || '') + ' · ' + name : EN_TITLE;
     var b = document.getElementById('langBtn');
     if (b) { b.setAttribute('lang', ar ? 'en' : 'ar'); }
     // keep ?lang in internal links so the choice survives when storage is blocked
