@@ -20,6 +20,7 @@
     var tk = document.body.getAttribute('data-title');
     var name = ar ? 'بيزة' : 'Beaza';
     if (tk) document.title = ar ? (AR[tk] || '') + ' · ' + name : EN_TITLE;
+    var ifr2 = document.querySelector('.live-phone iframe'); if (ifr2) ifr2.title = ar ? (AR['demo.live.title'] || '') : 'Beaza interactive prototype';
     var b = document.getElementById('langBtn');
     if (b) { b.setAttribute('lang', ar ? 'en' : 'ar'); }
     // keep ?lang in internal links so the choice survives when storage is blocked
@@ -45,6 +46,11 @@
     var open = document.body.classList.toggle('nav-open');
     mb.setAttribute('aria-expanded', open ? 'true' : 'false');
   });
+
+  document.addEventListener('keydown', function (e) { if (e.key === 'Escape' && document.body.classList.contains('nav-open')) { document.body.classList.remove('nav-open'); if (mb) mb.setAttribute('aria-expanded', 'false'); } });
+  document.querySelectorAll('nav a').forEach(function (a) { a.addEventListener('click', function () { document.body.classList.remove('nav-open'); if (mb) mb.setAttribute('aria-expanded', 'false'); }); });
+  var ifr = document.querySelector('.live-phone iframe');
+  if (ifr) { var ta = AR['demo.live.title']; }
 
   // ---------- config bindings ----------
   document.querySelectorAll('[data-cfg-mail]').forEach(function (a) {
@@ -73,7 +79,7 @@
     if (id) {
       vb.innerHTML = '<iframe src="https://www.youtube-nocookie.com/embed/' + id + '" title="Beaza demo video" allow="accelerometer; encrypted-media; gyroscope; picture-in-picture; fullscreen" allowfullscreen loading="lazy"></iframe>';
     } else {
-      vb.innerHTML = '<video controls preload="metadata" playsinline src="' + url.replace(/"/g, '') + '"></video>';
+      vb.innerHTML = '<video controls preload="metadata" playsinline poster="img/video-poster.jpg" src="' + url.replace(/"/g, '') + '"></video>';
     }
     vb.classList.add('has-video');
   }

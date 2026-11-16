@@ -1,0 +1,159 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="robots" content="noindex">
+<title>Beaza interactive demo</title>
+<link rel="stylesheet" href="styles.css">
+</head>
+<body>
+<svg class="icon-library" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+    <symbol id="icon-eye" viewBox="0 0 24 24"><path d="M2 12s3.6-6 10-6 10 6 10 6-3.6 6-10 6S2 12 2 12Z"/><circle cx="12" cy="12" r="3"/></symbol>
+    <symbol id="icon-user" viewBox="0 0 24 24"><circle cx="12" cy="8" r="3.5"/><path d="M5 20c.5-3.6 2.8-5.5 7-5.5s6.5 1.9 7 5.5M21 12a9 9 0 1 1-18 0 9 9 0 0 1 18 0Z"/></symbol>
+    <symbol id="icon-home" viewBox="0 0 24 24"><path d="m3 10 9-7 9 7v10h-6v-6H9v6H3V10Z"/><path d="M1.5 10 12 2l10.5 8"/></symbol>
+    <symbol id="icon-history" viewBox="0 0 24 24"><path d="M3 11a9 9 0 1 1 2.6 7.4"/><path d="M3 4v7h7M12 7v5l3 2"/></symbol>
+    <symbol id="icon-insights" viewBox="0 0 24 24"><path d="M3 20h18M5 16l5-5 4 3 6-8"/><path d="M16 6h4v4"/><circle cx="5" cy="16" r="1"/><circle cx="10" cy="11" r="1"/><circle cx="14" cy="14" r="1"/></symbol>
+    <symbol id="icon-saving" viewBox="0 0 24 24"><path d="M4 9h12a4 4 0 0 1 4 4v4a3 3 0 0 1-3 3h-7l-4 2v-3H4a2 2 0 0 1-2-2v-6a2 2 0 0 1 2-2Z"/><path d="M8 9V5h9v4M16 13h.01"/><path d="M7 5V3h8v2"/></symbol>
+    <symbol id="icon-receipt" viewBox="0 0 24 24"><path d="M6 3h12v18l-3-2-3 2-3-2-3 2V3Z"/><path d="M9 8h6M9 12h6M9 16h4"/></symbol>
+    <symbol id="icon-picture" viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="16" rx="2"/><circle cx="8.5" cy="9" r="1.5"/><path d="m21 15-5-5L5 20"/></symbol>
+    <symbol id="icon-mic" viewBox="0 0 24 24"><rect x="9" y="2.5" width="6" height="13" rx="3"/><path d="M5 11a7 7 0 0 0 14 0M12 18v4M9 22h6"/></symbol>
+    <symbol id="icon-plus" viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"/></symbol>
+    <symbol id="icon-arrow" viewBox="0 0 24 24"><path d="M7 17 17 7M7 7h10v10"/></symbol>
+    <symbol id="icon-clock" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></symbol>
+    <symbol id="icon-coffee" viewBox="0 0 24 24"><path d="M4 8h13v7a5 5 0 0 1-5 5H9a5 5 0 0 1-5-5V8ZM17 10h2a2 2 0 1 1 0 4h-2M3 22h17M8 4c-1-1 1-2 0-3M13 4c-1-1 1-2 0-3"/></symbol>
+    <symbol id="icon-car" viewBox="0 0 24 24"><path d="m4 14 2-6h12l2 6v5h-3v-2H7v2H4v-5ZM6 14h12M7 11h.01M17 11h.01M9 6l1-3h4l1 3"/></symbol>
+    <symbol id="icon-bill" viewBox="0 0 24 24"><path d="M5 3h14v18l-3-2-4 2-4-2-3 2V3Z"/><path d="M9 8h6M9 12h6M9 16h3"/></symbol>
+    <symbol id="icon-bag" viewBox="0 0 24 24"><path d="M4 8h16l1 13H3L4 8Z"/><path d="M8 9V6a4 4 0 0 1 8 0v3"/></symbol>
+    <symbol id="icon-food" viewBox="0 0 24 24"><path d="M7 3v7M4 3v4a3 3 0 0 0 6 0V3M7 10v11M16 3v18M16 3c4 2 4 8 0 9"/></symbol>
+    <symbol id="icon-shield" viewBox="0 0 24 24"><path d="M12 22s8-4 8-11V5l-8-3-8 3v6c0 7 8 11 8 11Z"/><path d="m9 12 2 2 4-5"/></symbol>
+    <symbol id="icon-sparkle" viewBox="0 0 24 24"><path d="m12 2 1.8 6.2L20 10l-6.2 1.8L12 18l-1.8-6.2L4 10l6.2-1.8L12 2ZM19 15l1 3 3 1-3 1-1 3-1-3-3-1 3-1 1-3ZM4 14l.8 2.2L7 17l-2.2.8L4 20l-.8-2.2L1 17l2.2-.8L4 14Z"/></symbol>
+    <symbol id="icon-send" viewBox="0 0 24 24"><path d="m22 2-7 20-4-9-9-4 20-7ZM22 2 11 13"/></symbol>
+  </svg>
+  
+<div class="beaza-app" aria-label="Interactive Beaza app">
+            <div class="app-statusbar"><span>2:43 ◉</span><span>◖ Wi-Fi ▴ ▣</span></div>
+            <header class="app-toolbar">
+              <button class="app-wordmark" type="button" data-screen="today" aria-label="Go to Today">Beaza</button>
+              <div class="app-toolbar-actions">
+                <button class="app-icon-button" type="button" data-action="privacy" aria-label="Hide balances"><svg class="app-icon"><use href="#icon-eye"></use></svg></button>
+                <button class="app-lang" type="button" data-action="language">文&nbsp; عربي</button>
+                <button class="app-icon-button" type="button" data-action="account" aria-label="Account and sync"><svg class="app-icon"><use href="#icon-user"></use></svg></button>
+              </div>
+            </header>
+
+            <main class="app-scroll">
+              <section class="app-screen" data-app-screen="today">
+                <button class="app-card daily-card" type="button" data-action="limit">
+                  <span class="card-chevron">›</span>
+                  <span class="daily-card-title" data-limit-title>Set a daily spending limit</span>
+                  <span class="daily-card-sub">Spent today: BHD <span data-money data-today-total>0.000</span></span>
+                  <span class="app-budget-meter" data-app-budget-meter hidden role="progressbar" aria-label="Daily spending" aria-valuemin="0" aria-valuemax="100" aria-valuenow="0"><span data-app-budget-fill></span></span>
+                  <span class="app-budget-status" data-app-budget-status></span>
+                  <span class="income-link"><svg class="app-icon"><use href="#icon-insights"></use></svg> Work it out from my income</span>
+                </button>
+                <article class="app-card import-card" data-import-card>
+                  <p>Beaza records bank messages from now on. Do you want to add earlier ones too?</p>
+                  <div class="pill-actions"><button type="button" data-action="import" data-days="7">Last 7 days</button><button type="button" data-action="import" data-days="30">Last 30 days</button></div>
+                  <button class="quiet-action" type="button" data-action="start-now">No, start from now</button>
+                </article>
+                <div class="app-pair">
+                  <button class="app-card mini-card" type="button" data-screen="insights"><span><svg class="app-icon"><use href="#icon-sparkle"></use></svg> Savings plan</span><strong>Get a plan</strong><small>From this week's spending</small></button>
+                  <button class="app-card mini-card" type="button" data-screen="insights"><span>This week's challenge</span><strong>None yet</strong><small>Start one in Insights</small></button>
+                </div>
+                <button class="app-card report-card" type="button" data-screen="history"><span class="large-card-icon"><svg class="app-icon"><use href="#icon-receipt"></use></svg></span><span><strong>Weekly report</strong><small>Your last 7 days: limit, where it went, habits</small></span><span class="card-chevron">›</span></button>
+                <article class="app-card summary-card"><span class="large-card-icon"><svg class="app-icon"><use href="#icon-coffee"></use></svg></span><span><strong data-expense-summary>No small expenses today</strong><small data-week-summary>Last 7 days: BHD 0.000</small></span></article>
+                <button class="app-card question-card" type="button" data-action="ask"><span class="large-card-icon"><svg class="app-icon"><use href="#icon-sparkle"></use></svg></span><span><strong>Where did my money go?</strong><small data-ask-summary>Nothing spent in the last 7 days</small></span><span class="card-chevron">›</span></button>
+                <div class="today-list">
+                  <h2>Today's spending</h2>
+                  <div data-today-list><p class="empty-note">No spending recorded yet. Add an expense to see it here.</p></div>
+                </div>
+              </section>
+
+              <section class="app-screen" data-app-screen="history" hidden>
+                <div class="screen-title-row"><h2>History</h2><button class="app-icon-button" data-action="export" aria-label="Export your data"><svg class="app-icon"><use href="#icon-receipt"></use></svg></button><button class="app-icon-button" data-action="privacy" aria-label="Hide balances"><svg class="app-icon"><use href="#icon-eye"></use></svg></button></div>
+                <button class="sort-chip" type="button" data-action="sort"><span>ⓘ</span> <span data-sort-label>Not sorted (8)</span></button>
+                <div class="history-list" data-history-list></div>
+              </section>
+
+              <section class="app-screen" data-app-screen="insights" hidden>
+                <div class="screen-title-row"><h2>Insights</h2><button class="app-icon-button" data-action="privacy" aria-label="Hide balances"><svg class="app-icon"><use href="#icon-eye"></use></svg></button></div>
+                <article class="app-card insight-card"><span class="large-card-icon">✧</span><p class="app-card-eyebrow">YOUR WEEK, AT A GLANCE</p><h3 data-insight-title>A fresh start</h3><p data-insight-copy>Add a few expenses to see a simple picture of where your money goes.</p></article>
+                <article class="app-card insight-card"><span class="large-card-icon">◷</span><p class="app-card-eyebrow">DAILY LIMIT</p><h3 data-insight-budget>No limit set</h3><p>A gentle guide can make the little daily choices easier.</p><button class="outline-action" type="button" data-action="limit">Set a daily limit</button></article>
+                <article class="app-card insight-card"><span class="large-card-icon">✦</span><p class="app-card-eyebrow">A SMALL CHALLENGE</p><h3>Try a no-spend afternoon</h3><p>Choose a few hours to enjoy what you already have.</p><button class="outline-action" type="button" data-action="challenge">Try this challenge</button></article>
+              </section>
+
+              <section class="app-screen" data-app-screen="saving" hidden>
+                <div class="screen-title-row"><h2>Saving</h2><button class="app-icon-button" data-action="privacy" aria-label="Hide balances"><svg class="app-icon"><use href="#icon-eye"></use></svg></button></div>
+                <article class="app-card saving-card">
+                  <h3><span><svg class="app-icon"><use href="#icon-saving"></use></svg></span> Savings goal</h3>
+                  <h2 data-goal-name>No goal yet</h2>
+                  <div class="saving-meter"><span data-goal-meter></span></div>
+                  <p><span data-money data-goal-current>0.000</span> of BHD <span data-money data-goal-target>0.000</span></p>
+                  <div class="saving-actions"><button type="button" data-action="goal-add">Add money put aside</button><button class="quiet-action" type="button" data-action="goal-set">Set a goal</button></div>
+                  <small>Counts what you put aside and purchases you skipped after waiting.</small>
+                </article>
+                <article class="app-card saving-card">
+                  <h3><span><svg class="app-icon"><use href="#icon-shield"></use></svg></span> Cooling-off shield</h3>
+                  <p>Want to buy something? Put it here and wait 24 hours. If you still want it, buy it; if not, you saved it.</p>
+                  <button class="outline-action full-action" type="button" data-action="hold">＋ &nbsp; Put something on hold</button>
+                  <div class="hold-list" data-hold-list></div>
+                </article>
+                <article class="app-card saving-card">
+                  <h3><span>⟳</span> Repeating charges</h3>
+                  <p data-subscription-summary>None found yet. It needs at least two charges from the same shop about a month or a week apart, or add one yourself.</p>
+                  <button class="quiet-action" type="button" data-action="subscription">＋ &nbsp; Add a subscription</button>
+                  <div data-subscription-list></div>
+                </article>
+                <article class="app-card saver-pass">
+                  <div><strong>Beaza Saver Pass</strong><small>Collect points for mindful money habits.</small></div>
+                  <strong class="pass-points" data-pass-points>0<small>points</small></strong>
+                </article>
+                <article class="app-card saving-card streak-card"><h3>♨ &nbsp; No streak yet</h3><p>Days in a row within your limit.</p><button class="outline-action" type="button" data-action="challenge">Freeze · 50 pts</button><p class="fine-print">10 points for each day of the last 30 within your limit.</p></article>
+                <article class="app-card saving-card"><h3>Deals &amp; coupons from shops</h3><p>Offers that fit your spending, all in one place.</p><label class="toggle-row">Show deals that fit my spending <input type="checkbox" checked data-action="offers-toggle"><span class="toggle-track"></span></label><div class="coupon-row" data-coupon-offers><span><svg class="app-icon"><use href="#icon-food"></use></svg> Nakhla Cafe<small>20% off coffee and lunch</small></span><button type="button" data-action="coupon">Get coupon</button></div></article>
+                <article class="app-card saving-card"><h3>♜ &nbsp; Leaderboard</h3><p>See how your money habits compare.</p><div class="leaderboard" data-leaderboard></div><label class="toggle-row">Show my nickname to everyone <input type="checkbox" data-action="nickname-toggle"><span class="toggle-track"></span></label></article>
+              </section>
+
+              <section class="app-screen account-screen" data-app-screen="account" hidden>
+                <div class="screen-title-row"><button class="app-icon-button" type="button" data-screen="today" aria-label="Back to Today">←</button><h2>Account &amp; sync</h2></div>
+                <div class="account-lock" aria-hidden="true">♙</div>
+                <p class="account-intro">Create an account to keep your spending in step across your phones. In the app, information is encrypted on this phone before it is sent.</p>
+                <button class="account-primary" type="button" data-action="account-info">Create account</button>
+                <button class="outline-action full-action" type="button" data-action="account-info">Log in</button>
+                <button class="outline-action full-action" type="button" data-action="account-info">▣ &nbsp; Continue with Google</button>
+                <div class="account-links"><button type="button" data-action="account-info">Privacy notice</button><button type="button" data-action="account-info">Terms of use</button></div>
+                <article class="app-card saving-card"><h3>Your data</h3><p>Save a copy of your expenses and settings as a file on your device.</p><button class="outline-action full-action" type="button" data-action="export">⇩ &nbsp; Export my data</button></article>
+              </section>
+
+              <section class="app-screen ask-screen" data-app-screen="ask" hidden>
+                <div class="screen-title-row"><button class="app-icon-button" type="button" data-screen="today">←</button><h2>Ask about your spending</h2></div>
+                <p>Ask about your expenses and budget.</p>
+                <div class="prompt-list"><button type="button" data-prompt="How much did I spend today?">How much did I spend today?</button><button type="button" data-prompt="Where did my money go?">Where did my money go?</button><button type="button" data-prompt="How much is left today?">How much is left today?</button><button type="button" data-prompt="Give me a tip">Give me a tip</button></div>
+                <div class="chat-thread" data-chat-thread aria-live="polite"></div>
+                <form class="ask-form" data-ask-form><input name="question" placeholder="Ask a money question..." required><button type="submit" aria-label="Send question"><svg class="app-icon"><use href="#icon-send"></use></svg></button></form>
+                <p class="chat-note">Answers use only the expenses and budget shown on this page.</p>
+              </section>
+            </main>
+
+            <div class="app-floats" data-app-floats>
+              <button class="floating-tool" type="button" data-action="receipt" aria-label="Add a receipt"><svg class="app-icon"><use href="#icon-receipt"></use></svg></button>
+              <button class="floating-tool" type="button" data-action="quick-add" aria-label="Add using voice"><svg class="app-icon"><use href="#icon-mic"></use></svg></button>
+              <button class="floating-add" type="button" data-action="expense"><svg class="app-icon"><use href="#icon-plus"></use></svg> Add expense</button>
+            </div>
+            <nav class="app-bottom-nav" aria-label="Beaza app navigation">
+              <button class="active" type="button" data-screen="today"><span><svg class="app-icon"><use href="#icon-home"></use></svg></span><small>Today</small></button>
+              <button type="button" data-screen="history"><span><svg class="app-icon"><use href="#icon-history"></use></svg></span><small>History</small></button>
+              <button type="button" data-screen="insights"><span><svg class="app-icon"><use href="#icon-insights"></use></svg></span><small>Insights</small></button>
+              <button type="button" data-screen="saving"><span><svg class="app-icon"><use href="#icon-saving"></use></svg></span><small>Saving</small></button>
+            </nav>
+            <div class="app-modal-backdrop" data-modal-backdrop hidden>
+              <section class="app-modal" role="dialog" aria-modal="true" aria-labelledby="modal-title">
+                <button class="modal-close" type="button" data-action="close-modal" aria-label="Close">×</button>
+                <div data-modal-content></div>
+              </section>
+            </div>
+</div>
+
+<script src="app.js"></script>
+</body>
+</html>
