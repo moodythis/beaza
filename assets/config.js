@@ -17,8 +17,8 @@ window.BEAZA_CONFIG = {
 
   // LinkedIn profile links (leave "" to hide)
   linkedin: {
-    mohammed: "",
-    sayed: ""
+    mohammed: "https://www.linkedin.com/in/mohamed-hussain-atiya-a775a0419/",
+    sayed: "https://www.linkedin.com/in/sayed-hussain-alderazi"
   },
 
   // Contact form: paste a Formspree endpoint (https://formspree.io/f/xxxxxxx) so messages
