@@ -195,6 +195,20 @@ void main() {
       expect(r.timestamp, DateTime.utc(2026, 11, 2, 13, 19));
     });
 
+    test('ila card in US dollars: converted to BHD at the 0.376 peg', () {
+      final r = run(
+          'ilabank',
+          'Purchase at CLOUDFLARE SAN FRANCISCO US using card ****1234 for USD 8.20 on 16/11/2026 18:09 debited from BHD Ac Balance BHD 9.999 Enquiry 17123456',
+          DateTime.utc(2026, 11, 16, 15, 10));
+      expect(r.status, ExtractionStatus.transaction);
+      expect(r.currency, 'BHD');
+      expect(r.amountFils, 3083); // 8.20 x 0.376 = 3.0832, rounded to fils
+      expect(r.flags, isNot(contains(ExtractionFlag.foreignCurrency)));
+      expect(r.last4, '1234');
+      expect(r.merchantRaw, 'CLOUDFLARE SAN FRANCISCO US');
+      expect(r.timestamp, DateTime.utc(2026, 11, 16, 15, 9));
+    });
+
     test('BisB account credited: income, time taken from the receipt', () {
       final r = run(
           'BisB',

@@ -66,6 +66,7 @@ class _Template {
     this.pattern, {
     this.hasMerchant = false,
     this.dateLagsAfterMidnight = false,
+    this.pegFilsPerUnit,
   });
 
   final String id;
@@ -79,6 +80,13 @@ class _Template {
   /// (seen on NBB: the balances show the order). With a receive time the
   /// date is moved forward one day.
   final bool dateLagsAfterMidnight;
+
+  /// For a foreign-currency card message in a currency pegged to the dinar:
+  /// fils per one unit (USD: 376, the fixed BHD peg of 0.376). The amount is
+  /// converted and reported as BHD. The result is an estimate: it leaves out
+  /// any fee or margin the bank adds, and the message does not state the
+  /// dinar amount actually debited.
+  final int? pegFilsPerUnit;
 
   /// 1.0 for templates verified on real messages. Give unverified templates
   /// a lower value (and a constructor parameter) when they are added.
@@ -167,6 +175,22 @@ class Tier1Extractor {
       // Like NBB, ila prints the previous day's date after midnight (a
       // purchase on 14 November at 00:23 read "13/11/2026 00:23").
       dateLagsAfterMidnight: true,
+    ),
+    // Card purchase in US dollars, debited from the BHD account. Converted at
+    // the fixed peg (0.376 BHD per USD); see [_Template.pegFilsPerUnit].
+    _Template(
+      'ila.card.usd',
+      {SenderFamily.ila},
+      TxChannel.card,
+      TxDirection.outgoing,
+      RegExp(
+        r'Purchase at (?<m>.+?) using card \*+(?<acct>\d{4}) for (?<cur>USD)\s?' +
+            _amt + r' on ' + _dmy4 + r' debited',
+        caseSensitive: false,
+      ),
+      hasMerchant: true,
+      dateLagsAfterMidnight: true,
+      pegFilsPerUnit: 376,
     ),
     _Template(
       'ila.fawri.in',
@@ -404,7 +428,12 @@ class Tier1Extractor {
     double lexicon,
     DateTime? receivedAt,
   ) {
-    final amount = _toFils(_g(m, 'amt'));
+    var amount = _toFils(_g(m, 'amt'));
+    final peg = t.pegFilsPerUnit;
+    if (peg != null && amount != null) {
+      // amount is units x 1000; round half up to whole fils.
+      amount = (amount * peg + 500) ~/ 1000;
+    }
     final date = _parseDate(m, receivedAt,
         lagsAfterMidnight: t.dateLagsAfterMidnight);
     final merchant = t.hasMerchant ? _cleanMerchant(_g(m, 'm')) : null;
@@ -433,7 +462,7 @@ class Tier1Extractor {
       accountLast4: _last4(_g(m, 'acct')),
       counterpartyLast4: _last4(_g(m, 'cp')),
       reference: canonicalRef(_g(m, 'ref')),
-      currency: (_g(m, 'cur') ?? 'BHD').toUpperCase(),
+      currency: peg != null ? 'BHD' : (_g(m, 'cur') ?? 'BHD').toUpperCase(),
     );
   }
 
