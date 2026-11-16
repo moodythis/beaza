@@ -10,7 +10,7 @@ window.BEAZA_CONFIG = {
 
   // Demo video: a YouTube link (https://youtu.be/XXXX or https://www.youtube.com/watch?v=XXXX)
   // or a file you upload next to the site, e.g. "media/beaza-demo.mp4". Leave "" until ready.
-  videoUrl: "",
+  videoUrl: "media/beaza-demo.mp4",
 
   // Source code (leave "" to hide the button, e.g. if the repo is private)
   githubUrl: "https://github.com/moodythis/beaza",
