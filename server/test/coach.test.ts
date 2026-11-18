@@ -234,7 +234,7 @@ describe('POST /v1/coach (AI savings plan)', () => {
   it('refuses any field that is not a total, so no name or text can be sent', async () => {
     const s = new Server();
     s.ai = new FakeAi({ response: 'x' });
-    for (const extra of [{ merchant: 'Waleed Al Kabah' }, { message: 'Dear Customer' }, { last4: '4810' }]) {
+    for (const extra of [{ merchant: 'Waleed Al Kabah' }, { message: 'Dear Customer' }, { last4: '6203' }]) {
       const res = await s.call('POST', '/v1/coach', request(extra));
       assert.equal(res.status, 400);
       assert.equal(res.body.error, 'unexpected_field');

@@ -46,7 +46,7 @@ List<LedgerEntry> sample() => ledger([
           category: 'food',
           merchantRaw: 'COSTA COFFEE SEEF MALL',
           merchantNorm: 'Costa Coffee',
-          last4: '4810'),
+          last4: '6203'),
       tx(13200, bh(12, 20), category: 'shopping', merchantRaw: 'REDTAG MANAMA'),
       tx(2050, bh(10, 16), merchantRaw: 'Waleed Al Kabah MANAMA'),
       tx(1000, bh(1, 10), category: 'food'),

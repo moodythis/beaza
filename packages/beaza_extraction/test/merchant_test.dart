@@ -82,7 +82,7 @@ void main() {
     test('a card purchase keeps the raw text and gets name and category', () {
       final r = x.process(RawMessage(
           text:
-              'Thank you for using NBB Debit Card at ABED BAKERY           MANAMA for BHD3.900 on 31/10/2026 14:02, A/C ending 4810 balance BHD99.999.',
+              'Thank you for using NBB Debit Card at ABED BAKERY           MANAMA for BHD3.900 on 31/10/2026 14:02, A/C ending 6203 balance BHD99.999.',
           sender: 'NBB',
           receivedAt: DateTime.utc(2026, 10, 31, 11, 3)));
       expect(r.merchantRaw, 'ABED BAKERY MANAMA');
@@ -93,7 +93,7 @@ void main() {
     test('a transfer has no merchant, so nothing is added', () {
       final r = x.process(RawMessage(
           text:
-              'Successful Fawri+ transfer of BHD1.600 credited to BHXALSAXX9417 on 24/10/2026 11:55, Ref.NBB241026ONH8WCQ, A/C ending 4810 balance BHD99.999.',
+              'Successful Fawri+ transfer of BHD1.600 credited to BHXALSAXX9417 on 24/10/2026 11:55, Ref.NBB241026ONH8WCQ, A/C ending 6203 balance BHD99.999.',
           sender: 'NBB',
           receivedAt: DateTime.utc(2026, 10, 24, 8, 56)));
       expect(r.merchantNorm, isNull);

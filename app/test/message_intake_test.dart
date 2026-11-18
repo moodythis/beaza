@@ -136,7 +136,7 @@ void main() {
   test('a new template set reads messages an older one dropped', () async {
     // An older version saw message 6 and called it not a transaction.
     sms.inbox.add(('6', 'NBB', bh(2, 19),
-        'Thank you for using NBB Debit Card at SAMPLE SHOP MANAMA for BHD2.050 on 02/11/2026 18:59, A/C ending 4810 balance BHD99.999.'));
+        'Thank you for using NBB Debit Card at SAMPLE SHOP MANAMA for BHD2.050 on 02/11/2026 18:59, A/C ending 6203 balance BHD99.999.'));
     for (final id in ['1', '2', '3', '6']) {
       await seen.add('sms:$id', bh(2, 19, 30));
     }

@@ -32,7 +32,7 @@ ExtractionResult tx(int fils, DateTime at, {String? category, String? shop}) =>
       direction: TxDirection.outgoing,
       category: category,
       merchantRaw: shop,
-      last4: '4810',
+      last4: '6203',
       reference: 'NBB${_n++}REF',
       timestamp: at,
     );
@@ -146,7 +146,7 @@ void main() {
         {'name': 'Waleed Al Kabah MANAMA', 'fils': 2050, 'count': 1},
       ]);
       final json = jsonEncode(r);
-      for (final secret in ['4810', 'NBB', 'REF', 'timestamp']) {
+      for (final secret in ['6203', 'NBB', 'REF', 'timestamp']) {
         expect(json, isNot(contains(secret)), reason: secret);
       }
     });
@@ -228,7 +228,7 @@ void main() {
         {'weekday': 'tue', 'hour': 16, 'fils': 2050, 'category': 'unsorted', 'shop': 'Waleed Al Kabah MANAMA'},
       ]);
       final json = jsonEncode(r);
-      for (final secret in ['AHMED', '33445566', '4810', 'NBB']) {
+      for (final secret in ['AHMED', '33445566', '6203', 'NBB']) {
         expect(json, isNot(contains(secret)), reason: secret);
       }
     });

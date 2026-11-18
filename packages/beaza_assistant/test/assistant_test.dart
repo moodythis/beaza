@@ -100,7 +100,7 @@ void main() {
       expect(r.source, ResponseSource.llm);
       expect(r.replyText, 'هالأسبوع صرفت ١٩٫١٥٠ د.ب في 3 عمليات.');
       final sent = llm.prompts.single.contextJson;
-      for (final secret in ['4810', 'COSTA', 'Costa', 'Waleed', 'REDTAG', 'REF']) {
+      for (final secret in ['6203', 'COSTA', 'Costa', 'Waleed', 'REDTAG', 'REF']) {
         expect(sent, isNot(contains(secret)), reason: secret);
       }
       expect(sent, contains('19150'));

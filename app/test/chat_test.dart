@@ -35,7 +35,7 @@ ExtractionResult purchase(int fils, DateTime at,
       direction: TxDirection.outgoing,
       category: category,
       merchantRaw: shop,
-      last4: '4810',
+      last4: '6203',
       reference: 'NBB${_n++}REF',
       timestamp: at,
     );
@@ -248,7 +248,7 @@ void main() {
 
     test('carries nothing that identifies the person', () {
       final text = jsonEncode(r);
-      for (final secret in ['Ali', 'Hasan', '4810', 'NBB', 'FAWRI', 'XYZ']) {
+      for (final secret in ['Ali', 'Hasan', '6203', 'NBB', 'FAWRI', 'XYZ']) {
         expect(text, isNot(contains(secret)), reason: secret);
       }
     });

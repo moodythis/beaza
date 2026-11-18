@@ -22,7 +22,7 @@ ExtractionResult spend(int fils, int day, String shop, {String? category}) =>
       direction: TxDirection.outgoing,
       merchantRaw: shop,
       category: category,
-      last4: '4810',
+      last4: '6203',
       reference: 'R${_n++}',
       timestamp: bh(day),
     );

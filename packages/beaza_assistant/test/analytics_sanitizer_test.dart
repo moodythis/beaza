@@ -65,12 +65,12 @@ void main() {
         tx(2050, bh(10, 16),
             merchantRaw: 'Waleed Al Kabah MANAMA',
             merchantNorm: 'Waleed Al Kabah',
-            last4: '4810',
+            last4: '6203',
             counterpartyLast4: '9417',
             reference: 'NBB241026ONH8WCQ'),
       ]).single;
       final json = jsonEncode(z.entry(e));
-      for (final secret in ['4810', '9417', 'NBB241026', 'Waleed', 'MANAMA']) {
+      for (final secret in ['6203', '9417', 'NBB241026', 'Waleed', 'MANAMA']) {
         expect(json, isNot(contains(secret)), reason: secret);
       }
       expect(z.entry(e)['amount_fils'], 2050);
