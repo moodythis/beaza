@@ -325,7 +325,7 @@ void main() {
       // Real message, 14 November 2026 at 00:23 Bahrain time (balance masked).
       final r = run(
           'ilabank',
-          'Success! Purchase at CHICKET - MADINAT HAMA using card ****2990 for BHD 12.460 on 13/11/2026 00:23 debited from BHD Ac Balance BHD 9.999 Enquiry 17123456',
+          'Success! Purchase at CHICKET - MADINAT HAMA using card ****4417 for BHD 12.460 on 13/11/2026 00:23 debited from BHD Ac Balance BHD 9.999 Enquiry 17123456',
           DateTime.utc(2026, 11, 13, 21, 23));
       expect(r.amountFils, 12460);
       expect(r.timestamp, DateTime.utc(2026, 11, 13, 21, 23));
